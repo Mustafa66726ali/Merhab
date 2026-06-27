@@ -1,0 +1,25 @@
+from django.urls import path
+
+from .public_views import (
+    PublicInvitationGreetingView,
+    PublicInvitationRespondView,
+    PublicInvitationView,
+)
+
+urlpatterns = [
+    path(
+        "invitation/<uuid:token>/",
+        PublicInvitationView.as_view(),
+        name="public-invitation",
+    ),
+    path(
+        "invitation/<uuid:token>/respond/",
+        PublicInvitationRespondView.as_view(),
+        name="public-invitation-respond",
+    ),
+    path(
+        "invitation/<uuid:token>/greeting/",
+        PublicInvitationGreetingView.as_view(),
+        name="public-invitation-greeting",
+    ),
+]

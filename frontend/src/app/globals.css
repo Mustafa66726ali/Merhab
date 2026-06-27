@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html { direction: rtl; }
+html.landing-scroll { scroll-behavior: smooth; }
+body { font-family: 'Inter','Noto Sans Arabic',sans-serif; background:#12121d; color:#e3e0f1; min-height:100vh; overflow-x:hidden; }
+
+/* خطوط قالب الدعوة (Digital Majlis) — مطابقة للنموذج */
+.arabic-display { font-family: 'Noto Kufi Arabic', sans-serif; line-height: 1.6; }
+.gradient-text {
+  background: linear-gradient(135deg, #c8bfff 0%, #5b2eff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:#1f1e2a; }
+::-webkit-scrollbar-thumb { background:#474557; border-radius:3px; }
+
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #474557 transparent;
+}
+.sidebar-scroll::-webkit-scrollbar { width: 4px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: #474557; border-radius: 4px; }
+.sidebar-scroll::-webkit-scrollbar-thumb:hover { background: #5b2eff; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; vertical-align:middle; }
+
+@layer components {
+  .input-field {
+    @apply w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant/30 rounded-xl text-on-surface placeholder:text-outline/60 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 outline-none transition-all;
+  }
+
+  .btn-primary {
+    @apply bg-primary-container text-on-primary-container font-bold rounded-xl hover:brightness-110 transition-all shadow-lg shadow-primary-container/30 disabled:opacity-50;
+  }
+
+  .glass-card {
+    @apply bg-surface-container/80 backdrop-blur-xl border border-outline-variant/20 rounded-2xl shadow-2xl shadow-black/40;
+  }
+
+  /* Landing page design system */
+  .landing-page {
+    @apply bg-surface-container-lowest text-on-surface font-body antialiased;
+  }
+
+  .landing-glow {
+    @apply pointer-events-none absolute rounded-full blur-[100px] opacity-30;
+  }
+
+  .landing-section-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold tracking-wide uppercase border border-primary-container/30 bg-primary-container/10 text-primary;
+  }
+
+  .landing-section-title {
+    @apply text-2xl sm:text-3xl lg:text-4xl font-extrabold font-headline text-on-surface leading-tight;
+  }
+
+  .landing-section-subtitle {
+    @apply text-sm sm:text-base text-on-surface-variant max-w-2xl leading-relaxed;
+  }
+
+  .landing-card {
+    @apply rounded-2xl border border-outline-variant/15 bg-surface-container-low/90 backdrop-blur-sm transition-all duration-300;
+  }
+
+  .landing-card-hover {
+    @apply hover:border-primary-container/35 hover:shadow-xl hover:shadow-primary-container/10 hover:-translate-y-0.5;
+  }
+
+  .landing-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-primary-container text-on-primary-container shadow-lg shadow-primary-container/25 hover:brightness-110 hover:shadow-primary-container/40 active:scale-[0.98] transition-all;
+  }
+
+  .landing-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold border border-outline-variant/40 text-on-surface-variant hover:border-primary-container/50 hover:text-primary hover:bg-primary-container/5 active:scale-[0.98] transition-all;
+  }
+
+  .landing-input {
+    @apply w-full px-4 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/25 text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-2 focus:ring-primary-container/40 focus:border-primary-container/50 transition-all;
+  }
+
+  .landing-page .landing-accordion .accordion-item {
+    @apply border border-outline-variant/15 bg-surface-container-low rounded-xl mb-3 overflow-hidden;
+    border-radius: 1rem !important;
+  }
+  .landing-page .landing-accordion .accordion-button {
+    background: transparent;
+    color: #e3e0f1;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: none;
+    padding: 1rem 1.25rem;
+  }
+  .landing-page .landing-accordion .accordion-button:not(.collapsed) {
+    background: rgba(91, 46, 255, 0.08);
+    color: #c8bfff;
+  }
+  .landing-page .landing-accordion .accordion-button::after {
+    filter: invert(0.85);
+  }
+  .landing-page .landing-accordion .accordion-body {
+    background: transparent;
+    color: #c9c3da;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .landing-testimonial-scroll {
+    @apply flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar md:grid md:grid-cols-2 md:overflow-visible md:pb-0;
+  }
+  .landing-testimonial-scroll > * {
+    @apply snap-center shrink-0 w-[min(100%,340px)] md:w-auto md:shrink;
+  }
+
+  .landing-page a,
+  .landing-page a:hover,
+  .landing-page a:focus {
+    text-decoration: none !important;
+  }
+
+  .landing-page .landing-ms-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    user-select: none;
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+
+  .landing-page .landing-icon-btn {
+    @apply flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-outline-variant/20 bg-surface-container-low/80 text-on-surface-variant hover:text-primary hover:border-primary-container/40 hover:bg-primary-container/10 transition-all shrink-0;
+  }
+}

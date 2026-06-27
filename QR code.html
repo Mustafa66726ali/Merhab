@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#12121d",
+                    "primary-container": "#5b2eff",
+                    "inverse-surface": "#e3e0f1",
+                    "tertiary-fixed-dim": "#ffb59b",
+                    "on-error": "#690005",
+                    "tertiary": "#ffb59b",
+                    "on-tertiary-fixed-variant": "#812800",
+                    "surface-bright": "#383845",
+                    "on-background": "#e3e0f1",
+                    "on-tertiary-fixed": "#380d00",
+                    "tertiary-container": "#aa3800",
+                    "on-tertiary-container": "#ffcfbf",
+                    "surface-dim": "#12121d",
+                    "secondary-container": "#47475d",
+                    "on-secondary-fixed-variant": "#45455b",
+                    "error-container": "#93000a",
+                    "secondary": "#c6c4df",
+                    "on-surface-variant": "#c9c3da",
+                    "surface-container": "#1f1e2a",
+                    "inverse-on-surface": "#302f3b",
+                    "surface-container-low": "#1b1a26",
+                    "primary-fixed-dim": "#c8bfff",
+                    "error": "#ffb4ab",
+                    "on-surface": "#e3e0f1",
+                    "on-primary-fixed-variant": "#4200da",
+                    "primary": "#c8bfff",
+                    "on-tertiary": "#5b1a00",
+                    "inverse-primary": "#5a2dfe",
+                    "on-secondary-container": "#b8b6d0",
+                    "on-primary-fixed": "#190064",
+                    "tertiary-fixed": "#ffdbcf",
+                    "surface-container-lowest": "#0d0d18",
+                    "background": "#12121d",
+                    "outline": "#928ea3",
+                    "on-primary": "#2d009d",
+                    "secondary-fixed-dim": "#c6c4df",
+                    "outline-variant": "#474557",
+                    "surface-container-highest": "#343440",
+                    "on-primary-container": "#dcd4ff",
+                    "on-secondary": "#2f2e43",
+                    "secondary-fixed": "#e2e0fc",
+                    "surface-container-high": "#292935",
+                    "surface-variant": "#343440",
+                    "surface-tint": "#c8bfff",
+                    "primary-fixed": "#e5deff",
+                    "on-error-container": "#ffdad6",
+                    "on-secondary-fixed": "#1a1a2e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .qr-overlay {
+            background: linear-gradient(to bottom, rgba(18,18,29,0.4), rgba(18,18,29,0.9));
+        }
+        .scan-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #c8bfff, transparent);
+            box-shadow: 0 0 15px #5B2EFF;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            animation: scan 3s ease-in-out infinite;
+        }
+        @keyframes scan {
+            0%, 100% { top: 0%; }
+            50% { top: 100%; }
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body overflow-x-hidden antialiased">
+<!-- Sidebar (Staff Logic - Right Side) -->
+<aside class="hidden md:flex flex-col h-full fixed right-0 w-[280px] bg-[#0d0d18] border-l border-[#474557]/20 z-50 rtl">
+<div class="p-8">
+<div class="flex items-center justify-end gap-4 mb-10">
+<div class="text-right">
+<p class="font-headline font-bold text-on-surface">عضو الفريق</p>
+<p class="text-xs text-on-surface-variant tracking-wider uppercase">النتشغيل الميداني</p>
+</div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-high overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="Professional portrait of a male staff member in formal attire, clean background, sharp lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdpBvvOAVK2DGGuZXjyJmSuU-GcnFCol4FGP9CaXS-SLYDQAZJEMW_oU9U-CgNQpLYM167kh0AdxHLOlFH09pkTcUWaWWtFYm9Ixd2odPEULngEPALEwfyBQHdYzVaj0qMYDbCytcuaYN2XTwyh--9ACLuZAZ4UienqyGqIy-ywF-gX6IhHCoDw8oGrC7IyrD1bGIjQ4NPmCQ1c9kf4z4o6NHi4cxyVz1lxZGsXbZC9VteA0vhSKxCrbZBRiffc1B4mPL1ZAEnCtn8"/>
+</div>
+</div>
+<nav class="space-y-2">
+<a class="flex items-center justify-end gap-3 text-[#c9c3da] py-3 px-6 hover:bg-[#1b1a26] transition-colors rounded-xl" href="#">
+<span>المهام الخاصة</span>
+<span class="material-symbols-outlined">assignment</span>
+</a>
+<a class="flex items-center justify-end gap-3 text-[#c9c3da] py-3 px-6 hover:bg-[#1b1a26] transition-colors rounded-xl" href="#">
+<span>قائمة الضيوف</span>
+<span class="material-symbols-outlined">list_alt</span>
+</a>
+<a class="flex items-center justify-end gap-3 text-[#5B2EFF] border-r-4 border-[#5B2EFF] bg-gradient-to-l from-[#5B2EFF]/10 to-transparent py-3 px-6 rounded-l-xl" href="#">
+<span class="font-bold">ماسح QR</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+</a>
+<a class="flex items-center justify-end gap-3 text-[#c9c3da] py-3 px-6 hover:bg-[#1b1a26] transition-colors rounded-xl" href="#">
+<span>الرسائل</span>
+<span class="material-symbols-outlined">forum</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-8 border-t border-outline-variant/10">
+<button class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-surface-container-high text-error hover:bg-error-container/20 transition-all">
+<span>تسجيل الخروج</span>
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</aside>
+<!-- Top Bar -->
+<header class="fixed top-0 left-0 right-0 md:pr-[280px] bg-[#0d0d18]/80 backdrop-blur-xl z-40 flex flex-row-reverse justify-between items-center w-full px-8 py-4 shadow-[0px_20px_40px_rgba(13,13,24,0.6)]">
+<div class="flex items-center gap-4">
+<span class="text-2xl font-bold bg-gradient-to-r from-[#5B2EFF] to-[#c8bfff] bg-clip-text text-transparent font-headline">مرحّاب</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full text-on-surface-variant hover:backdrop-brightness-125 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:backdrop-brightness-125 transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/30"></div>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high text-[#c8bfff] font-medium transition-all active:scale-95">
+<span>تبديل الفعالية</span>
+<span class="material-symbols-outlined">event_repeat</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="min-h-screen pt-24 pb-32 md:pr-[280px] flex flex-col items-center">
+<!-- Scanning Interface Section -->
+<section class="w-full max-w-5xl px-8 flex flex-col items-center">
+<div class="w-full mb-8 text-center">
+<h1 class="text-3xl font-headline font-extrabold text-on-surface mb-2 tracking-tight">ماسح التذاكر الذكي</h1>
+<p class="text-on-surface-variant text-lg">قم بتوجيه رمز QR داخل المربع للمسح التلقائي</p>
+</div>
+<!-- Scanner Camera Viewport -->
+<div class="relative w-full max-w-md aspect-square rounded-[2rem] overflow-hidden border border-outline-variant/20 shadow-2xl bg-surface-container-lowest group">
+<!-- Background Simulation Image -->
+<div class="absolute inset-0">
+<img class="w-full h-full object-cover brightness-50 contrast-125" data-alt="Close up of a person holding a smartphone showing a QR code in a dimly lit high-tech environment with blue neon accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvxmMRcfou8H0N-b2pwmBe7eFt-IfzOzUUVNTPE-q5K1mLOQJ8NGf0zjUwq95CCIb36YLEjL4vBB23ejYC3Co1nlRBjI_T_g4SiLubVuekk9AZu-K9FUn3QyZndjGU49A_x10BwvWrFQaB5zhU3wRUSj7f1Ymb8HBenjxlWSF8evqG7hlmhVXQuw4rQW35oB46rm6mcFuRepeM8L3DXF963dyKmDQjd3SKtfthLK_ZT3wCm3iSG_5Oe2dlfOgyLaNfu3ve4nSqyB1U"/>
+</div>
+<!-- Camera HUD Overlay -->
+<div class="absolute inset-0 qr-overlay flex items-center justify-center">
+<div class="relative w-64 h-64 border-2 border-primary/40 rounded-3xl">
+<!-- Scanning Corner Brackets -->
+<div class="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-xl"></div>
+<div class="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl"></div>
+<div class="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl"></div>
+<div class="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl"></div>
+<!-- Animated Scanning Line -->
+<div class="scan-line"></div>
+</div>
+</div>
+<!-- Live HUD Controls -->
+<div class="absolute top-6 left-1/2 -translate-x-1/2 flex gap-4">
+<button class="w-12 h-12 rounded-full glass-panel bg-surface/40 flex items-center justify-center text-on-surface hover:bg-surface/60 transition-all border border-white/10">
+<span class="material-symbols-outlined">flashlight_on</span>
+</button>
+<button class="w-12 h-12 rounded-full glass-panel bg-surface/40 flex items-center justify-center text-on-surface hover:bg-surface/60 transition-all border border-white/10">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+</div>
+</div>
+<!-- Status Feedback Grid -->
+<div class="mt-12 w-full grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Status: Success -->
+<div class="bg-surface-container-low p-6 rounded-2xl flex items-center flex-row-reverse justify-between group cursor-pointer hover:bg-surface-container-high transition-all">
+<div class="flex flex-col items-end">
+<h3 class="font-bold text-lg text-on-surface">تم الدخول</h3>
+<p class="text-sm text-on-surface-variant">الرمز صالح ومسجل</p>
+</div>
+<div class="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">check_circle</span>
+</div>
+</div>
+<!-- Status: Rejected -->
+<div class="bg-surface-container-low p-6 rounded-2xl flex items-center flex-row-reverse justify-between group cursor-pointer hover:bg-surface-container-high transition-all border-r-4 border-error/50">
+<div class="flex flex-col items-end">
+<h3 class="font-bold text-lg text-on-surface">مرفوض</h3>
+<p class="text-sm text-on-surface-variant">سبق استخدامه أو منتهي</p>
+</div>
+<div class="w-14 h-14 rounded-full bg-error/10 flex items-center justify-center text-error group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">cancel</span>
+</div>
+</div>
+<!-- Status: Not Registered -->
+<div class="bg-surface-container-low p-6 rounded-2xl flex items-center flex-row-reverse justify-between group cursor-pointer hover:bg-surface-container-high transition-all">
+<div class="flex flex-col items-end">
+<h3 class="font-bold text-lg text-on-surface">غير مسجل</h3>
+<p class="text-sm text-on-surface-variant">البيانات غير موجودة</p>
+</div>
+<div class="w-14 h-14 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">info</span>
+</div>
+</div>
+</div>
+<!-- Recent Scans List -->
+<div class="mt-12 w-full bg-surface-container-low rounded-3xl p-8 mb-10 overflow-hidden relative">
+<div class="flex flex-row-reverse justify-between items-center mb-8">
+<div class="flex items-center gap-3">
+<h2 class="text-xl font-headline font-bold text-on-surface">آخر عمليات المسح</h2>
+<span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">١٤ ضيفاً</span>
+</div>
+<button class="text-primary-fixed-dim text-sm font-medium hover:underline">عرض السجل الكامل</button>
+</div>
+<div class="space-y-4">
+<!-- Scan Entry 1 -->
+<div class="flex flex-row-reverse items-center justify-between p-4 rounded-2xl bg-surface-container-high/50 hover:bg-surface-container-high transition-colors">
+<div class="flex flex-row-reverse items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-lowest flex items-center justify-center text-emerald-400">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">أحمد عبد الله المنصور</p>
+<p class="text-xs text-on-surface-variant">تذكرة كبار الشخصيات • #V-2904</p>
+</div>
+</div>
+<div class="flex flex-col items-start">
+<span class="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-lg">تم الدخول</span>
+<span class="text-[10px] text-on-surface-variant mt-1">منذ ٢ دقيقة</span>
+</div>
+</div>
+<!-- Scan Entry 2 -->
+<div class="flex flex-row-reverse items-center justify-between p-4 rounded-2xl bg-surface-container-high/50 hover:bg-surface-container-high transition-colors">
+<div class="flex flex-row-reverse items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-lowest flex items-center justify-center text-error">
+<span class="material-symbols-outlined">block</span>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">نورة العلي</p>
+<p class="text-xs text-on-surface-variant">تذكرة عامة • #G-1152</p>
+</div>
+</div>
+<div class="flex flex-col items-start">
+<span class="text-xs font-medium text-error bg-error/10 px-3 py-1 rounded-lg">مرفوض</span>
+<span class="text-[10px] text-on-surface-variant mt-1">منذ ٧ دقائق</span>
+</div>
+</div>
+<!-- Scan Entry 3 -->
+<div class="flex flex-row-reverse items-center justify-between p-4 rounded-2xl bg-surface-container-high/50 hover:bg-surface-container-high transition-colors">
+<div class="flex flex-row-reverse items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-lowest flex items-center justify-center text-emerald-400">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="text-right">
+<p class="font-bold text-on-surface">محمد حسن القحطاني</p>
+<p class="text-xs text-on-surface-variant">تذكرة أعمال • #B-0082</p>
+</div>
+</div>
+<div class="flex flex-col items-start">
+<span class="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-lg">تم الدخول</span>
+<span class="text-[10px] text-on-surface-variant mt-1">منذ ١٤ دقيقة</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-surface-container-lowest/90 backdrop-blur-xl border-t border-outline-variant/10 z-50 flex items-center justify-around px-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+<button class="flex flex-col items-center gap-1 text-on-surface-variant transition-all active:scale-95">
+<span class="material-symbols-outlined">forum</span>
+<span class="text-[10px]">الرسائل</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary transition-all active:scale-95">
+<div class="relative -top-6 w-16 h-16 rounded-full bg-primary-container shadow-[0_0_20px_rgba(91,46,255,0.4)] flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+</div>
+<span class="text-[10px] absolute bottom-3">الماسح</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant transition-all active:scale-95">
+<span class="material-symbols-outlined">list_alt</span>
+<span class="text-[10px]">الضيوف</span>
+</button>
+</nav>
+<!-- Floating Action Background Glow -->
+<div class="fixed -bottom-40 -left-40 w-[600px] h-[600px] bg-primary-container/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
+<div class="fixed top-20 -right-20 w-[400px] h-[400px] bg-tertiary/5 blur-[100px] rounded-full pointer-events-none z-0"></div>
+</body></html>

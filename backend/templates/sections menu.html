@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Plus+Jakarta+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#12121d",
+                        "primary-container": "#5b2eff",
+                        "on-surface": "#e3e0f1",
+                        "on-tertiary-container": "#ded4ff",
+                        "surface-container-lowest": "#0d0d18",
+                        "on-secondary-container": "#b8b6d0",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#634ac1",
+                        "tertiary-fixed-dim": "#cbbeff",
+                        "on-primary-container": "#dcd4ff",
+                        "on-tertiary-fixed": "#1e0061",
+                        "secondary-fixed-dim": "#c6c4df",
+                        "on-secondary-fixed-variant": "#45455b",
+                        "surface-container-high": "#292935",
+                        "outline-variant": "#474557",
+                        "primary-fixed-dim": "#c8bfff",
+                        "surface-container-highest": "#343440",
+                        "on-error-container": "#ffdad6",
+                        "outline": "#928ea3",
+                        "on-primary-fixed": "#190064",
+                        "on-tertiary-fixed-variant": "#4a2ea7",
+                        "secondary-container": "#47475d",
+                        "primary": "#c8bfff",
+                        "surface-tint": "#c8bfff",
+                        "on-primary": "#2d009d",
+                        "inverse-on-surface": "#302f3b",
+                        "inverse-surface": "#e3e0f1",
+                        "tertiary": "#cbbeff",
+                        "inverse-primary": "#5a2dfe",
+                        "on-secondary-fixed": "#1a1a2e",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#e2e0fc",
+                        "on-surface-variant": "#c9c3da",
+                        "on-primary-fixed-variant": "#4200da",
+                        "surface-bright": "#383845",
+                        "surface-variant": "#343440",
+                        "surface": "#12121d",
+                        "primary-fixed": "#e5deff",
+                        "tertiary-fixed": "#e7deff",
+                        "surface-container": "#1f1e2a",
+                        "secondary": "#c6c4df",
+                        "error-container": "#93000a",
+                        "on-background": "#e3e0f1",
+                        "on-secondary": "#2f2e43",
+                        "on-tertiary": "#330b91",
+                        "surface-container-low": "#1b1a26",
+                        "background": "#12121d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .glass-panel {
+            background: rgba(27, 26, 38, 0.6);
+            backdrop-filter: blur(20px);
+        }
+        .nebula-glow {
+            background: linear-gradient(135deg, rgba(91, 46, 255, 0.15) 0%, rgba(99, 74, 193, 0.15) 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen">
+<!-- Right Side Navigation Drawer -->
+<aside class="fixed right-0 top-0 h-full w-72 m-6 rounded-3xl border-none bg-slate-900/60 backdrop-blur-xl shadow-2xl shadow-black/40 flex flex-col p-6 text-right rtl z-50">
+<div class="mb-10 flex items-center gap-4 px-2">
+<div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-2xl" data-icon="dashboard">dashboard</span>
+</div>
+<div>
+<h1 class="text-2xl font-bold text-white tracking-tight">مرحّاب</h1>
+<p class="text-xs text-slate-400 font-medium">نظام إدارة المناسبات</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Navigation Items Mapping from JSON -->
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>لوحة التحكم</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="event">event</span>
+<span>المناسبات</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>المدعوون</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 bg-[#5B2EFF]/20 text-[#5B2EFF] rounded-xl font-bold transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="category">category</span>
+<span>الأقسام والمجموعات</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span>جدول الحدث</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+<span>الرسائل والتنبيهات</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all duration-300 mt-auto" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>الإعدادات</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="mr-80 ml-6 pt-6 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="flex flex-row-reverse justify-between items-center w-full px-8 py-6 mb-8">
+<div class="flex items-center gap-6 flex-row-reverse">
+<div class="flex items-center gap-3 cursor-pointer active:opacity-70">
+<img alt="صورة المستخدم الشخصية" class="w-10 h-10 rounded-full border-2 border-primary-container/30" data-alt="professional corporate headshot of a middle eastern executive in a sleek modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAF4c6BrmqL2Qopo2kFgRNAJo2fMOp6IcLJHfT0Rk7KdAWO-N11bTs234KU6c9upHhBfcWi_AG506Xj4X2fW0533mlSwWioHAqOsJF3HkhrjXGPa5B8XZ7YY8PrF0fhdlXxlAQO8Nzof2dU_4vigQwQpcaLcTFhc-AVqSQUHRtT0HKDLH0qUs1roYUwI5Cvv2wzZ3LkqA995_VxG3pDjQ_gNL_D12PXyjQAArlUebqkwp0f-LZhRyIQZFs3kILCHdmj6vG8FZ3nwD5D"/>
+<div class="text-right">
+<p class="text-on-surface font-bold text-sm">عبدالرحمن محمد</p>
+<p class="text-xs text-outline font-medium">مدير الحدث</p>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container transition-colors text-on-surface">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="px-4 py-2 bg-surface-container text-on-surface-variant rounded-xl text-sm font-medium flex items-center gap-2 hover:bg-surface-container-high transition-all">
+<span>اختر المناسبة</span>
+<span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col items-start">
+<h2 class="text-3xl font-extrabold text-white tracking-tight mb-1">تفاصيل الأقسام</h2>
+<p class="text-outline-variant font-medium">إدارة وتوزيع ضيوف المناسبة حسب التصنيفات</p>
+</div>
+</header>
+<!-- Stats Overview Row -->
+<section class="grid grid-cols-4 gap-6 px-8 mb-10">
+<div class="surface-container-low p-6 rounded-[24px] border-none flex flex-col gap-2">
+<span class="text-outline-variant text-sm font-bold">إجمالي الأقسام</span>
+<span class="text-4xl font-black text-primary">04</span>
+</div>
+<div class="surface-container-low p-6 rounded-[24px] border-none flex flex-col gap-2">
+<span class="text-outline-variant text-sm font-bold">إجمالي المدعوين</span>
+<span class="text-4xl font-black text-on-surface">1,240</span>
+</div>
+<div class="surface-container-low p-6 rounded-[24px] border-none flex flex-col gap-2">
+<span class="text-outline-variant text-sm font-bold">الحضور المؤكد</span>
+<span class="text-4xl font-black text-tertiary">856</span>
+</div>
+<div class="surface-container-low p-6 rounded-[24px] border-none flex flex-col gap-2 nebula-glow border border-primary-container/10">
+<span class="text-primary-fixed-dim text-sm font-bold">سعة القاعة</span>
+<span class="text-4xl font-black text-white">92%</span>
+</div>
+</section>
+<!-- Sections Grid -->
+<section class="px-8 pb-12">
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+<!-- Section Card: Men -->
+<div class="surface-container-low rounded-[32px] overflow-hidden flex flex-col group transition-all duration-500 hover:translate-y-[-4px]">
+<div class="p-8 pb-4 flex justify-between items-start">
+<div class="flex gap-6 items-start">
+<div class="w-16 h-16 rounded-[20px] bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-4xl" data-icon="person">person</span>
+</div>
+<div>
+<h3 class="text-2xl font-extrabold text-white mb-2">قسم الرجال</h3>
+<div class="flex flex-wrap gap-4 text-sm text-outline">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+<span>15 أكتوبر 2024</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span>القاعة الرئيسية - الدور الأرضي</span>
+</div>
+</div>
+</div>
+</div>
+<button class="px-5 py-2.5 bg-primary-container text-on-primary-container rounded-xl font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary-container/20">
+                            إدارة القسم
+                        </button>
+</div>
+<div class="px-8 py-6 grid grid-cols-2 gap-4">
+<div class="bg-surface-container-highest/30 p-4 rounded-2xl">
+<p class="text-outline text-xs mb-1">عدد المدعوين</p>
+<p class="text-xl font-bold text-white">650 ضيف</p>
+</div>
+<div class="bg-surface-container-highest/30 p-4 rounded-2xl">
+<p class="text-outline text-xs mb-1">نسبة التأكيد</p>
+<p class="text-xl font-bold text-tertiary">78%</p>
+</div>
+</div>
+<!-- Nested Groups Preview -->
+<div class="mx-8 mb-8 mt-2 space-y-3">
+<p class="text-xs font-bold text-outline-variant tracking-widest uppercase">المجموعات التابعة</p>
+<!-- Group Item -->
+<div class="flex items-center justify-between p-4 bg-surface-container rounded-2xl border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-bold text-sm text-on-surface">كبار الشخصيات (VIP)</span>
+</div>
+<div class="flex gap-4 text-xs font-medium">
+<span class="text-outline-variant">المدعوين: <span class="text-white">50</span></span>
+<span class="text-outline-variant">المؤكد: <span class="text-tertiary">48</span></span>
+</div>
+</div>
+<!-- Group Item -->
+<div class="flex items-center justify-between p-4 bg-surface-container rounded-2xl border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="font-bold text-sm text-on-surface">العائلة والأقارب</span>
+</div>
+<div class="flex gap-4 text-xs font-medium">
+<span class="text-outline-variant">المدعوين: <span class="text-white">200</span></span>
+<span class="text-outline-variant">المؤكد: <span class="text-tertiary">145</span></span>
+</div>
+</div>
+<button class="w-full py-3 border border-outline-variant/20 rounded-xl text-outline-variant text-xs font-bold hover:bg-surface-container-high transition-colors">
+                            عرض جميع المجموعات (12)
+                        </button>
+</div>
+</div>
+<!-- Section Card: Women -->
+<div class="surface-container-low rounded-[32px] overflow-hidden flex flex-col group transition-all duration-500 hover:translate-y-[-4px]">
+<div class="p-8 pb-4 flex justify-between items-start">
+<div class="flex gap-6 items-start">
+<div class="w-16 h-16 rounded-[20px] bg-tertiary-container/10 flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined text-4xl" data-icon="female">female</span>
+</div>
+<div>
+<h3 class="text-2xl font-extrabold text-white mb-2">قسم النساء</h3>
+<div class="flex flex-wrap gap-4 text-sm text-outline">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+<span>15 أكتوبر 2024</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span>القاعة الكبرى - الدور الأول</span>
+</div>
+</div>
+</div>
+</div>
+<button class="px-5 py-2.5 bg-primary-container text-on-primary-container rounded-xl font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary-container/20">
+                            إدارة القسم
+                        </button>
+</div>
+<div class="px-8 py-6 grid grid-cols-2 gap-4">
+<div class="bg-surface-container-highest/30 p-4 rounded-2xl">
+<p class="text-outline text-xs mb-1">عدد المدعوين</p>
+<p class="text-xl font-bold text-white">590 ضيف</p>
+</div>
+<div class="bg-surface-container-highest/30 p-4 rounded-2xl">
+<p class="text-outline text-xs mb-1">نسبة التأكيد</p>
+<p class="text-xl font-bold text-tertiary">91%</p>
+</div>
+</div>
+<!-- Nested Groups Preview -->
+<div class="mx-8 mb-8 mt-2 space-y-3">
+<p class="text-xs font-bold text-outline-variant tracking-widest uppercase">المجموعات التابعة</p>
+<!-- Group Item -->
+<div class="flex items-center justify-between p-4 bg-surface-container rounded-2xl border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-bold text-sm text-on-surface">صديقات العروس</span>
+</div>
+<div class="flex gap-4 text-xs font-medium">
+<span class="text-outline-variant">المدعوين: <span class="text-white">85</span></span>
+<span class="text-outline-variant">المؤكد: <span class="text-tertiary">82</span></span>
+</div>
+</div>
+<!-- Group Item -->
+<div class="flex items-center justify-between p-4 bg-surface-container rounded-2xl border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="font-bold text-sm text-on-surface">ضيوف من خارج المنطقة</span>
+</div>
+<div class="flex gap-4 text-xs font-medium">
+<span class="text-outline-variant">المدعوين: <span class="text-white">120</span></span>
+<span class="text-outline-variant">المؤكد: <span class="text-tertiary">110</span></span>
+</div>
+</div>
+<button class="w-full py-3 border border-outline-variant/20 rounded-xl text-outline-variant text-xs font-bold hover:bg-surface-container-high transition-colors">
+                            عرض جميع المجموعات (8)
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Asymmetric Detail Section -->
+<section class="grid grid-cols-3 gap-8 px-8 pb-12">
+<div class="col-span-2 surface-container-low p-8 rounded-[32px] nebula-glow flex items-center justify-between">
+<div class="max-w-md">
+<h4 class="text-2xl font-extrabold text-white mb-4">أتمتة توزيع المقاعد</h4>
+<p class="text-on-surface-variant leading-relaxed mb-6">قم بتوزيع الضيوف تلقائياً بناءً على المجموعات والعلاقات لضمان أفضل تجربة حضور لضيوفك في جميع الأقسام.</p>
+<button class="px-6 py-3 bg-white text-primary-container rounded-xl font-bold hover:bg-primary-container hover:text-white transition-all flex items-center gap-2">
+<span>ابدأ التوزيع الذكي</span>
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</button>
+</div>
+<div class="relative hidden lg:block">
+<img alt="تنسيق المناسبات" class="w-64 h-64 object-cover rounded-3xl rotate-3 shadow-2xl" data-alt="close-up of luxury table setting with gold cutlery and purple flowers in a dimly lit high-end banquet hall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgr1pdP4GGIuGlv71sUA6ryW0SiLFWg--LA5apqyK6le5TaikFjahPsZZocuxnP6ZgVTPmPC1gpAhQDzu6aEJEHfEHFUvmVWIj4EgxX4mA11ja6wV1cXfu_3TsmY9ZFxvhXWalD2ViZiZnlC83bu_EraGQ3CqmaP9YFesf7WmHssLm2Prxs-Ll_B0nWLz0ijISZeQsDXnhIaw4AvVa8ol1eZaADub5txPvIDWU2ZDTl5Wk-UekZEvlNMdeRCw4UwDaMl23oQLlEgLN"/>
+<div class="absolute inset-0 rounded-3xl bg-primary-container/20 mix-blend-overlay"></div>
+</div>
+</div>
+<div class="col-span-1 bg-surface-container p-8 rounded-[32px] flex flex-col items-center justify-center text-center">
+<div class="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="add_circle">add_circle</span>
+</div>
+<h4 class="text-xl font-bold text-white mb-2">إضافة قسم جديد</h4>
+<p class="text-outline text-sm mb-6 px-4">يمكنك إضافة تصنيف جديد للمدعوين مثل "الأطفال" أو "طاقم العمل"</p>
+<button class="w-full py-3 rounded-2xl border-2 border-dashed border-outline-variant/30 text-outline-variant font-bold hover:border-primary/50 hover:text-primary transition-all">
+                    إعداد القسم
+                </button>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-10 left-10 w-16 h-16 bg-primary-container text-on-primary-container rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-40 group">
+<span class="material-symbols-outlined text-3xl" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="absolute right-full mr-4 bg-surface-container-high text-white text-xs font-bold py-2 px-4 rounded-xl opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-all">
+            مسح دخول الضيوف
+        </span>
+</button>
+</body></html>

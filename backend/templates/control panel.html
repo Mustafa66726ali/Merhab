@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#5b2eff",
+                        "on-tertiary-fixed": "#380d00",
+                        "tertiary": "#ffb59b",
+                        "primary-fixed-dim": "#c8bfff",
+                        "outline-variant": "#474557",
+                        "on-surface-variant": "#c9c3da",
+                        "on-secondary-fixed": "#1a1a2e",
+                        "surface-tint": "#c8bfff",
+                        "secondary-fixed": "#e2e0fc",
+                        "surface-container-lowest": "#0d0d18",
+                        "surface-container": "#1f1e2a",
+                        "on-primary-container": "#dcd4ff",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#aa3800",
+                        "on-surface": "#e3e0f1",
+                        "secondary": "#c6c4df",
+                        "on-tertiary-container": "#ffcfbf",
+                        "surface-bright": "#383845",
+                        "on-primary-fixed": "#190064",
+                        "surface-dim": "#12121d",
+                        "secondary-fixed-dim": "#c6c4df",
+                        "surface-container-highest": "#343440",
+                        "on-tertiary-fixed-variant": "#812800",
+                        "inverse-surface": "#e3e0f1",
+                        "primary": "#c8bfff",
+                        "on-secondary": "#2f2e43",
+                        "error-container": "#93000a",
+                        "secondary-container": "#47475d",
+                        "on-secondary-fixed-variant": "#45455b",
+                        "background": "#12121d",
+                        "tertiary-fixed-dim": "#ffb59b",
+                        "surface": "#12121d",
+                        "inverse-on-surface": "#302f3b",
+                        "tertiary-fixed": "#ffdbcf",
+                        "on-tertiary": "#5b1a00",
+                        "on-background": "#e3e0f1",
+                        "surface-container-high": "#292935",
+                        "on-primary": "#2d009d",
+                        "on-secondary-container": "#b8b6d0",
+                        "surface-container-low": "#1b1a26",
+                        "primary-fixed": "#e5deff",
+                        "on-error-container": "#ffdad6",
+                        "surface-variant": "#343440",
+                        "on-primary-fixed-variant": "#4200da",
+                        "on-error": "#690005",
+                        "inverse-primary": "#5a2dfe",
+                        "outline": "#928ea3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .font-plus-jakarta-sans { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0d0d18; }
+        ::-webkit-scrollbar-thumb { background: #474557; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5b2eff; }
+        .glass-gradient { background: linear-gradient(135deg, rgba(91, 46, 255, 0.1) 0%, rgba(200, 191, 255, 0.05) 100%); }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen selection:bg-primary-container selection:text-white">
+<!-- Sidebar Navigation -->
+<aside class="fixed right-0 top-0 h-screen w-72 z-50 border-l border-outline-variant/20 dark:bg-[#0d0d18]/90 backdrop-blur-xl flex flex-col py-8 space-y-6 shadow-2xl shadow-black/50">
+<div class="px-8 mb-4">
+<h1 class="text-3xl font-black bg-gradient-to-tr from-[#5B2EFF] to-[#c8bfff] bg-clip-text text-transparent">مرحّاب</h1>
+<p class="text-on-surface-variant text-xs mt-1 font-label tracking-widest opacity-70">إدارة المنصة</p>
+</div>
+<nav class="flex-1 space-y-1 px-4">
+<!-- Active Tab: لوحة التحكم -->
+<a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 dark:bg-[#5B2EFF]/15 dark:text-[#e3e0f1] relative before:absolute before:right-0 before:top-0 before:h-full before:w-1 before:bg-[#5B2EFF]" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium">لوحة التحكم</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors duration-200 dark:text-[#c9c3da] hover:dark:text-white hover:bg-[#5B2EFF]/10" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="font-medium">إدارة المناسبات</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors duration-200 dark:text-[#c9c3da] hover:dark:text-white hover:bg-[#5B2EFF]/10" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-medium">إدارة المستخدمين</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors duration-200 dark:text-[#c9c3da] hover:dark:text-white hover:bg-[#5B2EFF]/10" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-medium">التقارير المالية</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors duration-200 dark:text-[#c9c3da] hover:dark:text-white hover:bg-[#5B2EFF]/10" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-medium">الإعدادات</span>
+</a>
+</nav>
+<div class="px-4 border-t border-outline-variant/10 pt-6">
+<a class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-colors duration-200 dark:text-[#c9c3da] hover:text-error hover:bg-error/10" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-medium">تسجيل الخروج</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="mr-72 p-8 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="flex flex-row-reverse justify-between items-center w-full h-20 mb-10 dark:bg-[#0d0d18]/80 backdrop-blur-md sticky top-0 z-40 rounded-2xl px-8 shadow-[0_20px_40px_rgba(13,13,24,0.6)]">
+<div class="flex items-center gap-6 flex-row-reverse">
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-sm font-bold text-on-surface">أحمد السعدني</p>
+<p class="text-[10px] text-on-surface-variant font-label">مدير المنصة</p>
+</div>
+<img alt="صورة المدير" class="w-10 h-10 rounded-full border-2 border-primary/30 object-cover" data-alt="professional headshot of an executive man in business attire, warm studio lighting, clean dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtHx0VzsJHQZF4sHyI4zHbnY8Lx7u8oddyMvmrB50QsB754i1xflvlIxjdM6sy1RR4DXQItps9vgX1DzA-tMD6QgVrYns5NWAwd52KrRRD_OH3J4xZKk-yCrr5eS_W8u7GLUYSZOpgGG7FHELn7ULQVBpqA2AoQ320n1UJHQqpDA22R0PDwk-NW9exnBRTrWr1_Z1pg2SdQeezVEhO_MLwgA7Of6FTCeNP6TSWRD4tW8Eb0uZsD09hdbawmUYH6uUMylcBg-BCQwLv"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2.5 rounded-full hover:bg-surface-container-highest transition-all text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2.5 rounded-full hover:bg-surface-container-highest transition-all text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="apps">apps</span>
+</button>
+</div>
+</div>
+<div class="flex-1 max-w-md ml-8">
+<div class="relative group">
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="search">search</span>
+<input class="w-full pr-12 pl-4 py-3 bg-surface-container-lowest border-none rounded-xl focus:ring-2 focus:ring-primary/50 text-on-surface placeholder:text-outline/60 transition-all" placeholder="البحث عن فعاليات، مستخدمين..." type="text"/>
+</div>
+</div>
+<div class="hidden lg:block">
+<h2 class="text-2xl font-bold tracking-tight text-white dark:text-[#e3e0f1]">لوحة التحكم</h2>
+</div>
+</header>
+<!-- KPI Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- Card 1 -->
+<div class="bg-surface-container-high p-6 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<div class="p-3 bg-primary-container/20 rounded-xl">
+<span class="material-symbols-outlined text-primary-fixed-dim" data-icon="calendar_today">calendar_today</span>
+</div>
+<span class="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                        12% <span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium mb-1">عدد الفعاليات</p>
+<h3 class="text-3xl font-plus-jakarta-sans font-extrabold text-on-surface">1,284</h3>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-high p-6 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-tertiary/10 rounded-full blur-2xl group-hover:bg-tertiary/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<div class="p-3 bg-tertiary-container/20 rounded-xl">
+<span class="material-symbols-outlined text-tertiary" data-icon="group">group</span>
+</div>
+<span class="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                        8% <span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium mb-1">عدد المستخدمين</p>
+<h3 class="text-3xl font-plus-jakarta-sans font-extrabold text-on-surface">45.2K</h3>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-high p-6 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<div class="p-3 bg-primary-container/20 rounded-xl">
+<span class="material-symbols-outlined text-primary-fixed-dim" data-icon="person_add">person_add</span>
+</div>
+<span class="text-xs font-bold text-rose-400 bg-rose-400/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                        2% <span class="material-symbols-outlined text-[14px]" data-icon="trending_down">trending_down</span>
+</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium mb-1">إجمالي المدعوين</p>
+<h3 class="text-3xl font-plus-jakarta-sans font-extrabold text-on-surface">128,930</h3>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-high p-6 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<div class="p-3 bg-primary-container/20 rounded-xl">
+<span class="material-symbols-outlined text-primary-fixed-dim" data-icon="analytics">analytics</span>
+</div>
+<span class="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                        5% <span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+</span>
+</div>
+<p class="text-on-surface-variant text-sm font-medium mb-1">نسبة التفاعل</p>
+<h3 class="text-3xl font-plus-jakarta-sans font-extrabold text-on-surface">94.2%</h3>
+</div>
+</section>
+<!-- Charts Section (Bento Inspired) -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+<!-- Chart 1: RSVP Trends -->
+<div class="lg:col-span-2 bg-surface-container-low p-8 rounded-2xl">
+<div class="flex justify-between items-center mb-10">
+<h3 class="text-xl font-bold">اتجاهات RSVP</h3>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+<span class="text-xs text-on-surface-variant">تم التأكيد</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-tertiary"></span>
+<span class="text-xs text-on-surface-variant">اعتذر عن الحضور</span>
+</div>
+</div>
+</div>
+<!-- Mock Chart Visualization -->
+<div class="h-64 flex items-end justify-between gap-2">
+<div class="flex-1 flex flex-col justify-end items-center group h-full">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="flex-1 bg-primary-container/20 rounded-t-lg h-[60%] group-hover:bg-primary-container/40 transition-all"></div>
+<div class="flex-1 bg-tertiary/20 rounded-t-lg h-[30%] group-hover:bg-tertiary/40 transition-all"></div>
+</div>
+<span class="text-[10px] mt-2 font-label text-on-surface-variant">يناير</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group h-full">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="flex-1 bg-primary-container/20 rounded-t-lg h-[75%] group-hover:bg-primary-container/40 transition-all"></div>
+<div class="flex-1 bg-tertiary/20 rounded-t-lg h-[20%] group-hover:bg-tertiary/40 transition-all"></div>
+</div>
+<span class="text-[10px] mt-2 font-label text-on-surface-variant">فبراير</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group h-full">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="flex-1 bg-primary-container rounded-t-lg h-[90%] shadow-[0_0_20px_rgba(91,46,255,0.3)]"></div>
+<div class="flex-1 bg-tertiary rounded-t-lg h-[15%] shadow-[0_0_20px_rgba(255,181,155,0.3)]"></div>
+</div>
+<span class="text-[10px] mt-2 font-label text-primary font-bold">مارس</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group h-full">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="flex-1 bg-primary-container/20 rounded-t-lg h-[65%] group-hover:bg-primary-container/40 transition-all"></div>
+<div class="flex-1 bg-tertiary/20 rounded-t-lg h-[40%] group-hover:bg-tertiary/40 transition-all"></div>
+</div>
+<span class="text-[10px] mt-2 font-label text-on-surface-variant">أبريل</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group h-full">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="flex-1 bg-primary-container/20 rounded-t-lg h-[80%] group-hover:bg-primary-container/40 transition-all"></div>
+<div class="flex-1 bg-tertiary/20 rounded-t-lg h-[25%] group-hover:bg-tertiary/40 transition-all"></div>
+</div>
+<span class="text-[10px] mt-2 font-label text-on-surface-variant">مايو</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group h-full">
+<div class="w-full flex gap-1 items-end h-full">
+<div class="flex-1 bg-primary-container/20 rounded-t-lg h-[70%] group-hover:bg-primary-container/40 transition-all"></div>
+<div class="flex-1 bg-tertiary/20 rounded-t-lg h-[35%] group-hover:bg-tertiary/40 transition-all"></div>
+</div>
+<span class="text-[10px] mt-2 font-label text-on-surface-variant">يونيو</span>
+</div>
+</div>
+</div>
+<!-- Chart 2: Event Growth -->
+<div class="bg-surface-container-low p-8 rounded-2xl flex flex-col">
+<h3 class="text-xl font-bold mb-2">نمو الفعاليات</h3>
+<p class="text-sm text-on-surface-variant mb-10">تحليل ربع سنوي لأداء الفعاليات</p>
+<div class="flex-1 flex items-center justify-center relative">
+<div class="w-48 h-48 rounded-full border-[12px] border-surface-container-highest flex items-center justify-center relative">
+<div class="absolute inset-0 border-[12px] border-primary-container rounded-full border-t-transparent border-l-transparent rotate-45"></div>
+<div class="text-center">
+<p class="text-4xl font-extrabold font-plus-jakarta-sans text-white">82%</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest mt-1">Goal achieved</p>
+</div>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-4">
+<div class="p-4 bg-surface-container rounded-xl">
+<p class="text-[10px] text-on-surface-variant mb-1">النمو السنوي</p>
+<p class="text-lg font-bold text-emerald-400">+24%</p>
+</div>
+<div class="p-4 bg-surface-container rounded-xl">
+<p class="text-[10px] text-on-surface-variant mb-1">النمو الشهري</p>
+<p class="text-lg font-bold text-primary">+11%</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Horizontal Scrolling Events -->
+<section class="mb-10">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-xl font-bold">أحدث الفعاليات</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+                    عرض الكل <span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
+</button>
+</div>
+<div class="flex gap-6 overflow-x-auto pb-4 no-scrollbar">
+<!-- Card Event 1 -->
+<div class="min-w-[340px] bg-surface-container-high rounded-2xl p-4 group">
+<div class="relative h-44 mb-4 rounded-xl overflow-hidden">
+<img alt="فعالية 1" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="luxury corporate event ballroom with dramatic purple lighting, large stage screens, and elegant round tables" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCJO7dCvFWgoRQBS--N9o1Ho6dNCOxJKrwKHr1lTYy5Q8CPLj4ByKpfImiyB2N0xwXUv8NqTaroNpE16N1LkdjgwHym6Bu3rOrTxMa2TGf_x20QtxiYmPRxF_J4BAqeAf8E0EY8G-p-27CVV0Rf11Dt6T7iz4Enl9f1hwrg7y_2CPcudq2IZ_S4CCFC8EvQeCVEn-zgV8SAKGozJXVe0FwHeEv52osoTpe0_i7V3GPhh80MNXc9RDUqNMEgr4ck3MF_wWAj8bd-9cY"/>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-primary">
+                            مؤتمر تقني
+                        </div>
+</div>
+<h4 class="text-lg font-bold mb-2">منتدى الابتكار الرقمي 2024</h4>
+<div class="flex items-center gap-4 text-on-surface-variant text-sm mb-4">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+<span>24 مايو</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span>الرياض</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2 space-x-reverse">
+<img alt="guest" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="portrait of a man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPrGDofHZYt_6DK-JReUIMGGaEXs_lSG7SjysdXo_5pTVnajABfEji1Scc2bwgU7VvL86gTKL-nb8FKON6A22OaLl9cRLnvawNAF9T3P8L3k_1niQorv5Rwjl3cuTNcI_6RAD2sCRFzoemRDLGeVwatCynOwsskbaHYfYHJAIIUhEuC46tXdGXjE_RKgrriPTDEAd8EsSwQ4QgEsluH5WWmWBVzKaAGxYrYGshKwBwo-g9e6TbW3rJu7P4oI3-6mEW1EoARM-uzWvI"/>
+<img alt="guest" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="portrait of a woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiOmKSL3Z75QVfpE_1Wb-jR1_nCgotfkjPWxJBa7uQcseTEvLij-22RBcrvJf3vwwIVsnlHfUwY1h9QSUrbRF0BVYAqpMHTX5TUt0s6DksPAp5j2PytB6-WOBiwH6dTCQCLJrhUe6L6JIh8IgrBf7u3RtgoXBvQ891C7YPV43EBsIqGT6YA3WznN6qRVNsf-KtUqojJhJmdvnyQ36dfc9Nd5yWnDavJbr2gfZadGSbnAxHrwdNua-dtRnFtSaypwMHn3OrMzcrjqEX"/>
+<img alt="guest" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="portrait of a man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtBf2vLXdS9FjJWIdiopNFYKCR88us7a9D6SSAn69Bzf2SNbqBY8UU8V6l17tejkICjk6Rh4dWWPqU4i5dCKjtqGQXJ52N9kTxjQDbfIZi7bE8Jt1I0_BcFFXu-ulMQn8m-fng6UqTZ_i_TqITpSmpU0yCUYmGlR_omLwWku6ijAdNrCXU6rVfKxzhuyfJNcu2xafz7-pQtRHVZriDbmVu3v4tcxpq2sCNj3yJvUrGt-dYAmAbplBG2hJ5Osf084htb-Y0azeLEThz"/>
+<div class="w-8 h-8 rounded-full bg-primary-container/20 border-2 border-surface-container-high flex items-center justify-center text-[10px] font-bold">+1.2k</div>
+</div>
+<span class="text-xs font-bold text-emerald-400">نشط</span>
+</div>
+</div>
+<!-- Card Event 2 -->
+<div class="min-w-[340px] bg-surface-container-high rounded-2xl p-4 group">
+<div class="relative h-44 mb-4 rounded-xl overflow-hidden">
+<img alt="فعالية 2" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="opulent wedding reception with warm gold lighting, white flowers, and crystal chandeliers in a grand hall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBUpfFbqzN5x0b8WYHZEWJ-DPA5eUZ7OYY9hsa9ILbcUW9_HpiFROce-TJX_Y8nF22WTCCGoUEkWQ1gzYa3ukb5Swu0vkGbu2PK7PmjBAXoOgjqspGa0MSWyE3tQBBHJO3vTGYpy8zFjFNGrgQF1ND71w21uzpEVdcSLRmKI4x_Ohga8mNbGshuLuuKbPF_AmhDnWwHnOIDCdqiDQ19Wj-m7lzOIhGzUhqbF2sEffSxLFLI8W7ac3cmxdZ6Wi1AgGt1bapQlgtgTjk"/>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-tertiary">
+                            مناسبة خاصة
+                        </div>
+</div>
+<h4 class="text-lg font-bold mb-2">حفل عشاء الخريجين</h4>
+<div class="flex items-center gap-4 text-on-surface-variant text-sm mb-4">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+<span>12 يونيو</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span>جدة</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2 space-x-reverse">
+<img alt="guest" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="portrait of a man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTbaoBjSFKmkgAH_uBDIru8XQeQxz41d_EKoBt7LJtPHbmYhC_FFp0KWVrsYR-uRWLDe14Xp0iuiN-y8hH7i33B-R2QcFibhHUXGF8VVTMNsN5BEtWn8nzLjt9qbnbWvltWCnpJfSaQt6fREMUf0GXM9bk_ORU7RdC9kzTPefPppwXNEkLD3GhBjOFi54i4oRSzkPsbBJZwK3vJAfTSYZCtRFEO7zGs8F_r5pGiqZlsIPSRsTkE6Med_s2VS4FF1dfwx04CC22t7IJ"/>
+<img alt="guest" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="portrait of a woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOKAoWOwlpdsMmbUl1lBKBzJZrvqAoTZ7hE5EtgTP8Cz5MlX7E7HfCNcL3rkSH8iWuQ_oUTGmToFPr599_1QYRgFukEHtEajZQvu8eNERyzl-tk0bEFKcQBtwF7hw3BScGcLGTVQHRuv-VpeeQx712d3OB--yZAejEwLjk5rB-bbou1nmxJtKVIYAI-hx63N7Ynstdogb1BGS1yZOqh6MAQtcWNJOcVIdVaty1oIkUIY91NMb0jFJfasnas3uMFsb8m91f3hnksG4B"/>
+<div class="w-8 h-8 rounded-full bg-primary-container/20 border-2 border-surface-container-high flex items-center justify-center text-[10px] font-bold">+450</div>
+</div>
+<span class="text-xs font-bold text-primary">قيد التحضير</span>
+</div>
+</div>
+<!-- Card Event 3 -->
+<div class="min-w-[340px] bg-surface-container-high rounded-2xl p-4 group">
+<div class="relative h-44 mb-4 rounded-xl overflow-hidden">
+<img alt="فعالية 3" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="modern outdoor festival stage with neon laser lights, silhouette of crowd in a high-energy concert atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJJX2_3WHLRtX4fRrHZHGPSyNO8C7u_wJqq-9-Q5OS6FTSIOsj3UW3NxN1UgHKjCMaSXtkODaqXrZcQFtdVPNptF44cZ4qapDXTvUEpw4-B_HVPrYPTbZdsofmL_Lb1c13CN-PWkVVEyya0q5qGYIZQIodasloLD8XBg4em8dYjriP3RzBMx8PT_k-sVzSwm_UKZ0-mmjJ_8NmQGIvA1a-eiNF7M4YGINQwPsx6p8d7SohzaH_UMjsAPG6At1fjKRF_rLorM32O_oL"/>
+<div class="absolute top-3 right-3 bg-surface-container-lowest/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-primary">
+                            مهرجان
+                        </div>
+</div>
+<h4 class="text-lg font-bold mb-2">ليالي نجد الموسيقية</h4>
+<div class="flex items-center gap-4 text-on-surface-variant text-sm mb-4">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+<span>05 يوليو</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span>الدرعية</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2 space-x-reverse">
+<img alt="guest" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="portrait of a man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCABeSkf_S3Ox-XY7aMweXXdSYjEROAN3_GmdYYCX_KkMic4aGmLNHu950dojvWoSS-P0PwOscS8MYvyNw4WG3uV28_fqCiBQVb_tOP25mGilHKM7at_6ZrFQzc5tdaA8z8b3YGIl13PtE9p_0wgIf6cT-q0-OM_1fj44Eo8Ru4azCSfvButlikyxkeL3WPv4hEb9f14w_Axq3S22DpM9brNn4H0n5BxsVD5qygIYoTRGoJmUxDKMOJAk7PCHDJQe17yPJK9sueMpEW"/>
+<img alt="guest" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="portrait of a woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4OomCSvSvfsYcmITF25I3RZ8t655Ubk_rGfGLz3MDxil_wysbopK-6XoNCS7nK4dZYU4TWxzp3MkfJdjupJJaktQy73clAlfQbwsebvhpeKLskhKrS887WQsCjqbxv6jezPUAG8IDCTa1G5OrRJw1Bg_KXVqbqtVfzJ6bJdbSgCvrjZP1_tUWJl7wta1gMURhpzax5fFn2nXDcUXhUmE3dOMVnfYc8JnwsLbUiIsmudIaLS_do50LXSozU9QPMuO5gWRKHKpxKehc"/>
+<img alt="guest" class="w-8 h-8 rounded-full border-2 border-surface-container-high" data-alt="portrait of a woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXUqBzTAZCkq7Cdr7FAgEi68rKddRHeNuWKfvnueTfhOm_9V-wUAyJcHOvJiSujwxl1vY4PCXivI721-IWzF_tgc2pvyrI3olTVolMk4I0MkqDruUSIbKVyQvJcNbO-mlSy1cL53OGTp1Y_JStw55MoH9zn_X2ccPbIW_-coRGhJWI30sps3rXotejR9RikfrQ9DcsXzAtUSHSjz5pQqf5Rt4dhiVxCwg-0AVWOq3eNzuGLJCwe0_vWHdq6PBPxKMSbt7fRYk2Dagw"/>
+<div class="w-8 h-8 rounded-full bg-primary-container/20 border-2 border-surface-container-high flex items-center justify-center text-[10px] font-bold">+5k</div>
+</div>
+<span class="text-xs font-bold text-on-surface-variant/50">تم الانتهاء</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Latest Users Section -->
+<section class="bg-surface-container-low rounded-2xl p-8">
+<div class="flex justify-between items-center mb-8">
+<h3 class="text-xl font-bold">أحدث المستخدمين</h3>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg bg-surface-container-high text-on-surface-variant hover:text-white transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="filter_list">filter_list</span>
+</button>
+<button class="p-2 rounded-lg bg-surface-container-high text-on-surface-variant hover:text-white transition-all">
+<span class="material-symbols-outlined text-xl" data-icon="sort">sort</span>
+</button>
+</div>
+</div>
+<div class="space-y-6">
+<!-- User Item 1 -->
+<div class="flex items-center justify-between group cursor-pointer">
+<div class="flex items-center gap-4">
+<img alt="User" class="w-12 h-12 rounded-xl object-cover ring-2 ring-transparent group-hover:ring-primary/40 transition-all" data-alt="portrait of a successful entrepreneur in business casual attire, neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEPLgg6ENAzoqplCAMJItw1Bog65nHazHANbHSX-lOB4fKHQ5RGy9ZnXhxZEwkSuRvegiwy9PNhVMPOWFvO0pPKeXx7PHRq8idxibilDXmK0DZ622VngbtumbOfQUrNmNSjFyOLll7A3swg-95ccTywYN59katquGSDXzrSBg9ShCEP712gzgTT7vSln-x_dmMYoBwOmN4dLfYZoG5QRhxInzIa_lejSWPSusxwZbkYhPZW05H_1bqTk9FeyNg-rCVve1DOlfKzEA7"/>
+<div>
+<p class="font-bold text-on-surface">محمد العبدالله</p>
+<p class="text-xs text-on-surface-variant">m.abdullah@example.com</p>
+</div>
+</div>
+<div class="text-right hidden sm:block">
+<p class="text-sm font-medium text-on-surface">منظم فعاليات</p>
+<p class="text-[10px] text-on-surface-variant">تاريخ التسجيل: 12 مايو</p>
+</div>
+<div class="flex items-center gap-8">
+<div class="hidden md:flex flex-col items-end">
+<span class="text-sm font-plus-jakarta-sans font-bold">42 فعالية</span>
+<span class="text-[10px] text-on-surface-variant">إجمالي النشاط</span>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-primary-container/20 transition-all text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- User Item 2 -->
+<div class="flex items-center justify-between group cursor-pointer">
+<div class="flex items-center gap-4">
+<img alt="User" class="w-12 h-12 rounded-xl object-cover ring-2 ring-transparent group-hover:ring-primary/40 transition-all" data-alt="portrait of a professional woman with a friendly smile, office setting background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmhmb7lX4Fe0O41QLfivYqy7ptxzAitE9b9OzaPlTcfymY-DEgfz0xA-su0VbTMNg8z48IojHoICBBA4PLSHub6qvqoIHli6NkmAl0yLUHsvs78iViePMaExgEnWKQYibVg0Gfk57ty_u6QfRyo1NFOma5JAGwkUDBnkKlvNTk9wXZvXcrIZoHyQWiClfd0lTP-1HOF7KPYyVfkALVuKoschY8bl4j8GkzHBOQnB-xA4iycEDrO_vmBfrVipbkaMVvS58nmWZgCrSj"/>
+<div>
+<p class="font-bold text-on-surface">سارة القحطاني</p>
+<p class="text-xs text-on-surface-variant">sara.q@domain.sa</p>
+</div>
+</div>
+<div class="text-right hidden sm:block">
+<p class="text-sm font-medium text-on-surface">مديرة تسويق</p>
+<p class="text-[10px] text-on-surface-variant">تاريخ التسجيل: 10 مايو</p>
+</div>
+<div class="flex items-center gap-8">
+<div class="hidden md:flex flex-col items-end">
+<span class="text-sm font-plus-jakarta-sans font-bold">18 فعالية</span>
+<span class="text-[10px] text-on-surface-variant">إجمالي النشاط</span>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-primary-container/20 transition-all text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- User Item 3 -->
+<div class="flex items-center justify-between group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-tertiary-container/30 flex items-center justify-center text-tertiary font-bold ring-2 ring-transparent group-hover:ring-tertiary/40 transition-all">
+                            ف.م
+                        </div>
+<div>
+<p class="font-bold text-on-surface">فهد بن محمد</p>
+<p class="text-xs text-on-surface-variant">fahad.m@web.com</p>
+</div>
+</div>
+<div class="text-right hidden sm:block">
+<p class="text-sm font-medium text-on-surface">مالك منشأة</p>
+<p class="text-[10px] text-on-surface-variant">تاريخ التسجيل: 08 مايو</p>
+</div>
+<div class="flex items-center gap-8">
+<div class="hidden md:flex flex-col items-end">
+<span class="text-sm font-plus-jakarta-sans font-bold">65 فعالية</span>
+<span class="text-[10px] text-on-surface-variant">إجمالي النشاط</span>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-primary-container/20 transition-all text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button - Only on appropriate screens -->
+<button class="fixed bottom-10 left-10 w-16 h-16 bg-primary-container text-white rounded-2xl shadow-[0_0_30px_rgba(91,46,255,0.4)] flex items-center justify-center group hover:scale-110 transition-all active:scale-95 z-50">
+<span class="material-symbols-outlined text-3xl transition-transform group-hover:rotate-90" data-icon="add">add</span>
+</button>
+</body></html>

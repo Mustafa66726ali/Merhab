@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#dcd4ff",
+                        "on-surface": "#e3e0f1",
+                        "primary-container": "#5b2eff",
+                        "surface-container-highest": "#343440",
+                        "on-tertiary-fixed-variant": "#812800",
+                        "on-tertiary-fixed": "#380d00",
+                        "surface-container-low": "#1b1a26",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#b8b6d0",
+                        "outline": "#928ea3",
+                        "tertiary-fixed-dim": "#ffb59b",
+                        "error": "#ffb4ab",
+                        "surface-container-lowest": "#0d0d18",
+                        "secondary-container": "#47475d",
+                        "on-surface-variant": "#c9c3da",
+                        "surface-dim": "#12121d",
+                        "surface-tint": "#c8bfff",
+                        "on-background": "#e3e0f1",
+                        "on-primary-fixed-variant": "#4200da",
+                        "primary-fixed-dim": "#c8bfff",
+                        "on-error": "#690005",
+                        "inverse-primary": "#5a2dfe",
+                        "on-secondary-fixed": "#1a1a2e",
+                        "surface-variant": "#343440",
+                        "tertiary": "#ffb59b",
+                        "surface-container": "#1f1e2a",
+                        "surface-bright": "#383845",
+                        "on-tertiary-container": "#ffcfbf",
+                        "surface": "#12121d",
+                        "inverse-surface": "#e3e0f1",
+                        "tertiary-fixed": "#ffdbcf",
+                        "on-primary": "#2d009d",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#aa3800",
+                        "primary-fixed": "#e5deff",
+                        "primary": "#c8bfff",
+                        "inverse-on-surface": "#302f3b",
+                        "background": "#12121d",
+                        "secondary-fixed": "#e2e0fc",
+                        "surface-container-high": "#292935",
+                        "on-secondary-fixed-variant": "#45455b",
+                        "on-secondary": "#2f2e43",
+                        "on-primary-fixed": "#190064",
+                        "on-tertiary": "#5b1a00",
+                        "secondary-fixed-dim": "#c6c4df",
+                        "outline-variant": "#474557",
+                        "secondary": "#c6c4df"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(13, 13, 24, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .timeline-line {
+            background: linear-gradient(to bottom, #5B2EFF 0%, rgba(91, 46, 255, 0.2) 100%);
+        }
+        .glow-node {
+            box-shadow: 0 0 15px #4200da4d;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d0d18;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #474557;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body overflow-hidden">
+<!-- Side Navigation Shell -->
+<aside class="fixed right-0 top-0 h-full w-[280px] border-l border-[#474557]/20 bg-[#0d0d18]/80 backdrop-blur-xl shadow-[0px_20px_40px_rgba(13,24,0.6)] rtl h-full flex flex-col py-8 px-4 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-xl font-bold bg-gradient-to-br from-[#5B2EFF] to-[#c8bfff] bg-clip-text text-transparent font-headline">The Digital Majlis</h1>
+<p class="text-xs text-on-surface-variant tracking-widest mt-1 opacity-70">EVENT OWNER DASH</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center justify-end text-[#c9c3da] hover:text-[#e3e0f1] hover:brightness-125 transition-all duration-300 px-4 py-3 rounded-xl" href="#">
+<span class="mr-auto text-sm font-medium font-headline tracking-wide">لوحة الفعالية</span>
+<span class="material-symbols-outlined ml-3" data-icon="dashboard">dashboard</span>
+</a>
+<a class="flex items-center justify-end text-[#c9c3da] hover:text-[#e3e0f1] hover:brightness-125 transition-all duration-300 px-4 py-3 rounded-xl" href="#">
+<span class="mr-auto text-sm font-medium font-headline tracking-wide">الضيوف</span>
+<span class="material-symbols-outlined ml-3" data-icon="group">group</span>
+</a>
+<a class="flex items-center justify-end text-[#c9c3da] hover:text-[#e3e0f1] hover:brightness-125 transition-all duration-300 px-4 py-3 rounded-xl" href="#">
+<span class="mr-auto text-sm font-medium font-headline tracking-wide">الأقسام</span>
+<span class="material-symbols-outlined ml-3" data-icon="category">category</span>
+</a>
+<a class="relative flex items-center justify-end text-[#c8bfff] before:content-[''] before:absolute before:right-0 before:w-1 before:h-6 before:bg-[#5B2EFF] before:rounded-full bg-[#5B2EFF]/10 px-4 py-3 rounded-xl" href="#">
+<span class="mr-auto text-sm font-medium font-headline tracking-wide">الجدول الزمني</span>
+<span class="material-symbols-outlined ml-3" data-icon="calendar_today">calendar_today</span>
+</a>
+<a class="flex items-center justify-end text-[#c9c3da] hover:text-[#e3e0f1] hover:brightness-125 transition-all duration-300 px-4 py-3 rounded-xl" href="#">
+<span class="mr-auto text-sm font-medium font-headline tracking-wide">توزيع المقاعد</span>
+<span class="material-symbols-outlined ml-3" data-icon="event_seat">event_seat</span>
+</a>
+<a class="flex items-center justify-end text-[#c9c3da] hover:text-[#e3e0f1] hover:brightness-125 transition-all duration-300 px-4 py-3 rounded-xl" href="#">
+<span class="mr-auto text-sm font-medium font-headline tracking-wide">الرسائل</span>
+<span class="material-symbols-outlined ml-3" data-icon="chat">chat</span>
+</a>
+<a class="flex items-center justify-end text-[#c9c3da] hover:text-[#e3e0f1] hover:brightness-125 transition-all duration-300 px-4 py-3 rounded-xl" href="#">
+<span class="mr-auto text-sm font-medium font-headline tracking-wide">فريق العمل</span>
+<span class="material-symbols-outlined ml-3" data-icon="diversity_3">diversity_3</span>
+</a>
+<a class="flex items-center justify-end text-[#c9c3da] hover:text-[#e3e0f1] hover:brightness-125 transition-all duration-300 px-4 py-3 rounded-xl" href="#">
+<span class="mr-auto text-sm font-medium font-headline tracking-wide">الإعدادات</span>
+<span class="material-symbols-outlined ml-3" data-icon="settings">settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-8 border-t border-[#474557]/20 flex items-center px-4">
+<div class="text-right mr-3">
+<p class="text-sm font-bold text-on-surface">أحمد السديري</p>
+<p class="text-xs text-on-surface-variant">مدير المناسبة</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-[#474557]/30 overflow-hidden">
+<img alt="Owner Profile Avatar" class="w-full h-full object-cover" data-alt="Professional headshot of an Arab man in formal attire for event management profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfSP_5CRJivEGmVsUz8iRSjT2I_0Jg0NMN07F-omA1YOEE9aPKMm8FAADKDHGPH20MZ8rWNSsKDMcYOCVIFQOB1SePvm3UZW4ydLYUlAki-41hbA0PWPN5a33yaeCWq__R2wZ-hSWABpHBXeAowHTtkrzSCH3jHA8POjWD198004swGHevIjWpiu2BsHTvvOi5ALLzHwpXUbSb8yb-R5RxUVFbEpMn5f4L0DvoeQ_qZTyHbIPPlzEioPIkKwTg2HOJ32TFTvq_EffY"/>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 left-0 right-[280px] h-16 border-b border-[#474557]/20 bg-[#0d0d18]/80 backdrop-blur-xl z-40 flex justify-between items-center px-8 w-full rtl">
+<div class="flex items-center space-x-4 space-x-reverse">
+<span class="text-on-surface-variant font-medium">مناسبة: حفل إطلاق التقنية 2024</span>
+<span class="material-symbols-outlined text-primary" data-icon="expand_more">expand_more</span>
+</div>
+<div class="flex items-center gap-6">
+<button class="flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold tracking-tight">
+                PLATFORM ADMIN
+            </button>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors" data-icon="person">person</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="mr-[280px] pt-16 h-screen overflow-y-auto bg-surface-dim scroll-smooth">
+<div class="max-w-6xl mx-auto p-12">
+<!-- Header Section with Bento Elements -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-8">
+<div class="space-y-2">
+<h2 class="text-4xl font-extrabold font-headline tracking-tight text-on-surface">الجدول الزمني للفعالية</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed">قم بتنظيم وإدارة تسلسل فقرات الحفل بدقة متناهية.</p>
+</div>
+<!-- Toggle Switches (Men/Women) -->
+<div class="flex bg-surface-container-low p-1.5 rounded-2xl border border-outline-variant/10 shadow-lg">
+<button class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 bg-gradient-to-br from-[#5B2EFF] to-[#c8bfff] text-white shadow-[0_0_15px_#4200da4d]">
+                        قسم الرجال
+                    </button>
+<button class="px-8 py-2.5 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all duration-300">
+                        قسم النساء
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-8">
+<!-- Timeline Editor Column -->
+<div class="col-span-12 lg:col-span-8 space-y-6 relative">
+<!-- Vertical Timeline Line -->
+<div class="absolute right-[21px] top-6 bottom-6 w-0.5 timeline-line z-0"></div>
+<!-- Activity Item 1 -->
+<div class="group relative flex items-start gap-8 z-10">
+<div class="flex-shrink-0 mt-2 relative">
+<div class="w-11 h-11 rounded-full bg-surface-container-highest border-4 border-surface-dim flex items-center justify-center glow-node z-20">
+<span class="w-3 h-3 rounded-full bg-primary animate-pulse"></span>
+</div>
+</div>
+<div class="flex-grow bg-surface-container-high p-6 rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all duration-500 shadow-xl group-hover:-translate-x-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline-variant cursor-grab active:cursor-grabbing hover:text-primary transition-colors" data-icon="drag_indicator">drag_indicator</span>
+<input class="bg-transparent border-none p-0 text-xl font-bold text-on-surface focus:ring-0 w-full" placeholder="اسم النشاط" type="text" value="استقبال كبار الشخصيات"/>
+</div>
+<div class="flex items-center bg-surface-container-lowest px-3 py-1.5 rounded-lg border border-outline-variant/10">
+<span class="material-symbols-outlined text-xs text-primary mr-2" data-icon="schedule">schedule</span>
+<input class="bg-transparent border-none p-0 text-xs font-bold text-primary focus:ring-0 w-20 text-center" type="text" value="08:00 PM"/>
+</div>
+</div>
+<textarea class="bg-transparent border-none p-0 text-on-surface-variant text-sm w-full focus:ring-0 resize-none leading-relaxed" placeholder="وصف النشاط" rows="2">وصول ضيوف الشرف واستقبالهم في المجلس الرئيسي مع تقديم القهوة العربية والتمور الفاخرة.</textarea>
+<div class="mt-4 flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs text-tertiary font-bold flex items-center gap-1 hover:brightness-110">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span> حذف
+                                </button>
+<button class="text-xs text-on-surface-variant font-bold flex items-center gap-1 hover:text-on-surface">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span> تكرار
+                                </button>
+</div>
+</div>
+</div>
+<!-- Activity Item 2 -->
+<div class="group relative flex items-start gap-8 z-10">
+<div class="flex-shrink-0 mt-2 relative">
+<div class="w-11 h-11 rounded-full bg-surface-container-highest border-4 border-surface-dim flex items-center justify-center glow-node z-20">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+</div>
+</div>
+<div class="flex-grow bg-surface-container-high p-6 rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all duration-500 shadow-xl group-hover:-translate-x-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline-variant cursor-grab active:cursor-grabbing hover:text-primary transition-colors" data-icon="drag_indicator">drag_indicator</span>
+<input class="bg-transparent border-none p-0 text-xl font-bold text-on-surface focus:ring-0 w-full" placeholder="اسم النشاط" type="text" value="الكلمة الافتتاحية"/>
+</div>
+<div class="flex items-center bg-surface-container-lowest px-3 py-1.5 rounded-lg border border-outline-variant/10">
+<span class="material-symbols-outlined text-xs text-primary mr-2" data-icon="schedule">schedule</span>
+<input class="bg-transparent border-none p-0 text-xs font-bold text-primary focus:ring-0 w-20 text-center" type="text" value="08:45 PM"/>
+</div>
+</div>
+<textarea class="bg-transparent border-none p-0 text-on-surface-variant text-sm w-full focus:ring-0 resize-none leading-relaxed" placeholder="وصف النشاط" rows="2">كلمة ترحيبية من رئيس اللجنة المنظمة تليها عرض مرئي قصير عن إنجازات العام.</textarea>
+<div class="mt-4 flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs text-tertiary font-bold flex items-center gap-1 hover:brightness-110">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span> حذف
+                                </button>
+<button class="text-xs text-on-surface-variant font-bold flex items-center gap-1 hover:text-on-surface">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span> تكرار
+                                </button>
+</div>
+</div>
+</div>
+<!-- Activity Item 3 -->
+<div class="group relative flex items-start gap-8 z-10">
+<div class="flex-shrink-0 mt-2 relative">
+<div class="w-11 h-11 rounded-full bg-surface-container-highest border-4 border-surface-dim flex items-center justify-center glow-node z-20">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+</div>
+</div>
+<div class="flex-grow bg-surface-container-high p-6 rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all duration-500 shadow-xl group-hover:-translate-x-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline-variant cursor-grab active:cursor-grabbing hover:text-primary transition-colors" data-icon="drag_indicator">drag_indicator</span>
+<input class="bg-transparent border-none p-0 text-xl font-bold text-on-surface focus:ring-0 w-full" placeholder="اسم النشاط" type="text" value="مأدبة العشاء"/>
+</div>
+<div class="flex items-center bg-surface-container-lowest px-3 py-1.5 rounded-lg border border-outline-variant/10">
+<span class="material-symbols-outlined text-xs text-primary mr-2" data-icon="schedule">schedule</span>
+<input class="bg-transparent border-none p-0 text-xs font-bold text-primary focus:ring-0 w-20 text-center" type="text" value="09:30 PM"/>
+</div>
+</div>
+<textarea class="bg-transparent border-none p-0 text-on-surface-variant text-sm w-full focus:ring-0 resize-none leading-relaxed" placeholder="وصف النشاط" rows="2">تقديم العشاء التقليدي الفاخر في القاعة الكبرى مع العناية بكافة تفاصيل الضيافة.</textarea>
+<div class="mt-4 flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs text-tertiary font-bold flex items-center gap-1 hover:brightness-110">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span> حذف
+                                </button>
+<button class="text-xs text-on-surface-variant font-bold flex items-center gap-1 hover:text-on-surface">
+<span class="material-symbols-outlined text-sm" data-icon="content_copy">content_copy</span> تكرار
+                                </button>
+</div>
+</div>
+</div>
+<!-- Add New Activity Button -->
+<div class="relative flex items-center gap-8 z-10 mt-8">
+<div class="flex-shrink-0 relative">
+<div class="w-11 h-11 rounded-full bg-primary-container border-4 border-surface-dim flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-white" data-icon="add">add</span>
+</div>
+</div>
+<button class="flex-grow py-4 border-2 border-dashed border-outline-variant/30 rounded-2xl text-on-surface-variant font-bold hover:border-primary/50 hover:text-primary transition-all group">
+                            إضافة فقرة جديدة للجدول الزمني
+                        </button>
+</div>
+</div>
+<!-- Right Side Bento Info Panel -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Quick Stats Card -->
+<div class="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/10 shadow-2xl space-y-6">
+<h3 class="text-lg font-bold font-headline">ملخص الجدول</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center p-4 bg-surface-container-high rounded-2xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="timer">timer</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">المدة الإجمالية</span>
+</div>
+<span class="text-lg font-bold">4 ساعات</span>
+</div>
+<div class="flex justify-between items-center p-4 bg-surface-container-high rounded-2xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="list_alt">list_alt</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">عدد الفقرات</span>
+</div>
+<span class="text-lg font-bold">8 أنشطة</span>
+</div>
+</div>
+<button class="w-full py-4 bg-gradient-to-br from-[#5B2EFF] to-[#c8bfff] text-white rounded-2xl font-bold shadow-[0_15px_30px_rgba(66,0,218,0.3)] hover:scale-[1.02] transition-transform">
+                            حفظ كافة التغييرات
+                        </button>
+</div>
+<!-- Visual Mood Card -->
+<div class="relative group rounded-3xl overflow-hidden aspect-video shadow-2xl">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Luxurious corporate gala event setup with purple ambient lighting and elegant table arrangements" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqe08MYFix8HNWHKE0OBf9qycmVY-SGsY2BCUdNkF_94LxAv-fW6xS4jlnPHuGvroVNRkeo2JaOeWMwyeoyiu3zez54G63HerJiaUmiLqFT37uo2i3BMrIQtVD4PFBGcln_njtYfWP_T1XaMDisr4Ec78O6oV7W1fb0S-H6tfGm__eKFtRQErfQErwdH2uD2hIpmI_h3S-ykZmIofqwpVPWn8al6LDLSs7sdecBeMzuPh3fibPAL-FOrEZvDpuBEjZY2mrvEQxQFhh"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+<div class="absolute bottom-4 right-4 left-4">
+<p class="text-xs font-bold text-white/60 tracking-widest uppercase mb-1">الرؤية البصرية</p>
+<h4 class="text-sm font-bold text-white">إعدادات الإضاءة الذكية مرتبطة بالجدول الزمني</h4>
+</div>
+</div>
+<!-- Helpful Tip Card -->
+<div class="bg-primary/5 p-6 rounded-3xl border border-primary/10">
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-primary flex-shrink-0" data-icon="lightbulb">lightbulb</span>
+<div class="space-y-1">
+<p class="text-sm font-bold text-on-surface">نصيحة المنسق</p>
+<p class="text-xs leading-relaxed text-on-surface-variant">احرص على ترك هامش 15 دقيقة بين الفقرات الرئيسية لتفادي أي تأخير غير متوقع في الجدول الزمني.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button for Adding Section (Contextual) -->
+<div class="fixed bottom-10 left-10 flex flex-col items-end gap-4 z-50">
+<button class="w-16 h-16 rounded-full bg-primary-container text-white shadow-[0px_20px_40px_rgba(13,13,24,0.6)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-3xl" data-icon="add" data-weight="fill">add</span>
+</button>
+</div>
+</body></html>

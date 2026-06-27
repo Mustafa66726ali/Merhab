@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+Arabic:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#190064",
+                    "surface-dim": "#12121d",
+                    "outline": "#928ea3",
+                    "on-tertiary-fixed": "#380d00",
+                    "inverse-on-surface": "#302f3b",
+                    "secondary-fixed-dim": "#c6c4df",
+                    "tertiary-fixed": "#ffdbcf",
+                    "tertiary-container": "#aa3800",
+                    "surface-container-lowest": "#0d0d18",
+                    "inverse-surface": "#e3e0f1",
+                    "surface-container-high": "#292935",
+                    "on-secondary-fixed-variant": "#45455b",
+                    "error": "#ffb4ab",
+                    "background": "#12121d",
+                    "surface-container-highest": "#343440",
+                    "primary-container": "#5b2eff",
+                    "surface-container": "#1f1e2a",
+                    "inverse-primary": "#5a2dfe",
+                    "on-secondary": "#2f2e43",
+                    "on-surface": "#e3e0f1",
+                    "primary-fixed": "#e5deff",
+                    "on-secondary-container": "#b8b6d0",
+                    "on-surface-variant": "#c9c3da",
+                    "tertiary-fixed-dim": "#ffb59b",
+                    "secondary": "#c6c4df",
+                    "primary": "#c8bfff",
+                    "on-background": "#e3e0f1",
+                    "surface": "#12121d",
+                    "error-container": "#93000a",
+                    "surface-bright": "#383845",
+                    "outline-variant": "#474557",
+                    "on-primary": "#2d009d",
+                    "on-primary-fixed-variant": "#4200da",
+                    "primary-fixed-dim": "#c8bfff",
+                    "on-secondary-fixed": "#1a1a2e",
+                    "on-error": "#690005",
+                    "on-primary-container": "#dcd4ff",
+                    "surface-container-low": "#1b1a26",
+                    "surface-variant": "#343440",
+                    "surface-tint": "#c8bfff",
+                    "secondary-container": "#47475d",
+                    "on-tertiary-fixed-variant": "#812800",
+                    "tertiary": "#ffb59b",
+                    "on-tertiary": "#5b1a00",
+                    "secondary-fixed": "#e2e0fc",
+                    "on-tertiary-container": "#ffcfbf",
+                    "on-error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans", "Noto Sans Arabic"],
+                    "body": ["Inter", "Noto Sans Arabic"],
+                    "label": ["Inter", "Noto Sans Arabic"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #12121d;
+            font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(41, 41, 53, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 right-[280px] h-16 z-40 bg-[#0d0d18]/80 backdrop-blur-xl flex items-center justify-between px-8 w-full border-b border-[#474557]/20">
+<div class="flex items-center gap-6">
+<h1 class="text-xl font-black text-[#e3e0f1]">مرحّاب</h1>
+<nav class="hidden md:flex gap-6">
+<a class="text-[#c9c3da] hover:text-[#e3e0f1] font-medium transition-colors" href="#">الفعاليات</a>
+<a class="text-[#5B2EFF] font-bold border-b-2 border-[#5B2EFF]" href="#">الرسائل</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-[#292935]/50 rounded-lg transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-[#292935]/50 rounded-lg transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="مدير المنصة" data-alt="Professional portrait of a middle-eastern male manager in a dark suit against a soft office background lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5KCTeTRebcc44CSm0waRGmhGpNMqiTGE3Ph5o8wHtx7b3b3NOYGrDltsUm5duxL6Z2dQ745b0-tE0XRHBK4bTNp24YxUEccPAqFR3vdNKFZnvAyEL0s8cn8MBy1YMIqxJR6g8jBxHCwfeuQ5Hzxjw6Gd26mtz_79I4p-Xzfexw8aa3ODmbMyhgwvS51av6cGDTpGIgxz6xR22KgHKz60Kl2oj6Rgh3Y3_C5zmCjKTWdNj9YVeF636FE-Mx4n6m5cYAnjKRd8othkT"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar (RTL) -->
+<aside class="fixed top-0 right-0 h-full w-[280px] bg-[#0d0d18]/80 backdrop-blur-xl border-l border-[#474557]/20 shadow-2xl shadow-[#0d0d18]/60 z-50 flex flex-col h-full py-8 pr-4 pl-2">
+<div class="mb-10 px-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div>
+<div class="text-2xl font-bold text-[#e3e0f1] tracking-tighter">مرحّاب</div>
+<div class="text-[10px] text-on-surface-variant tracking-[0.2em] uppercase font-bold">The Digital Majlis</div>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 px-4 py-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">لوحة الفعالية</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 px-4 py-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-medium">الضيوف</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 px-4 py-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-medium">الأقسام</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 px-4 py-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined">schedule</span>
+<span class="font-medium">الجدول الزمني</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 px-4 py-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined">event_seat</span>
+<span class="font-medium">توزيع المقاعد</span>
+</a>
+<a class="relative flex items-center justify-start text-[#c8bfff] font-bold before:absolute before:right-0 before:w-1 before:h-6 before:bg-[#5b2eff] before:rounded-full bg-gradient-to-l from-[#5b2eff]/10 to-transparent px-4 py-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span class="font-medium">الرسائل</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 px-4 py-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-medium">فريق العمل</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 px-4 py-3 rounded-xl gap-4 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">الإعدادات</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="fixed top-16 bottom-0 left-0 right-[280px] overflow-hidden flex bg-surface">
+<!-- Left Side: Message List (WhatsApp Style) -->
+<section class="w-[400px] border-l border-outline-variant/10 flex flex-col bg-surface-container-lowest/30 backdrop-blur-md">
+<!-- Search & Filters -->
+<div class="p-6 space-y-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl pr-10 pl-4 py-3 text-sm focus:ring-1 focus:ring-primary/40 placeholder:text-outline/50 transition-all" placeholder="البحث في المحادثات..." type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+<button class="px-4 py-1.5 rounded-full bg-primary-container text-on-primary-container text-xs font-bold whitespace-nowrap">الكل</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium whitespace-nowrap hover:bg-surface-container-highest transition-colors">دعوات</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium whitespace-nowrap hover:bg-surface-container-highest transition-colors">تذكيرات</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-medium whitespace-nowrap hover:bg-surface-container-highest transition-colors">تأكيدات</button>
+</div>
+</div>
+<!-- List -->
+<div class="flex-1 overflow-y-auto px-2 space-y-1">
+<!-- Chat Item Active -->
+<div class="p-4 rounded-2xl bg-surface-container-high/60 border-r-4 border-primary cursor-pointer flex gap-3 group">
+<div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-surface-container-highest relative">
+<img alt="الضيف" data-alt="Portrait of an elegant man with a clean beard wearing traditional clothing in a high-end setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARpRvfrJWtKKzddV7tghdleQt590bki0SwNXeaODQ4h556HVvfhSrUr7i8GxgFj90GF6Q4-ZI4v4U5KDi4URjfaW-VxPR7Si0ApDWuc_nQNvyzmyU_0AXA1n5EliOEe6MvuGaSfo_9ScuZeTIvxOJ_gdjphRjRNSqHNfM5RvsKrrH32XM0donwBnLjdsQzQeFTQqNgVVdnhPcv9RVnx4O9DKsffc_Lzn6ae-2B1bktycNfzrTdPokb4nLP1uxTHocQoNVLk8TlsEJ2"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-surface rounded-full"></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-sm font-bold text-on-surface truncate">فهد بن عبدالعزيز</h3>
+<span class="text-[10px] text-primary font-medium">الآن</span>
+</div>
+<p class="text-xs text-on-surface-variant truncate">لقد تم استلام دعوة حضور الحفل، شكراً لكم على...</p>
+</div>
+</div>
+<!-- Chat Item -->
+<div class="p-4 rounded-2xl hover:bg-surface-container-low cursor-pointer flex gap-3 group transition-all">
+<div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-surface-container-highest">
+<img alt="الضيفة" data-alt="Close up portrait of a professional woman with thoughtful expression in soft ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFi6neAbg8cRUQwKsh8vDoEcdmF6XuOwbqTittal4GR8GQauh65lIrNZ_i1oBT9otysfrYo2BMVR_biaz3LKURiHihwm8ppnsGt0HVSy4G7YD4XqKYm4ZP1ULbofBZEnfN3i_2iD3ZZnztVwaQjQHgU00B_BnI_65PfYnYoWCxYvS45fZC9lSa1ej2oWfCnfsq3TJWjgDfHZrdtKHC4V0ypxMzBwei2jkLwCIUMGhI4hIGNzeKflMoHTO3eRoCA_KiFhR39If9kI55"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-sm font-semibold text-on-surface truncate">سارة محمد</h3>
+<span class="text-[10px] text-outline">١٠:٤٥ ص</span>
+</div>
+<p class="text-xs text-outline truncate">هل يمكنني تعديل عدد المرافقين في الدعوة؟</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<div class="w-4 h-4 rounded-full bg-primary text-[10px] flex items-center justify-center text-on-primary font-bold">2</div>
+</div>
+</div>
+<!-- Chat Item -->
+<div class="p-4 rounded-2xl hover:bg-surface-container-low cursor-pointer flex gap-3 group transition-all opacity-80">
+<div class="w-12 h-12 rounded-full flex-shrink-0 bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-sm font-semibold text-on-surface truncate">مجموعة كبار الشخصيات</h3>
+<span class="text-[10px] text-outline">أمس</span>
+</div>
+<p class="text-xs text-outline truncate"><span class="text-primary font-medium">سعود:</span> تم ترتيب النقل الخاص لضيوف الفندق</p>
+</div>
+</div>
+<!-- Chat Item -->
+<div class="p-4 rounded-2xl hover:bg-surface-container-low cursor-pointer flex gap-3 group transition-all opacity-60">
+<div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-surface-container-highest">
+<img alt="الضيف" data-alt="Portrait of a middle aged man with a warm smile in professional attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwU-5ERUdOo84rlKUxqQFAIYqxIYaXWteB0yoHIaPuWcbAU9Kr6H8l07-cgtAJSqgAGMN-xx5M0Y1K6e6fMwEcnxK_berX40yaRsslF5B-qwBguEy1AdmEudRHROtz1JlAIz7QgHz0gSYgnI0aKQb3gjVKmjGZcah1X5VgV8_NUNnzp-p7rZGVr1FUUopg5VP6hk1RbXH0xYMXMPyFep-L8yBRKBt-_8JJBhX_6P35Li-NQ98n7YhFaskjhc02vJzsxzm7EcEOSypq"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-sm font-semibold text-on-surface truncate">خالد العتيبي</h3>
+<span class="text-[10px] text-outline">الأحد</span>
+</div>
+<p class="text-xs text-outline truncate">وصلتني رسالة التذكير، نراكم على خير بإذن الله.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Area: Chat Window & Editor -->
+<section class="flex-1 flex flex-col relative">
+<!-- Background Texture -->
+<div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, #c8bfff 1px, transparent 0); background-size: 32px 32px;"></div>
+<!-- Chat Header -->
+<div class="h-20 glass-panel border-b border-outline-variant/10 px-8 flex items-center justify-between z-10">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl overflow-hidden bg-surface-container-high border border-outline-variant/20">
+<img alt="Active Chat" data-alt="Close up photo of an elegant businessman focused on a discussion" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDT49mGbNYK73dhN2IlxIGJExvKqYMqcJfaCx4aXNlIbAiWZIxuXwLg0pU3R8AvGCWunzk6TerngfUvUc37saj75iJNEjUANd4unZYsgCkOfOCMLZ8N4yNfQpVVFNYhbM-hlzENuzNkL-hfT3Zb28IsCX9Q-76YHCi7wZQgOIlvjYhsfCyjYOFYcgqJk0f6tzOFr8Tv_yxqZRVsxMuYPeHbeg7xrylOCFMGzDCZ16PZuK53a5z7G-aw4gdt7kHnSrbT-7SbCtFzjVZA"/>
+</div>
+<div>
+<h2 class="text-lg font-bold text-on-surface leading-tight">فهد بن عبدالعزيز</h2>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+<span class="text-[10px] text-on-surface-variant font-medium tracking-wide">متصل الآن • ضيف VIP</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2.5 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2.5 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Chat History -->
+<div class="flex-1 overflow-y-auto p-8 space-y-6">
+<div class="flex justify-center">
+<span class="px-4 py-1 rounded-full bg-surface-container-low text-[10px] text-outline-variant uppercase font-bold tracking-widest">اليوم</span>
+</div>
+<!-- Message Received -->
+<div class="flex items-end gap-3 max-w-[70%]">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high flex-shrink-0">
+<img alt="Sender" data-alt="Close up face of a professional gentleman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxwIMO_gty6gldA0SHor1mS2mNZ1p-9SC5TbYtH8GPeBh1PrwL05IB5AIS9dApCENYjRneMv8lFigY_Dn6MxrPBgpoWRkZQmpoiSUcy-ZdNwxZ5WnQCL9pUvFAxGkXVVLWttJBMNgVuFLkvolqZRSvjv86Eck6uN5uJkWQfwatDArxAd5Ew9691Om_A5DYQYy1wb2MHxi7HN0mbYTu_l8nltXOmUUD4CPPX4w8h09ItTfflgwVz6-wO0HLqFbeNPJM8R9q6YNfZk4f"/>
+</div>
+<div class="space-y-1">
+<div class="p-4 bg-surface-container-high rounded-2xl rounded-br-none text-sm leading-relaxed text-on-surface">
+                            السلام عليكم، أود التأكد من وقت البدء الرسمي لفعالية "المجلس الرقمي" اليوم؟
+                        </div>
+<span class="text-[9px] text-outline pr-1">١٢:٤٠ م</span>
+</div>
+</div>
+<!-- Message Sent -->
+<div class="flex flex-row-reverse items-end gap-3 max-w-[70%] mr-auto">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container flex-shrink-0">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+</div>
+<div class="space-y-1 text-left">
+<div class="p-4 bg-gradient-to-br from-primary-container to-primary-container/80 text-on-primary-container rounded-2xl rounded-bl-none text-sm leading-relaxed shadow-lg shadow-primary-container/20">
+                            وعليكم السلام ورحمة الله، أهلاً بك يا سيد فهد. تبدأ الفعالية في تمام الساعة ٨:٠٠ مساءً، وسيكون الاستقبال بانتظاركم من الساعة ٧:٣٠ مساءً.
+                        </div>
+<div class="flex items-center justify-end gap-1 pl-1">
+<span class="text-[9px] text-outline">١٢:٤٢ م</span>
+<span class="material-symbols-outlined text-[10px] text-primary">done_all</span>
+</div>
+</div>
+</div>
+<!-- Message Received -->
+<div class="flex items-end gap-3 max-w-[70%]">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high flex-shrink-0">
+<img alt="Sender" data-alt="Close up face of a professional gentleman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCd2Br_1JOdqc9ucb9zFzglkPF3UNfMw0yOkvbkojjOM_kmJXvp68gp-SZgAs3ZAuzI74TUMeyPc24wNfO47pDyJSIAIgM6Vh8tYn6KZdFflTr72GoPQKiyFpUK3Ol3md5RI0_5Dd3btjJR7uGDc1Mrf7xGICkLcPMHNiXFYofGPQuo94MrOQtlDqm0A2BniexoTRS_aZ8ykgFu5mHsJ1k8b8-q8V_u52LHeAgRuwbWOodrSPzeUfzMJSh3Lne8OL6-i-72BoRFY_bL"/>
+</div>
+<div class="space-y-1">
+<div class="p-4 bg-surface-container-high rounded-2xl rounded-br-none text-sm leading-relaxed text-on-surface">
+                            ممتاز، شكراً جزيلاً. سأكون متواجداً في الموعد. هل يتوفر موقف مخصص للسيارة؟
+                        </div>
+<span class="text-[9px] text-outline pr-1">١٢:٤٥ م</span>
+</div>
+</div>
+</div>
+<!-- Message Input & Templates -->
+<div class="p-6 bg-surface-container-lowest/80 backdrop-blur-xl border-t border-outline-variant/10 z-10">
+<!-- Template Quick Access -->
+<div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high transition-all group">
+<span class="material-symbols-outlined text-sm text-primary group-hover:scale-110 transition-transform">mail</span>
+<span class="text-xs font-semibold whitespace-nowrap">قالب دعوة</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high transition-all group">
+<span class="material-symbols-outlined text-sm text-tertiary group-hover:scale-110 transition-transform">timer</span>
+<span class="text-xs font-semibold whitespace-nowrap">قالب تذكير</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high transition-all group">
+<span class="material-symbols-outlined text-sm text-on-secondary-container group-hover:scale-110 transition-transform">celebration</span>
+<span class="text-xs font-semibold whitespace-nowrap">قالب ترحيب</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-container-high text-outline hover:text-on-surface transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+</div>
+<div class="flex items-end gap-4 bg-surface-container-low rounded-2xl p-2 pl-4 border border-outline-variant/10">
+<button class="p-3 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-3 text-on-surface resize-none placeholder:text-outline/40" placeholder="اكتب رسالتك هنا..." rows="1"></textarea>
+<div class="flex gap-2 mb-1">
+<button class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-highest text-on-surface rounded-xl text-xs font-bold hover:brightness-110 transition-all border border-outline-variant/20">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                            جدولة
+                        </button>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary-container text-on-primary-container rounded-xl text-xs font-black hover:brightness-110 transition-all shadow-lg shadow-primary-container/30">
+                            إرسال
+                            <span class="material-symbols-outlined text-sm rotate-180" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Side: Contact Details / Templates Library (Hidden on small screens) -->
+<section class="w-80 border-r border-outline-variant/10 p-8 space-y-8 bg-surface-container-low/20 overflow-y-auto">
+<div>
+<h4 class="text-[10px] text-outline-variant uppercase font-extrabold tracking-widest mb-6">مكتبة القوالب المميزة</h4>
+<div class="space-y-4">
+<div class="p-4 rounded-2xl bg-surface-container-high border border-outline-variant/20 group hover:border-primary/40 transition-colors cursor-pointer">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm">auto_awesome</span>
+<span class="text-xs font-bold text-on-surface">دعوة ملكية</span>
+</div>
+<p class="text-[11px] text-outline leading-relaxed line-clamp-2">"نتشرف بدعوتكم لحضور الفعالية المقامة في فندق الريتز كارلتون..."</p>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-high border border-outline-variant/20 group hover:border-tertiary/40 transition-colors cursor-pointer">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary text-sm">notifications_active</span>
+<span class="text-xs font-bold text-on-surface">تذكير الموعد</span>
+</div>
+<p class="text-[11px] text-outline leading-relaxed line-clamp-2">"نذكركم بموعد الفعالية اليوم الساعة الثامنة مساءً..."</p>
+</div>
+<div class="p-4 rounded-2xl bg-surface-container-high border border-outline-variant/20 group hover:border-on-secondary-container/40 transition-colors cursor-pointer">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-on-secondary-container text-sm">qr_code_2</span>
+<span class="text-xs font-bold text-on-surface">إرسال الباركود</span>
+</div>
+<p class="text-[11px] text-outline leading-relaxed line-clamp-2">"مرفق أدناه رمز الدخول السريع الخاص بكم للفعالية..."</p>
+</div>
+</div>
+<button class="w-full mt-4 py-3 rounded-xl border border-dashed border-outline-variant/40 text-xs text-outline font-medium hover:border-primary/40 hover:text-primary transition-all">
+                    إنشاء قالب جديد +
+                </button>
+</div>
+<div class="pt-8 border-t border-outline-variant/10">
+<h4 class="text-[10px] text-outline-variant uppercase font-extrabold tracking-widest mb-6">إحصائيات الرسائل</h4>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container-high/40 p-4 rounded-2xl">
+<span class="text-[10px] text-outline block mb-1">المرسلة</span>
+<span class="text-xl font-black text-on-surface tracking-tighter">١,٢٨٤</span>
+</div>
+<div class="bg-surface-container-high/40 p-4 rounded-2xl">
+<span class="text-[10px] text-outline block mb-1">نسبة الفتح</span>
+<span class="text-xl font-black text-primary tracking-tighter">٩٤٪</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

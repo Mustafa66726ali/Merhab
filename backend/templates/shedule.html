@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>مرحّاب - الجدول الزمني</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+Arabic:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-fixed": "#190064",
+              "surface-dim": "#12121d",
+              "outline": "#928ea3",
+              "on-tertiary-fixed": "#380d00",
+              "inverse-on-surface": "#302f3b",
+              "secondary-fixed-dim": "#c6c4df",
+              "tertiary-fixed": "#ffdbcf",
+              "tertiary-container": "#aa3800",
+              "surface-container-lowest": "#0d0d18",
+              "inverse-surface": "#e3e0f1",
+              "surface-container-high": "#292935",
+              "on-secondary-fixed-variant": "#45455b",
+              "error": "#ffb4ab",
+              "background": "#12121d",
+              "surface-container-highest": "#343440",
+              "primary-container": "#5b2eff",
+              "surface-container": "#1f1e2a",
+              "inverse-primary": "#5a2dfe",
+              "on-secondary": "#2f2e43",
+              "on-surface": "#e3e0f1",
+              "primary-fixed": "#e5deff",
+              "on-secondary-container": "#b8b6d0",
+              "on-surface-variant": "#c9c3da",
+              "tertiary-fixed-dim": "#ffb59b",
+              "secondary": "#c6c4df",
+              "primary": "#c8bfff",
+              "on-background": "#e3e0f1",
+              "surface": "#12121d",
+              "error-container": "#93000a",
+              "surface-bright": "#383845",
+              "outline-variant": "#474557",
+              "on-primary": "#2d009d",
+              "on-primary-fixed-variant": "#4200da",
+              "primary-fixed-dim": "#c8bfff",
+              "on-secondary-fixed": "#1a1a2e",
+              "on-error": "#690005",
+              "on-primary-container": "#dcd4ff",
+              "surface-container-low": "#1b1a26",
+              "surface-variant": "#343440",
+              "surface-tint": "#c8bfff",
+              "secondary-container": "#47475d",
+              "on-tertiary-fixed-variant": "#812800",
+              "tertiary": "#ffb59b",
+              "on-tertiary": "#5b1a00",
+              "secondary-fixed": "#e2e0fc",
+              "on-tertiary-container": "#ffcfbf",
+              "on-error-container": "#ffdad6"
+            },
+            borderRadius: {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "2xl": "1.5rem"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans", "Noto Sans Arabic"],
+              "body": ["Inter", "Noto Sans Arabic"],
+              "label": ["Inter", "Noto Sans Arabic"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body { font-family: 'Inter', 'Noto Sans Arabic', sans-serif; }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-effect {
+        backdrop-filter: blur(12px);
+        background-color: rgba(13, 13, 24, 0.8);
+      }
+      .timeline-dot::after {
+        content: '';
+        position: absolute;
+        width: 2px;
+        height: 100%;
+        background: #474557;
+        right: 50%;
+        transform: translateX(50%);
+        top: 2rem;
+        z-index: 0;
+      }
+      .timeline-item:last-child .timeline-dot::after {
+        display: none;
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- SideNavBar (RTL) -->
+<aside class="fixed top-0 right-0 h-full w-[280px] border-l border-[#474557]/20 bg-[#0d0d18]/80 backdrop-blur-xl shadow-2xl shadow-[#0d0d18]/60 flex flex-col h-full py-8 pr-4 pl-2 z-50">
+<div class="mb-10 px-4">
+<h1 class="text-2xl font-bold text-[#e3e0f1] tracking-tighter flex items-center gap-3">
+<span class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5b2eff] to-[#c8bfff] flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed text-lg" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</span>
+                مرحّاب
+            </h1>
+<p class="text-xs text-on-surface-variant tracking-widest mt-1 opacity-50 uppercase">The Digital Majlis</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-medium">لوحة الفعالية</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-medium">الضيوف</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="font-medium">الأقسام</span>
+</a>
+<a class="relative flex items-center justify-start text-[#c8bfff] font-bold before:absolute before:right-0 before:w-1 before:h-6 before:bg-[#5b2eff] before:rounded-full bg-gradient-to-l from-[#5b2eff]/10 to-transparent p-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="schedule" style="font-variation-settings: 'FILL' 1;">schedule</span>
+<span class="font-medium">الجدول الزمني</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="event_seat">event_seat</span>
+<span class="font-medium">توزيع المقاعد</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-medium">الرسائل</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span class="font-medium">فريق العمل</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl gap-4" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-medium">الإعدادات</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-surface-container-low rounded-2xl border border-outline-variant/10">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="professional portrait of a middle-eastern event manager in a dark suit with soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaLJZavxDYwGSjabG096lGYWjfytFUhgeIFpJBmiG6z46Kt7OrDEVLjJaSVPUNMKZjVMTHU8SjJviZPMlI8Rw_zywNwu70MO06nT6frZh0s7skZBHWi9cAoUpy6P8crc4vuougUqxDwgOomqVXsC5SdTHXaSzFdVXZA6ZdmAEwG89jEEL-m0XDywQSb15z9c8cZGf3djwR1Zch3ZRTJtSpiA4yF6KBK7S7i4Fp8nHI3CicYfglZBxdI3J3JvVuxEAxGjltzLRn0aOI"/>
+<div>
+<p class="text-sm font-bold text-on-surface">أحمد الخالدي</p>
+<p class="text-[10px] text-primary tracking-widest uppercase font-bold">مدير المنصة</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 right-[280px] h-16 z-40 bg-[#0d0d18]/80 backdrop-blur-xl border-b border-[#474557]/20 flex items-center justify-between px-8 w-full">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-full border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary text-sm">calendar_month</span>
+<span class="text-sm font-bold">فعالية اليوبيل الذهبي</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">expand_more</span>
+</div>
+<nav class="flex gap-8">
+<a class="text-[#5B2EFF] font-bold border-b-2 border-[#5B2EFF] pb-1 h-full flex items-center" href="#">الفعاليات</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-[#c9c3da] hover:text-[#e3e0f1] hover:bg-[#292935]/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-[#c9c3da] hover:text-[#e3e0f1] hover:bg-[#292935]/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/20 mx-2"></div>
+<button class="flex items-center gap-3 pr-2">
+<img class="w-8 h-8 rounded-full border border-primary/30" data-alt="close up of executive manager profile picture clean background professional attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRbXKt0LsGYqGlDBiO5UzNkr6hW16yA82MDGQ2lEcFCiS0xvPwyzhnMlWKSo_rbJ6kLzuosJ7pErhfvs5sdkrGoOdi4m7EAR0KwuaiZTMy4uUVQeGTBSlicsstxLVnxCywNw2sh3zjBHtwkrHpEckDIVRAPzw5Op91H9UTUnnyplTp4bNV90XHXdqHDyLhNtDmCZ5eZp0yuVWut271PzkOg6Z88GKvVYm6KNNAN71D6-bMrLeyUXODQwTezm0nYLnqeaAIYZskSUDj"/>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="mr-[280px] pt-24 px-12 pb-12">
+<!-- Dashboard Header -->
+<div class="flex items-end justify-between mb-12">
+<div>
+<h2 class="text-4xl font-extrabold tracking-tight text-on-surface mb-2">الجدول الزمني للفعالية</h2>
+<p class="text-on-surface-variant max-w-lg leading-relaxed">قم بتنظيم تسلسل أحداث الفعالية بدقة. يمكنك السحب والإفلات لإعادة الترتيب.</p>
+</div>
+<div class="flex gap-4">
+<button class="bg-surface-container-high border border-outline-variant/20 px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">file_download</span>
+<span>تصدير PDF</span>
+</button>
+<button class="bg-primary-container text-on-primary-container px-8 py-3 rounded-2xl flex items-center gap-2 shadow-lg shadow-[#4200da]/30 hover:brightness-110 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined">add</span>
+<span class="font-bold">إضافة نشاط</span>
+</button>
+</div>
+</div>
+<!-- Section Switcher & Search (Bento Style Layout) -->
+<div class="grid grid-cols-12 gap-6 mb-12">
+<div class="col-span-8 bg-surface-container-low p-2 rounded-2xl flex gap-2">
+<button class="flex-1 py-3 px-6 rounded-xl bg-surface-container-highest text-primary font-bold shadow-sm">القاعة الرئيسية</button>
+<button class="flex-1 py-3 px-6 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors">منطقة الاستقبال</button>
+<button class="flex-1 py-3 px-6 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors">كبار الشخصيات (VIP)</button>
+<button class="flex-1 py-3 px-6 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors">المركز الإعلامي</button>
+</div>
+<div class="col-span-4 bg-surface-container-low p-2 rounded-2xl flex items-center px-4 gap-3 border border-outline-variant/10">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface w-full placeholder:text-outline/50" placeholder="البحث في الجدول..." type="text"/>
+</div>
+</div>
+<!-- Timeline Container -->
+<div class="relative max-w-4xl mx-auto space-y-6">
+<!-- Timeline Item 1 -->
+<div class="timeline-item flex gap-12 group">
+<div class="w-24 pt-3 text-right">
+<span class="text-xl font-bold text-primary block">06:00 م</span>
+<span class="text-xs text-on-surface-variant opacity-50 uppercase tracking-tighter">بداية الفعالية</span>
+</div>
+<div class="timeline-dot relative z-10 flex-shrink-0 mt-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border-2 border-primary-container flex items-center justify-center shadow-lg shadow-primary-container/20">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-high p-6 rounded-2xl border border-outline-variant/10 hover:border-primary/40 transition-all duration-300 relative">
+<div class="absolute -right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+<span class="material-symbols-outlined text-outline">drag_indicator</span>
+</div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-xl font-bold text-on-surface">استقبال الضيوف والترحيب</h3>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold">بروتوكول</span>
+</div>
+<p class="text-on-surface-variant leading-relaxed text-sm mb-4">ترحيب رسمي بالضيوف في المدخل الرئيسي مع تقديم القهوة العربية والتمور الفاخرة.</p>
+<div class="flex items-center gap-4 text-xs text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">timer</span> 45 دقيقة</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">person</span> فريق الاستقبال</span>
+</div>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="timeline-item flex gap-12 group">
+<div class="w-24 pt-3 text-right">
+<span class="text-xl font-bold text-on-surface block">06:45 م</span>
+<span class="text-xs text-on-surface-variant opacity-50 uppercase tracking-tighter">العرض الافتتاحي</span>
+</div>
+<div class="timeline-dot relative z-10 flex-shrink-0 mt-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border-2 border-outline-variant flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-high p-6 rounded-2xl border border-outline-variant/10 hover:border-primary/40 transition-all duration-300 relative">
+<div class="absolute -right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+<span class="material-symbols-outlined text-outline">drag_indicator</span>
+</div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-xl font-bold text-on-surface">فيلم وثائقي: مسيرة الإنجاز</h3>
+<span class="bg-primary-container/20 text-primary px-3 py-1 rounded-full text-xs font-bold">عرض مرئي</span>
+</div>
+<p class="text-on-surface-variant leading-relaxed text-sm mb-4">عرض مرئي سينمائي يستعرض أهم المحطات التاريخية للشركة خلال الخمسين عاماً الماضية.</p>
+<div class="flex items-center gap-4 text-xs text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">timer</span> 15 دقيقة</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">stadium</span> المسرح الرئيسي</span>
+</div>
+</div>
+</div>
+<!-- Timeline Item 3 (Active Selection/Edit State) -->
+<div class="timeline-item flex gap-12 group">
+<div class="w-24 pt-3 text-right">
+<span class="text-xl font-bold text-on-surface block">07:00 م</span>
+<span class="text-xs text-on-surface-variant opacity-50 uppercase tracking-tighter">الكلمة الرسمية</span>
+</div>
+<div class="timeline-dot relative z-10 flex-shrink-0 mt-3">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">edit</span>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-highest p-6 rounded-2xl border-2 border-primary shadow-xl shadow-primary/5 relative">
+<div class="absolute -right-10 top-1/2 -translate-y-1/2 opacity-100 transition-opacity cursor-grab">
+<span class="material-symbols-outlined text-primary">drag_indicator</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div class="space-y-1">
+<label class="text-[10px] uppercase font-bold text-primary tracking-widest">اسم النشاط</label>
+<input class="bg-surface-container-lowest border-outline-variant/30 text-on-surface rounded-xl w-full focus:border-primary transition-colors text-sm" type="text" value="كلمة رئيس مجلس الإدارة"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] uppercase font-bold text-primary tracking-widest">الوقت</label>
+<input class="bg-surface-container-lowest border-outline-variant/30 text-on-surface rounded-xl w-full focus:border-primary transition-colors text-sm" type="time" value="19:00"/>
+</div>
+</div>
+<div class="space-y-1 mb-6">
+<label class="text-[10px] uppercase font-bold text-primary tracking-widest">الوصف</label>
+<textarea class="bg-surface-container-lowest border-outline-variant/30 text-on-surface rounded-xl w-full focus:border-primary transition-colors text-sm" rows="2">توجيه كلمة شكر للموظفين والشركاء وتدشين الهوية الجديدة.</textarea>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-outline-variant/20">
+<div class="flex gap-2">
+<button class="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"><span class="material-symbols-outlined">delete</span></button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"><span class="material-symbols-outlined">content_copy</span></button>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 text-on-surface-variant text-sm font-bold">إلغاء</button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-xl text-sm font-bold">حفظ التغييرات</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Item 4 -->
+<div class="timeline-item flex gap-12 group">
+<div class="w-24 pt-3 text-right">
+<span class="text-xl font-bold text-on-surface block">07:30 م</span>
+<span class="text-xs text-on-surface-variant opacity-50 uppercase tracking-tighter">مأدبة العشاء</span>
+</div>
+<div class="timeline-dot relative z-10 flex-shrink-0 mt-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border-2 border-outline-variant flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-high p-6 rounded-2xl border border-outline-variant/10 hover:border-primary/40 transition-all duration-300 relative">
+<div class="absolute -right-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+<span class="material-symbols-outlined text-outline">drag_indicator</span>
+</div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-xl font-bold text-on-surface">العشاء والتشبيك</h3>
+<span class="bg-tertiary/20 text-tertiary px-3 py-1 rounded-full text-xs font-bold">ضيافة</span>
+</div>
+<p class="text-on-surface-variant leading-relaxed text-sm mb-4">بدء مأدبة العشاء الفاخرة مع فرصة للتعارف والتبادل بين الحضور.</p>
+<div class="flex items-center gap-4 text-xs text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">timer</span> 90 دقيقة</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">restaurant</span> قاعة الاحتفالات</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Quick Stats -->
+<div class="fixed left-8 bottom-8 flex flex-col gap-4">
+<div class="bg-[#0d0d18]/90 backdrop-blur-xl p-6 rounded-2xl border border-outline-variant/20 shadow-2xl min-w-[200px]">
+<div class="mb-4">
+<p class="text-[10px] font-bold text-primary tracking-widest uppercase mb-1">المدة الإجمالية</p>
+<p class="text-2xl font-black text-on-surface">3 ساعات و 30 دقيقة</p>
+</div>
+<div class="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-gradient-to-l from-primary to-primary-container"></div>
+</div>
+<p class="text-[10px] mt-2 text-on-surface-variant">تم تخطيط 75% من الوقت المتاح</p>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Only for Main Dashboards as per instruction) -->
+<button class="fixed bottom-12 right-12 w-16 h-16 bg-primary text-on-primary rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</body></html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Plus+Jakarta+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#12121d",
+                    "primary-container": "#5b2eff",
+                    "on-surface": "#e3e0f1",
+                    "on-tertiary-container": "#ded4ff",
+                    "surface-container-lowest": "#0d0d18",
+                    "on-secondary-container": "#b8b6d0",
+                    "error": "#ffb4ab",
+                    "tertiary-container": "#634ac1",
+                    "tertiary-fixed-dim": "#cbbeff",
+                    "on-primary-container": "#dcd4ff",
+                    "on-tertiary-fixed": "#1e0061",
+                    "secondary-fixed-dim": "#c6c4df",
+                    "on-secondary-fixed-variant": "#45455b",
+                    "surface-container-high": "#292935",
+                    "outline-variant": "#474557",
+                    "primary-fixed-dim": "#c8bfff",
+                    "surface-container-highest": "#343440",
+                    "on-error-container": "#ffdad6",
+                    "outline": "#928ea3",
+                    "on-primary-fixed": "#190064",
+                    "on-tertiary-fixed-variant": "#4a2ea7",
+                    "secondary-container": "#47475d",
+                    "primary": "#c8bfff",
+                    "surface-tint": "#c8bfff",
+                    "on-primary": "#2d009d",
+                    "inverse-on-surface": "#302f3b",
+                    "inverse-surface": "#e3e0f1",
+                    "tertiary": "#cbbeff",
+                    "inverse-primary": "#5a2dfe",
+                    "on-secondary-fixed": "#1a1a2e",
+                    "on-error": "#690005",
+                    "secondary-fixed": "#e2e0fc",
+                    "on-surface-variant": "#c9c3da",
+                    "on-primary-fixed-variant": "#4200da",
+                    "surface-bright": "#383845",
+                    "surface-variant": "#343440",
+                    "surface": "#12121d",
+                    "primary-fixed": "#e5deff",
+                    "tertiary-fixed": "#e7deff",
+                    "surface-container": "#1f1e2a",
+                    "secondary": "#c6c4df",
+                    "error-container": "#93000a",
+                    "on-background": "#e3e0f1",
+                    "on-secondary": "#2f2e43",
+                    "on-tertiary": "#330b91",
+                    "surface-container-low": "#1b1a26",
+                    "background": "#12121d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "2xl": "2rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Manrope"],
+                    "label": ["Plus Jakarta Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(27, 26, 38, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .nebula-glow {
+            background: linear-gradient(135deg, rgba(91, 46, 255, 0.15) 0%, rgba(99, 74, 193, 0.15) 100%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen overflow-x-hidden">
+<!-- Right Floating SideNavBar -->
+<nav class="fixed right-0 top-0 h-full w-72 m-6 rounded-3xl border-none bg-slate-900/60 backdrop-blur-xl shadow-2xl shadow-black/40 z-50 flex flex-col p-6 text-right rtl font-['Manrope'] leading-relaxed">
+<div class="mb-10 flex flex-col items-center gap-4">
+<div class="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="event">event</span>
+</div>
+<div class="text-center">
+<h1 class="text-2xl font-bold text-white tracking-tight">مرحّاب</h1>
+<p class="text-slate-400 text-sm">نظام إدارة المناسبات</p>
+</div>
+</div>
+<div class="flex flex-col gap-2 flex-grow">
+<!-- Active Tab: Events -->
+<a class="flex items-center gap-4 px-4 py-3 bg-[#5B2EFF]/20 text-[#5B2EFF] rounded-xl font-bold transition-all duration-300 scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="event">event</span>
+<span>المناسبات</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>لوحة التحكم</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>المدعوون</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="category">category</span>
+<span>الأقسام والمجموعات</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span>جدول الحدث</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+<span>الرسائل والتنبيهات</span>
+</a>
+</div>
+<div class="mt-auto">
+<a class="flex items-center gap-4 px-4 py-3 text-slate-400 font-medium hover:bg-slate-800/50 hover:text-white rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>الإعدادات</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="mr-80 ml-12 py-8">
+<!-- TopAppBar -->
+<header class="flex flex-row-reverse justify-between items-center w-full px-4 py-6 font-['Manrope'] text-right">
+<div class="flex items-center gap-6 flex-row-reverse">
+<div class="flex flex-col text-right">
+<span class="text-on-surface-variant text-xs mb-1">المستخدم الحالي</span>
+<span class="text-white font-bold">أحمد الفهد</span>
+</div>
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-high border-2 border-primary-container/30">
+<img alt="صورة المستخدم الشخصية" data-alt="professional headshot of a middle eastern man with a neat beard wearing traditional attire in a modern studio setting with warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDF45Tezev6AeOk89vp28FaurJqYC6p5LdclsysGSQ7VD73XyYzZRXfv7NdDjrd66DDv18EHinxa484JyFZhCxNHPz5lyso7eoZgo9C7C_nDIkXiMM3bvCPU1_zdQDlG_UmnAhT5oiHltZfeT4ICHjiw0wIbB8t6T2xo1Mh8oGeIVxsCGnf6G4JiCkm47ok-aubKU_o_S_23lYQIs4xtnd2sSwqXZNZeERNeE03nMo-P_YWm0vUXsSxrP9QmFjnG52nbIgdnEJrHl7_"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-surface-container-high p-3 rounded-xl text-on-surface hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-xl text-on-surface cursor-pointer hover:bg-surface-container-highest transition-all active:opacity-70">
+<span class="material-symbols-outlined" data-icon="expand_more">expand_more</span>
+<span class="font-medium">اختر المناسبة</span>
+</div>
+</div>
+</header>
+<!-- Event Hero Section -->
+<section class="mt-8 mb-12">
+<div class="relative h-[400px] rounded-[2.5rem] overflow-hidden shadow-2xl">
+<img alt="خلفية المناسبة" class="absolute inset-0 w-full h-full object-cover" data-alt="grand luxury ballroom with violet ambient lighting, crystal chandeliers, and sophisticated flower arrangements on tables for a high-end gala event" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmujLwlhPlQZitB1cxKmSqHoHk3cU9VW9kyHV2fqZ4b_W9oIe7D4IsHtuPrS3NnhW02iDLPHfFwgsAaphq49D5ggXxFbmhVOhcZ_JkxougnSTw9lh4trJb-OxmjAdNkCpVWF4sPUwVQYn3BQywaZXzRGaDjo_MdlzzCCC1qImTqG5_X5iyBL_LxjGFS_CyYaae9KTF_4c7dbG5AdqBnbFqfxXO-fEhCRkPaQjH8XDSwBY6SwlUljV3oVEVrV_9rYsgjgWm7gppeR4L"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
+<div class="absolute bottom-10 right-10 left-10 flex flex-col md:flex-row-reverse justify-between items-end gap-6">
+<div class="text-right">
+<div class="inline-flex items-center gap-2 bg-primary-container text-white px-4 py-1.5 rounded-full text-sm font-bold mb-4 shadow-lg shadow-primary-container/20">
+<span class="material-symbols-outlined text-sm" data-icon="auto_awesome" data-weight="fill" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                            حدث نشط
+                        </div>
+<h2 class="text-5xl font-extrabold text-white mb-2 leading-tight">حفل التميز السنوي 2024</h2>
+<div class="flex flex-row-reverse items-center gap-6 text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_month">calendar_month</span>
+<span>24 أكتوبر 2024</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<span>فندق الريتز كارلتون، الرياض</span>
+</div>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="bg-primary-container text-on-primary-container px-8 py-4 rounded-xl font-bold flex items-center gap-3 hover:brightness-110 transition-all shadow-xl shadow-primary-container/20">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+                            تعديل التفاصيل
+                        </button>
+<button class="bg-surface-container-high/60 backdrop-blur-md text-white px-8 py-4 rounded-xl font-bold border border-outline-variant/20 hover:bg-surface-container-highest transition-all">
+                            تحميل التقرير
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Navigation Tabs -->
+<nav class="flex flex-row-reverse items-center gap-8 mb-12 overflow-x-auto pb-4 scrollbar-hide">
+<button class="whitespace-nowrap text-primary border-b-2 border-primary pb-2 font-bold text-lg px-2 transition-all">نظرة عامة</button>
+<button class="whitespace-nowrap text-on-surface-variant hover:text-white pb-2 font-medium text-lg px-2 transition-all">الأقسام</button>
+<button class="whitespace-nowrap text-on-surface-variant hover:text-white pb-2 font-medium text-lg px-2 transition-all">المجموعات</button>
+<button class="whitespace-nowrap text-on-surface-variant hover:text-white pb-2 font-medium text-lg px-2 transition-all">المدعوون</button>
+<button class="whitespace-nowrap text-on-surface-variant hover:text-white pb-2 font-medium text-lg px-2 transition-all">جدول الحدث</button>
+<button class="whitespace-nowrap text-on-surface-variant hover:text-white pb-2 font-medium text-lg px-2 transition-all">توزيع الجلوس</button>
+<button class="whitespace-nowrap text-on-surface-variant hover:text-white pb-2 font-medium text-lg px-2 transition-all">الرسائل</button>
+<button class="whitespace-nowrap text-on-surface-variant hover:text-white pb-2 font-medium text-lg px-2 transition-all">الإعدادات</button>
+</nav>
+<!-- Overview Content: Bento Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Key Metrics -->
+<div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel nebula-glow p-8 rounded-2xl flex flex-col justify-between min-h-[200px]">
+<div class="flex justify-between items-start">
+<div class="bg-primary-container/20 p-3 rounded-xl">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="groups">groups</span>
+</div>
+<span class="text-primary text-xs font-bold tracking-widest">+12% منذ الأمس</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-medium mb-1">إجمالي المدعوين</p>
+<h3 class="text-4xl font-extrabold text-white tracking-tight">1,240</h3>
+</div>
+</div>
+<div class="glass-panel p-8 rounded-2xl flex flex-col justify-between min-h-[200px]">
+<div class="flex justify-between items-start">
+<div class="bg-tertiary-container/20 p-3 rounded-xl">
+<span class="material-symbols-outlined text-tertiary text-3xl" data-icon="how_to_reg">how_to_reg</span>
+</div>
+<span class="text-tertiary text-xs font-bold tracking-widest">85% تم التأكيد</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-medium mb-1">الحضور المؤكد</p>
+<h3 class="text-4xl font-extrabold text-white tracking-tight">1,054</h3>
+</div>
+</div>
+<div class="glass-panel p-8 rounded-2xl flex flex-col justify-between min-h-[200px]">
+<div class="flex justify-between items-start">
+<div class="bg-error/10 p-3 rounded-xl">
+<span class="material-symbols-outlined text-error text-3xl" data-icon="pending_actions">pending_actions</span>
+</div>
+<span class="text-error text-xs font-bold tracking-widest">تحتاج انتباه</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-medium mb-1">لم يتم الرد</p>
+<h3 class="text-4xl font-extrabold text-white tracking-tight">186</h3>
+</div>
+</div>
+</div>
+<!-- Event Status Visual -->
+<div class="col-span-12 lg:col-span-4 glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center relative overflow-hidden group">
+<div class="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity">
+<img alt="نمط فني" class="w-full h-full object-cover" data-alt="abstract artistic pattern of flowing ethereal light trails in deep purple and magenta on a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwTa4RaR8NfrGd1pBLaCLP0edAHLxOMLae24tJwkmraLFx7tkmBvkQQ_SwJzOh1SQO8ClFhtdACZM3yMRHTC7mY0n2l6ca0O0Oqltpogf_hgQbB1lWpfC56_DDiCPouJ2GWD8dWYGFfD25rL_Nlv39VQkKWoJu2ER_PyF8ojtGxhWW9HYlkknJ8fUacMxMwBNv4JPQ1epsyJJq3jyPsBAisp20jkesstRr4cQdzrKg4iSYZmbALQR07-2fArL5cEqgx8zsGCB2sB37"/>
+</div>
+<div class="relative z-10">
+<div class="w-24 h-24 rounded-full border-4 border-primary-container border-t-transparent animate-pulse mb-6 flex items-center justify-center mx-auto">
+<span class="text-2xl font-bold text-white">75%</span>
+</div>
+<h4 class="text-xl font-bold text-white mb-2">اكتمال التحضيرات</h4>
+<p class="text-on-surface-variant text-sm px-4">تم الانتهاء من حجز القاعة وتوزيع المجموعات، المتبقي: تفاصيل قائمة الطعام.</p>
+</div>
+</div>
+<!-- Detailed Overview Section -->
+<div class="col-span-12 lg:col-span-7 glass-panel p-10 rounded-2xl">
+<div class="flex flex-row-reverse justify-between items-center mb-10">
+<h3 class="text-2xl font-bold text-white">ملخص المناسبة</h3>
+<button class="text-primary hover:underline text-sm font-bold">تعديل الأقسام</button>
+</div>
+<div class="space-y-8">
+<div class="flex flex-row-reverse items-start gap-6">
+<div class="w-12 h-12 bg-surface-container-high rounded-full flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary" data-icon="description">description</span>
+</div>
+<div class="text-right">
+<h5 class="text-white font-bold mb-1">وصف الحدث</h5>
+<p class="text-on-surface-variant leading-relaxed">الاحتفال السنوي بمرور 10 أعوام على انطلاق الشركة، يجمع الحدث بين كبار المستثمرين والموظفين المتميزين في ليلة تكريمية فاخرة تتضمن عشاءً رسمياً وجلسات حوارية.</p>
+</div>
+</div>
+<div class="flex flex-row-reverse items-start gap-6">
+<div class="w-12 h-12 bg-surface-container-high rounded-full flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary" data-icon="map">map</span>
+</div>
+<div class="text-right flex-grow">
+<h5 class="text-white font-bold mb-1">موقع الحدث</h5>
+<p class="text-on-surface-variant mb-4">قاعة المملكة، الريتز كارلتون - الرياض، المملكة العربية السعودية</p>
+<div class="w-full h-48 rounded-2xl overflow-hidden border border-outline-variant/10">
+<img alt="خريطة الموقع" class="w-full h-full object-cover" data-alt="high-quality digital map interface showing the Riyadh city center with a clean dark theme and golden markers" data-location="Riyadh, Saudi Arabia" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVe75GV4SW_i_QWxaXiWNYaFjh4Gd6gAC80PVrdvQTdTf8dzJoSp1HgVLLi1bxoAtcw8YvPnI0FwjwXOt2V37eTlCj6xI-7rWTkF4bRBZCptV4neRcmElr7kn2C3pAFvRp5KO6aIqszk-spozmGRZjwnuVsth2uEYheDHWMhQUUt7RC5E8z-I8-7qQAnVAI7AVuUG45eO0rf4HhoyFAIJ9T0sHNviRUUlNuFKsJGk18XKdSRyVL0-iydxR9axbseXahIfmqEUAQAIw"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions & Timeline -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-6">
+<!-- Guests Status Breakdown -->
+<div class="glass-panel p-8 rounded-2xl">
+<h4 class="text-xl font-bold text-white mb-6 text-right">توزيع المدعوين</h4>
+<div class="space-y-4">
+<div>
+<div class="flex flex-row-reverse justify-between text-sm mb-2">
+<span class="text-white">كبار الشخصيات (VIP)</span>
+<span class="text-primary font-bold">120 / 150</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container" style="width: 80%"></div>
+</div>
+</div>
+<div>
+<div class="flex flex-row-reverse justify-between text-sm mb-2">
+<span class="text-white">الموظفون</span>
+<span class="text-tertiary font-bold">450 / 600</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-container" style="width: 75%"></div>
+</div>
+</div>
+<div>
+<div class="flex flex-row-reverse justify-between text-sm mb-2">
+<span class="text-white">شركاء النجاح</span>
+<span class="text-secondary font-bold">484 / 490</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container" style="width: 98%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity -->
+<div class="glass-panel p-8 rounded-2xl flex-grow">
+<h4 class="text-xl font-bold text-white mb-6 text-right">آخر التحديثات</h4>
+<div class="space-y-6">
+<div class="flex flex-row-reverse gap-4">
+<div class="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+<div class="text-right">
+<p class="text-white text-sm font-medium">تأكيد حضور 12 ضيفاً جديداً من قسم الـ VIP</p>
+<span class="text-on-surface-variant text-xs">منذ 10 دقائق</span>
+</div>
+</div>
+<div class="flex flex-row-reverse gap-4">
+<div class="w-2 h-2 rounded-full bg-tertiary mt-2 flex-shrink-0"></div>
+<div class="text-right">
+<p class="text-white text-sm font-medium">تم إرسال رسائل التذكير لجدول الحدث</p>
+<span class="text-on-surface-variant text-xs">منذ ساعة</span>
+</div>
+</div>
+<div class="flex flex-row-reverse gap-4">
+<div class="w-2 h-2 rounded-full bg-error mt-2 flex-shrink-0"></div>
+<div class="text-right">
+<p class="text-white text-sm font-medium">تعديل موقع الجلوس للمجموعة "أ"</p>
+<span class="text-on-surface-variant text-xs">منذ ساعتين</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button class="fixed bottom-10 left-10 w-16 h-16 bg-primary-container text-white rounded-2xl shadow-2xl shadow-primary-container/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</body></html>

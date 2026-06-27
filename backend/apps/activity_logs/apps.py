@@ -1,0 +1,10 @@
+from django.apps import AppConfig
+
+
+class ActivityLogsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.activity_logs"
+    verbose_name = "سجلات النشاط"
+
+    def ready(self):
+        pass

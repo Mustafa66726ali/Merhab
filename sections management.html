@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+Arabic:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-fixed": "#190064",
+                        "surface-dim": "#12121d",
+                        "outline": "#928ea3",
+                        "on-tertiary-fixed": "#380d00",
+                        "inverse-on-surface": "#302f3b",
+                        "secondary-fixed-dim": "#c6c4df",
+                        "tertiary-fixed": "#ffdbcf",
+                        "tertiary-container": "#aa3800",
+                        "surface-container-lowest": "#0d0d18",
+                        "inverse-surface": "#e3e0f1",
+                        "surface-container-high": "#292935",
+                        "on-secondary-fixed-variant": "#45455b",
+                        "error": "#ffb4ab",
+                        "background": "#12121d",
+                        "surface-container-highest": "#343440",
+                        "primary-container": "#5b2eff",
+                        "surface-container": "#1f1e2a",
+                        "inverse-primary": "#5a2dfe",
+                        "on-secondary": "#2f2e43",
+                        "on-surface": "#e3e0f1",
+                        "primary-fixed": "#e5deff",
+                        "on-secondary-container": "#b8b6d0",
+                        "on-surface-variant": "#c9c3da",
+                        "tertiary-fixed-dim": "#ffb59b",
+                        "secondary": "#c6c4df",
+                        "primary": "#c8bfff",
+                        "on-background": "#e3e0f1",
+                        "surface": "#12121d",
+                        "error-container": "#93000a",
+                        "surface-bright": "#383845",
+                        "outline-variant": "#474557",
+                        "on-primary": "#2d009d",
+                        "on-primary-fixed-variant": "#4200da",
+                        "primary-fixed-dim": "#c8bfff",
+                        "on-secondary-fixed": "#1a1a2e",
+                        "on-error": "#690005",
+                        "on-primary-container": "#dcd4ff",
+                        "surface-container-low": "#1b1a26",
+                        "surface-variant": "#343440",
+                        "surface-tint": "#c8bfff",
+                        "secondary-container": "#47475d",
+                        "on-tertiary-fixed-variant": "#812800",
+                        "tertiary": "#ffb59b",
+                        "on-tertiary": "#5b1a00",
+                        "secondary-fixed": "#e2e0fc",
+                        "on-tertiary-container": "#ffcfbf",
+                        "on-error-container": "#ffdad6"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans", "Noto Sans Arabic"],
+                        "body": ["Inter", "Noto Sans Arabic"],
+                        "label": ["Inter", "Noto Sans Arabic"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', 'Noto Sans Arabic', sans-serif; }
+        .font-plus-jakarta { font-family: 'Plus Jakarta Sans', 'Noto Sans Arabic', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(41, 41, 53, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(71, 69, 87, 0.2);
+        }
+        .premium-glow {
+            box-shadow: 0 0 30px -10px rgba(91, 46, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen overflow-x-hidden">
+<!-- SideNavBar -->
+<aside class="fixed top-0 right-0 h-full w-[280px] border-l border-outline-variant/20 bg-[#0d0d18]/80 backdrop-blur-xl shadow-2xl shadow-[#0d0d18]/60 flex flex-col h-full py-8 pr-4 pl-2 z-50 font-plus-jakarta text-on-surface-variant leading-relaxed tracking-wide">
+<div class="px-6 mb-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-container to-primary flex items-center justify-center shadow-lg shadow-on-primary-fixed-variant/30">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">mosque</span>
+</div>
+<div>
+<h1 class="text-2xl font-bold text-[#e3e0f1] tracking-tighter">مرحّاب</h1>
+<p class="text-[10px] text-on-surface-variant opacity-60 uppercase tracking-widest">The Digital Majlis</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] px-6 py-3 rounded-xl transition-all duration-300 scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined ml-4" data-icon="dashboard">dashboard</span>
+<span>لوحة الفعالية</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] px-6 py-3 rounded-xl transition-all duration-300 scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined ml-4" data-icon="group">group</span>
+<span>الضيوف</span>
+</a>
+<a class="relative flex items-center justify-start text-[#c8bfff] font-bold before:absolute before:right-0 before:w-1 before:h-6 before:bg-[#5b2eff] before:rounded-full bg-gradient-to-l from-[#5b2eff]/10 to-transparent px-6 py-3 rounded-xl transition-all duration-300 scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined ml-4" data-icon="grid_view" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+<span>الأقسام</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] px-6 py-3 rounded-xl transition-all duration-300 scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined ml-4" data-icon="schedule">schedule</span>
+<span>الجدول الزمني</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] px-6 py-3 rounded-xl transition-all duration-300 scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined ml-4" data-icon="event_seat">event_seat</span>
+<span>توزيع المقاعد</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] px-6 py-3 rounded-xl transition-all duration-300 scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined ml-4" data-icon="chat">chat</span>
+<span>الرسائل</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] px-6 py-3 rounded-xl transition-all duration-300 scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined ml-4" data-icon="badge">badge</span>
+<span>فريق العمل</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-opacity hover:bg-[#292935] hover:text-[#e3e0f1] px-6 py-3 rounded-xl transition-all duration-300 scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined ml-4" data-icon="settings">settings</span>
+<span>الإعدادات</span>
+</a>
+</nav>
+<div class="mt-auto px-4">
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-3">
+<img alt="User Profile" class="w-10 h-10 rounded-full border border-primary/20" data-alt="close up professional portrait of a middle eastern man with a neat beard wearing modern business attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXhSEWefs0EWk-_59-CZKbUXrd5hXMV0hiYmRuhaxr_KSgvW4gIzdtJXDTjPzxQgY3XncRdZyC62zJhBVLiE59Wdl61gUukBxZr2_JI937GiLrma3OHfA24IwNL5EeLUc9FVnm9qpYvoB6nfp88qaHQNT7XOl15_sc3UXR4slZ3iZ3Ld7WVjDApKBBstQuFLA6c5LxuJ2VAZkqxlCQHAfI_vS9CWYuVLbsgM90dNVnKeKR9zy71dn8xWUZ2X3MOXNNjTqeorf9gC_I"/>
+<div>
+<p class="text-sm font-bold text-on-surface">مدير المنصة</p>
+<p class="text-[10px] text-on-surface-variant">PLATFORM ADMIN</p>
+</div>
+</div>
+<button class="w-full py-2 bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant text-xs rounded-lg transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">logout</span>
+                    تسجيل الخروج
+                </button>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="mr-[280px] p-8 min-h-screen relative">
+<!-- Background Accents -->
+<div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="fixed bottom-[10%] right-[10%] w-[400px] h-[400px] bg-tertiary/5 blur-[100px] rounded-full pointer-events-none"></div>
+<!-- TopNavBar -->
+<header class="flex items-center justify-between mb-12 relative z-10">
+<div>
+<h2 class="text-4xl font-extrabold text-on-surface tracking-tight mb-2">إدارة الأقسام</h2>
+<p class="text-on-surface-variant/80 font-medium">تنظيم وتوزيع ضيوف الفعالية حسب الأقسام المخصصة</p>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-12 h-12 flex items-center justify-center rounded-xl glass-panel hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-container to-primary text-on-primary-container font-bold flex items-center gap-2 shadow-lg premium-glow active:scale-95 transition-transform">
+<span class="material-symbols-outlined">add_circle</span>
+                    إضافة قسم جديد
+                </button>
+</div>
+</header>
+<!-- Bento Grid Layout for Sections -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+<!-- Men Section Card -->
+<div class="group relative bg-surface-container-high p-8 rounded-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/10 border border-outline-variant/10">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-8">
+<div class="w-14 h-14 rounded-2xl bg-[#5b2eff]/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="man" style="font-variation-settings: 'FILL' 1;">man</span>
+</div>
+<span class="px-3 py-1 rounded-full bg-secondary-container/30 text-secondary text-[10px] font-bold tracking-widest uppercase">Active Section</span>
+</div>
+<h3 class="text-2xl font-bold text-on-surface mb-6">قسم الرجال</h3>
+<div class="space-y-6 mb-10">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-sm">إجمالي الضيوف المتوقعين</span>
+<span class="font-headline text-xl font-bold text-on-surface">450</span>
+</div>
+<div class="relative h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="absolute top-0 right-0 h-full w-[72%] bg-gradient-to-l from-primary to-primary-container rounded-full"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-sm">عدد الضيوف المؤكدين</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline text-2xl font-black text-primary">324</span>
+<span class="text-on-surface-variant/40 text-xs">/ 450</span>
+</div>
+</div>
+</div>
+<button class="w-full py-4 rounded-xl glass-panel text-on-surface font-bold hover:bg-primary hover:text-on-primary transition-all duration-300 flex items-center justify-center gap-2 group/btn">
+                        إدارة القسم
+                        <span class="material-symbols-outlined text-sm group-hover/btn:-translate-x-1 transition-transform">arrow_back</span>
+</button>
+</div>
+</div>
+<!-- Women Section Card -->
+<div class="group relative bg-surface-container-high p-8 rounded-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/10 border border-outline-variant/10">
+<div class="absolute inset-0 bg-gradient-to-br from-tertiary/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-8">
+<div class="w-14 h-14 rounded-2xl bg-tertiary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-tertiary text-3xl" data-icon="woman" style="font-variation-settings: 'FILL' 1;">woman</span>
+</div>
+<span class="px-3 py-1 rounded-full bg-secondary-container/30 text-secondary text-[10px] font-bold tracking-widest uppercase">Active Section</span>
+</div>
+<h3 class="text-2xl font-bold text-on-surface mb-6">قسم النساء</h3>
+<div class="space-y-6 mb-10">
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-sm">إجمالي الضيوف المتوقعين</span>
+<span class="font-headline text-xl font-bold text-on-surface">380</span>
+</div>
+<div class="relative h-2 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="absolute top-0 right-0 h-full w-[85%] bg-gradient-to-l from-tertiary to-tertiary-container rounded-full"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-on-surface-variant text-sm">عدد الضيوف المؤكدين</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline text-2xl font-black text-tertiary">323</span>
+<span class="text-on-surface-variant/40 text-xs">/ 380</span>
+</div>
+</div>
+</div>
+<button class="w-full py-4 rounded-xl glass-panel text-on-surface font-bold hover:bg-tertiary hover:text-on-tertiary transition-all duration-300 flex items-center justify-center gap-2 group/btn">
+                        إدارة القسم
+                        <span class="material-symbols-outlined text-sm group-hover/btn:-translate-x-1 transition-transform">arrow_back</span>
+</button>
+</div>
+</div>
+<!-- VIP Section Card (Asymmetric Featured Style) -->
+<div class="group relative lg:col-span-1 bg-[#1b1a26] p-8 rounded-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20 border-2 border-primary/20 overflow-hidden">
+<div class="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-[60px]"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-8">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-on-primary-fixed-variant/40">
+<span class="material-symbols-outlined text-on-primary text-3xl" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<span class="px-4 py-1.5 rounded-full bg-primary/20 text-primary text-[11px] font-black tracking-[0.2em] uppercase ring-1 ring-primary/50">Elite Access</span>
+</div>
+<h3 class="text-3xl font-black text-on-surface mb-2">قسم كبار الشخصيات</h3>
+<p class="text-primary text-xs font-bold tracking-widest mb-8 uppercase">VIP Hospitality</p>
+<div class="grid grid-cols-2 gap-4 mb-10">
+<div class="p-4 rounded-xl bg-surface-container-lowest/50 border border-outline-variant/10">
+<p class="text-on-surface-variant text-[10px] uppercase mb-1">Total</p>
+<p class="font-headline text-2xl font-bold text-on-surface">50</p>
+</div>
+<div class="p-4 rounded-xl bg-primary-container/10 border border-primary/20">
+<p class="text-primary text-[10px] uppercase mb-1">Confirmed</p>
+<p class="font-headline text-2xl font-bold text-primary">48</p>
+</div>
+</div>
+<div class="flex -space-x-3 space-x-reverse mb-10">
+<img alt="VIP guest" class="w-10 h-10 rounded-full border-2 border-surface-container-high" data-alt="close up headshot of an elegant person in formal attire for a premium luxury event profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbKIiosu9dt-tLbYr5GC25JAcGDnmX1m5TnALT4LLq8SUW6WNRMlcZHTDLVvIN062DzVis-nYeiURIiLtoJzI9JnKUfe_V93b9VhDC5nAYp-n74LgA4nwSHekez2LNHiYWr8X7n3Q21KVnkrARCHx7pKe3WIe1-_FHGzY5RKUCP473RtkXMZMaOhrN88viZioKNqXZuRfYQnx9FUOVniWDtl01eGz-6EGgnbO3S-qnS9SX8BX2nOGCWUgFBSTSw6mNSKxXGGFRZuZu"/>
+<img alt="VIP guest" class="w-10 h-10 rounded-full border-2 border-surface-container-high" data-alt="professional headshot of a middle eastern dignitary wearing traditional bisht and ghutra in high key lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7ILdfpmMmVvcNPgMqMs8ODrlUFCQl-6xOXBvlJExSzRa2MZG8smOnkoyrrzzaJ55XSZweU09z-Z-PGPFC1aDPNf0N3R4-zetltekQi7DfmPlHPH0HG8kSVSNbonwSnwss2PbZMkYD0s8ajxtJ--3NlXu0CQeM-aB8jFQZFpPrl_6W80iVZrstKifexMMAAbBmiXHePl6Oa7ol2qFxW5zVE3TVO7rANaQwILofichMAyT44N8xD8drgCqdTGOw7WBF_qtxiMCIq_EX"/>
+<img alt="VIP guest" class="w-10 h-10 rounded-full border-2 border-surface-container-high" data-alt="formal studio portrait of a woman wearing high end jewelry and luxury evening wear for a royal event" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDICyOOdnlEeX_jfsIC_tLgZ_pW3bqG5z6EkxSAfoz_To8rLiP7GgA75kDY4cafoOZx0TyyasNfbTlXxRyvpDl_GSA3eR-gD0bJssvDaC2e3rr1FgxZQJQtADSnu70J912W4RVyfrd9Ojm3hvEmzuKbDYEtKc5NprE6HySbdF987nlxdmSYIpc9u1wqgo5jgwAo1xMspAJcxypSelXdPi89WThfBU0PZp6jdyOFbQpVDOabeR8UQbYRIQkKDxYnpgZE5uFUpI7_lNV5"/>
+<div class="w-10 h-10 rounded-full border-2 border-surface-container-high bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">+45</div>
+</div>
+<button class="w-full py-5 rounded-2xl bg-gradient-to-r from-primary-container to-[#4200da] text-on-primary font-black text-lg shadow-xl hover:brightness-110 transition-all duration-300 flex items-center justify-center gap-3">
+                        إدارة القسم الملكي
+                        <span class="material-symbols-outlined text-xl">star_rate</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Sectional Insights (Bonus high-end UI block) -->
+<div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+<div class="glass-panel p-8 rounded-2xl flex items-center justify-between">
+<div>
+<h4 class="text-lg font-bold text-on-surface mb-2">توزيع الحضور الكلي</h4>
+<p class="text-on-surface-variant text-sm mb-6">نسبة توزيع الضيوف عبر جميع الأقسام المتاحة</p>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-xs text-on-surface-variant">رجال (45%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-tertiary"></div>
+<span class="text-xs text-on-surface-variant">نساء (40%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-white"></div>
+<span class="text-xs text-on-surface-variant">VIP (15%)</span>
+</div>
+</div>
+</div>
+<div class="relative w-32 h-32">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-lowest" cx="18" cy="18" fill="none" r="16" stroke-width="4"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="45 100" stroke-width="4"></circle>
+<circle class="stroke-tertiary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="40 100" stroke-dashoffset="-45" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="text-sm font-bold text-on-surface">88%</span>
+</div>
+</div>
+</div>
+<div class="glass-panel p-8 rounded-2xl overflow-hidden relative">
+<img alt="Majlis Atmosphere" class="absolute inset-0 w-full h-full object-cover opacity-20" data-alt="moody high end interior of a luxury majlis with soft purple ambient lighting velvet seating and geometric patterns" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI1sw-MtD0RyGu-X3oad0SzGr8ALW-E1I6dgm2zv953sM7YDFnHAdGr3Ue6uCdaJ1qMcpwkpic7ln6ImtCDRVBiewdsQx_AUyEcZy7_BjhSLNQ8V-XFJ6FqB7Fcu6uzbMH9oRqBqCYSj32Yh_hvv7w057Xve_WLw5GzzWHnr2Ul5woMT52Q_17Bs17VwY6FZ_7y3cGljdVl8imr9YpNgCQeI076FhJTjUxs3MDczLm3p4EEqFcwweu6QQt8w9K6bxiAS9spa6w6D_Q"/>
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<h4 class="text-lg font-bold text-on-surface mb-2">إحصائيات فورية</h4>
+<p class="text-on-surface-variant text-sm">يتم تحديث البيانات تلقائياً عند تأكيد كل دعوة</p>
+</div>
+<div class="mt-8 flex items-end gap-2">
+<div class="w-8 bg-primary/40 h-12 rounded-t-lg"></div>
+<div class="w-8 bg-primary/60 h-20 rounded-t-lg"></div>
+<div class="w-8 bg-primary/80 h-16 rounded-t-lg"></div>
+<div class="w-8 bg-primary h-28 rounded-t-lg"></div>
+<div class="w-8 bg-tertiary/60 h-24 rounded-t-lg"></div>
+<div class="w-8 bg-tertiary h-32 rounded-t-lg"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

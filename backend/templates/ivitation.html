@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Digital Majlis - حفل زفاف</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Noto+Kufi+Arabic:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-container": "#dcd4ff",
+                        "on-secondary-container": "#b8b6d0",
+                        "surface-container": "#1f1e2a",
+                        "primary": "#c8bfff",
+                        "tertiary-fixed": "#ffdbcf",
+                        "tertiary": "#ffb59b",
+                        "error": "#ffb4ab",
+                        "surface-dim": "#12121d",
+                        "primary-container": "#5b2eff",
+                        "background": "#12121d",
+                        "secondary-fixed": "#e2e0fc",
+                        "inverse-on-surface": "#302f3b",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#0d0d18",
+                        "surface-container-low": "#1b1a26",
+                        "on-tertiary-fixed-variant": "#812800",
+                        "secondary-container": "#47475d",
+                        "surface-container-highest": "#343440",
+                        "surface-bright": "#383845",
+                        "primary-fixed-dim": "#c8bfff",
+                        "surface": "#12121d",
+                        "secondary-fixed-dim": "#c6c4df",
+                        "on-secondary-fixed": "#1a1a2e",
+                        "inverse-primary": "#5a2dfe",
+                        "surface-tint": "#c8bfff",
+                        "outline": "#928ea3",
+                        "on-primary-fixed": "#190064",
+                        "outline-variant": "#474557",
+                        "on-error-container": "#ffdad6",
+                        "surface-variant": "#343440",
+                        "inverse-surface": "#e3e0f1",
+                        "on-surface-variant": "#c9c3da",
+                        "on-tertiary-container": "#ffcfbf",
+                        "on-tertiary-fixed": "#380d00",
+                        "on-surface": "#e3e0f1",
+                        "on-secondary": "#2f2e43",
+                        "on-primary-fixed-variant": "#4200da",
+                        "secondary": "#c6c4df",
+                        "primary-fixed": "#e5deff",
+                        "on-secondary-fixed-variant": "#45455b",
+                        "error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb59b",
+                        "tertiary-container": "#aa3800",
+                        "on-background": "#e3e0f1",
+                        "surface-container-high": "#292935",
+                        "on-tertiary": "#5b1a00",
+                        "on-primary": "#2d009d"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "2rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans", "Noto Kufi Arabic"],
+                        "body": ["Inter", "Noto Kufi Arabic"],
+                        "label": ["Inter", "Noto Kufi Arabic"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(41, 41, 53, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 69, 87, 0.2);
+        }
+        body {
+            font-family: 'Inter', 'Noto Kufi Arabic', sans-serif;
+            background-color: #12121d;
+            color: #e3e0f1;
+        }
+        .arabic-display {
+            font-family: 'Noto Kufi Arabic', sans-serif;
+            line-height: 1.6;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #c8bfff 0%, #5b2eff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0d0d18]/80 backdrop-blur-xl flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#c8bfff] hover:opacity-80 transition-opacity cursor-pointer" data-icon="menu">menu</span>
+</div>
+<h1 class="font-['Plus_Jakarta_Sans'] tracking-widest uppercase text-sm text-[#e3e0f1] font-bold tracking-tighter text-xl">Digital Majlis</h1>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#c8bfff] hover:opacity-80 transition-opacity cursor-pointer" data-icon="calendar_today">calendar_today</span>
+</div>
+</header>
+<main class="pt-20 pb-32 max-w-md mx-auto px-4 space-y-12">
+<!-- Hero Section -->
+<section class="relative h-[530px] flex flex-col items-center justify-center text-center space-y-6 overflow-hidden rounded-2xl">
+<div class="absolute inset-0 z-0">
+<img alt="Wedding decor" class="w-full h-full object-cover opacity-40" data-alt="Luxurious wedding hall with elegant floral arrangements and warm ambient lighting in a purple and gold theme" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbe1PJ1x6XD3etoqiPGgBAc0fW01x5tEsXdE80BEItfLF33fOBeSdO0fV4rQr1L-wtxJp6y7uRin78FvhzrRLHHwZMyYTx1mZHbp4FxyBXdUOXBTQqJtaibOCFh_bWiFietAr0VseZwbMajz_qmPFpMtT2tMjLLoUeEC78s5Ke-iI2hPFgCWzq6IcE8Ua3hEZtLtjXOb_hOFwh1rby9Ww8V3onWonarSnqG746pBGk3Or7QI-B_ENa0tYHE8nW_HsNNctDiJVmenoi"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 space-y-4 px-6">
+<span class="label-md uppercase tracking-[0.2em] text-primary font-bold text-xs">حفل زفاف</span>
+<h2 class="arabic-display text-4xl font-extrabold leading-tight">دعوة لحضور حفل زفاف</h2>
+<div class="w-12 h-1 bg-primary mx-auto rounded-full"></div>
+<p class="arabic-display text-2xl font-bold text-on-surface-variant">عائلة بن محمد &amp; عائلة آل ناصر</p>
+</div>
+</section>
+<!-- Description -->
+<section class="space-y-6 text-center px-4">
+<p class="arabic-display text-lg text-on-surface-variant leading-relaxed italic">
+                "بكل المحبة والسرور، نتشرف بدعوتكم لمشاركتنا فرحة العمر في ليلة تزدان بحضوركم، وتكتمل بها سعادتنا."
+            </p>
+</section>
+<!-- Details Grid -->
+<section class="grid grid-cols-1 gap-4">
+<div class="bg-surface-container-high p-6 rounded-xl flex items-center gap-6">
+<div class="bg-primary-container/20 p-4 rounded-lg">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="calendar_month">calendar_month</span>
+</div>
+<div>
+<h3 class="arabic-display text-sm text-on-surface-variant">التاريخ</h3>
+<p class="arabic-display text-xl font-bold">الجمعة، 15 نوفمبر 2024</p>
+</div>
+</div>
+<div class="bg-surface-container-high p-6 rounded-xl flex items-center gap-6">
+<div class="bg-primary-container/20 p-4 rounded-lg">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="schedule">schedule</span>
+</div>
+<div>
+<h3 class="arabic-display text-sm text-on-surface-variant">الوقت</h3>
+<p class="arabic-display text-xl font-bold">الساعة 8:00 مساءً</p>
+</div>
+</div>
+<div class="bg-surface-container-high p-6 rounded-xl space-y-4">
+<div class="flex items-center gap-6">
+<div class="bg-primary-container/20 p-4 rounded-lg">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="location_on">location_on</span>
+</div>
+<div>
+<h3 class="arabic-display text-sm text-on-surface-variant">الموقع</h3>
+<p class="arabic-display text-xl font-bold">قاعة الثريا للمناسبات</p>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-container-highest rounded-xl text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span>عرض الخريطة</span>
+</button>
+</div>
+</section>
+<!-- Gender Sections -->
+<section class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-6 rounded-2xl text-center space-y-4">
+<div class="w-12 h-12 bg-secondary-container rounded-full mx-auto flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="man">man</span>
+</div>
+<h3 class="arabic-display font-bold">مجلس الرجال</h3>
+<p class="text-xs text-on-surface-variant">القاعة الكبرى - البوابة A</p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-2xl text-center space-y-4">
+<div class="w-12 h-12 bg-secondary-container rounded-full mx-auto flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="woman">woman</span>
+</div>
+<h3 class="arabic-display font-bold">قاعة النساء</h3>
+<p class="text-xs text-on-surface-variant">جناح الفيروز - البوابة C</p>
+</div>
+</section>
+<!-- RSVP Section -->
+<section class="bg-surface-container-high p-8 rounded-2xl space-y-8 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-32 h-32 bg-primary/10 blur-[60px] rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+<div class="text-center space-y-2">
+<h2 class="arabic-display text-2xl font-bold">هل ستشرفنا بحضورك؟</h2>
+<p class="text-on-surface-variant text-sm">نرجو تأكيد الحضور لضمان أفضل استقبال</p>
+</div>
+<div class="flex flex-col gap-4">
+<button class="w-full py-4 bg-gradient-to-br from-[#5b2eff] to-[#c8bfff] text-white rounded-xl font-bold shadow-[0px_10px_20px_rgba(66,0,218,0.3)] active:scale-95 transition-transform">
+                    تأكيد الحضور
+                </button>
+<div class="grid grid-cols-2 gap-4">
+<button class="py-4 bg-surface-container-highest rounded-xl text-on-surface font-medium active:scale-95 transition-transform">اعتذار</button>
+<button class="py-4 bg-surface-container-highest rounded-xl text-on-surface font-medium active:scale-95 transition-transform">احتمال الحضور</button>
+</div>
+</div>
+</section>
+<!-- QR Placeholder -->
+<section class="bg-surface-container-lowest p-8 rounded-2xl border border-dashed border-outline-variant text-center space-y-6">
+<p class="text-sm text-on-surface-variant arabic-display">سيظهر رمز الدخول (QR Code) الخاص بك هنا بعد تأكيد الحضور</p>
+<div class="w-48 h-48 mx-auto bg-surface-container-high rounded-xl flex items-center justify-center relative group">
+<span class="material-symbols-outlined text-outline text-6xl opacity-20" data-icon="qr_code_2">qr_code_2</span>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="lock">lock</span>
+</div>
+</div>
+</section>
+<!-- Timeline -->
+<section class="space-y-6">
+<h3 class="arabic-display text-xl font-bold px-2 flex items-center gap-3">
+<span class="w-2 h-8 bg-primary rounded-full"></span>
+                برنامج الحفل
+            </h3>
+<div class="space-y-0 relative">
+<div class="absolute top-0 right-[23px] bottom-0 w-0.5 bg-outline-variant/30"></div>
+<!-- Timeline Item -->
+<div class="relative pr-16 pb-12">
+<div class="absolute right-0 top-1 w-12 h-12 bg-surface-container-high rounded-full border-4 border-background z-10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="door_open">door_open</span>
+</div>
+<div class="space-y-1">
+<span class="text-xs font-bold text-primary tracking-widest">08:00 PM</span>
+<h4 class="arabic-display font-bold text-lg">استقبال الضيوف</h4>
+<p class="text-sm text-on-surface-variant italic">البخور والقهوة العربية الأصيلة</p>
+</div>
+</div>
+<!-- Timeline Item -->
+<div class="relative pr-16 pb-12">
+<div class="absolute right-0 top-1 w-12 h-12 bg-surface-container-high rounded-full border-4 border-background z-10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="restaurant">restaurant</span>
+</div>
+<div class="space-y-1">
+<span class="text-xs font-bold text-primary tracking-widest">10:00 PM</span>
+<h4 class="arabic-display font-bold text-lg">مأدبة العشاء</h4>
+<p class="text-sm text-on-surface-variant italic">بوفيه فاخر يضم أشهى الأطباق</p>
+</div>
+</div>
+<!-- Timeline Item -->
+<div class="relative pr-16">
+<div class="absolute right-0 top-1 w-12 h-12 bg-surface-container-high rounded-full border-4 border-background z-10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="celebration">celebration</span>
+</div>
+<div class="space-y-1">
+<span class="text-xs font-bold text-primary tracking-widest">11:30 PM</span>
+<h4 class="arabic-display font-bold text-lg">بدء المراسم الاحتفالية</h4>
+<p class="text-sm text-on-surface-variant italic">مشاركة الفرحة مع العرسان</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Social Checkmarks -->
+<section class="bg-surface-container-low p-6 rounded-2xl space-y-6">
+<h3 class="arabic-display font-bold">من سيحضر من مجموعتك</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="Friend" class="w-full h-full object-cover" data-alt="Portrait of a smiling Middle Eastern man in smart casual attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt3K90jsg80EX9aM5qBXxAU_4xR96-iTbXOdsLJ-F7V0iqA5YTuT6aczGwiAvEv9u5B1hp-cW7aLTe5HVsMYvDjcKCb2NKQ2sq284hpuDeJueJ0xmheDa9FJ73wCfywPxHQQrl5BQNVpVrE7T0E1Emx4zV76IPSENrjar01FurBZ2OpvWO3NzXtlZMtsOs9BpFryJFnGF1WGDqgJxtx9Ir_ZX2gwke0Uuz63EPl3umIIYVFBxU7Tdip4KhscfryMTOJy14gOrozG4H"/>
+</div>
+<span class="arabic-display font-medium">أحمد العبدالله</span>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-xl opacity-60">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="Friend" class="w-full h-full object-cover" data-alt="Portrait of a professional young woman with a warm smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxryOG30KHPiOb_9iEe_JlxHabZXOpX6yyrpugUnGYY7Zz5BXFVR37qWuOaMGOTnEZSqtvnbGBI3FuHQuXW5bNayeIBdppN6mFW8r7HaWkluFy1owlWNZZVH0Drem1qHnZPG9E7OBhNir6AJYguLBbSEg73WBFGdb5f8NqcsZygZKqCbwnqM_xO_YWQ6Nqiye2Ujx1CjeDT7PNoBc66HzScT6xIHoUrRJhOsb-fdApsAKNmDIaPWOflXE-0wTapYkmT0dEnZHFRpmu"/>
+</div>
+<span class="arabic-display font-medium">سارة محمد</span>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="help">help</span>
+</div>
+</div>
+</section>
+<!-- Message Host -->
+<section class="space-y-4">
+<label class="arabic-display font-bold px-2 block">كلمة تهنئة لأهل الحفل</label>
+<div class="relative">
+<textarea class="w-full bg-surface-container-lowest border-outline-variant/20 rounded-xl p-4 focus:ring-primary focus:border-primary text-on-surface arabic-display h-32" placeholder="اكتب مشاعرك هنا..."></textarea>
+<button class="absolute bottom-4 left-4 bg-primary-container p-2 rounded-lg text-white">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+</section>
+<!-- Media Buttons -->
+<section class="grid grid-cols-2 gap-4">
+<button class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-high rounded-2xl hover:bg-surface-bright transition-colors border border-primary/10">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="live_tv">live_tv</span>
+<span class="arabic-display text-sm font-bold">البث المباشر</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-3 p-6 bg-surface-container-high rounded-2xl hover:bg-surface-bright transition-colors border border-primary/10">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="upload_file">upload_file</span>
+<span class="arabic-display text-sm font-bold">رفع الصور</span>
+</button>
+</section>
+<!-- Contact Coordinator -->
+<section class="bg-surface-container-highest p-6 rounded-2xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="support_agent">support_agent</span>
+</div>
+<div>
+<h4 class="arabic-display font-bold">منسق الحفل</h4>
+<p class="text-xs text-on-surface-variant">لأي استفسارات أو مساعدة</p>
+</div>
+</div>
+<div class="flex gap-2">
+<a class="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+</a>
+<a class="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center" href="#">
+<span class="material-symbols-outlined" data-icon="call">call</span>
+</a>
+</div>
+</section>
+<!-- Footer -->
+<footer class="text-center pt-8 pb-12 space-y-4">
+<h2 class="arabic-display text-2xl font-black gradient-text">مرحاب</h2>
+<p class="text-sm text-on-surface-variant tracking-[0.3em] uppercase font-bold">حيث تبدأ الحفاوة</p>
+<div class="flex justify-center gap-4 pt-4">
+<span class="w-2 h-2 rounded-full bg-primary/20"></span>
+<span class="w-2 h-2 rounded-full bg-primary/50"></span>
+<span class="w-2 h-2 rounded-full bg-primary/20"></span>
+</div>
+</footer>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-6 pb-6 pt-2 bg-[#1b1a26]/90 backdrop-blur-md z-50 rounded-t-[2rem] shadow-[0px_-10px_30px_rgba(13,13,24,0.5)]">
+<a class="flex flex-col items-center justify-center text-[#c9c3da] p-2 hover:text-[#e3e0f1]" href="#">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span class="font-['Plus_Jakarta_Sans'] font-medium text-[10px] uppercase tracking-wider">Invite</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c9c3da] p-2 hover:text-[#e3e0f1]" href="#">
+<span class="material-symbols-outlined" data-icon="schedule">schedule</span>
+<span class="font-['Plus_Jakarta_Sans'] font-medium text-[10px] uppercase tracking-wider">Timeline</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c9c3da] p-2 hover:text-[#e3e0f1]" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-['Plus_Jakarta_Sans'] font-medium text-[10px] uppercase tracking-wider">Guest List</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#5b2eff] to-[#c8bfff] text-white rounded-full p-3 shadow-[0px_10px_20px_rgba(66,0,218,0.3)] transition-all duration-300 ease-in-out scale-110-active" href="#">
+<span class="material-symbols-outlined" data-icon="confirmation_number">confirmation_number</span>
+<span class="font-['Plus_Jakarta_Sans'] font-medium text-[10px] uppercase tracking-wider">RSVP</span>
+</a>
+</nav>
+</body></html>

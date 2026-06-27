@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#12121d",
+                        "primary-container": "#5b2eff",
+                        "inverse-surface": "#e3e0f1",
+                        "tertiary-fixed-dim": "#ffb59b",
+                        "on-error": "#690005",
+                        "tertiary": "#ffb59b",
+                        "on-tertiary-fixed-variant": "#812800",
+                        "surface-bright": "#383845",
+                        "on-background": "#e3e0f1",
+                        "on-tertiary-fixed": "#380d00",
+                        "tertiary-container": "#aa3800",
+                        "on-tertiary-container": "#ffcfbf",
+                        "surface-dim": "#12121d",
+                        "secondary-container": "#47475d",
+                        "on-secondary-fixed-variant": "#45455b",
+                        "error-container": "#93000a",
+                        "secondary": "#c6c4df",
+                        "on-surface-variant": "#c9c3da",
+                        "surface-container": "#1f1e2a",
+                        "inverse-on-surface": "#302f3b",
+                        "surface-container-low": "#1b1a26",
+                        "primary-fixed-dim": "#c8bfff",
+                        "error": "#ffb4ab",
+                        "on-surface": "#e3e0f1",
+                        "on-primary-fixed-variant": "#4200da",
+                        "primary": "#c8bfff",
+                        "on-tertiary": "#5b1a00",
+                        "inverse-primary": "#5a2dfe",
+                        "on-secondary-container": "#b8b6d0",
+                        "on-primary-fixed": "#190064",
+                        "tertiary-fixed": "#ffdbcf",
+                        "surface-container-lowest": "#0d0d18",
+                        "background": "#12121d",
+                        "outline": "#928ea3",
+                        "on-primary": "#2d009d",
+                        "secondary-fixed-dim": "#c6c4df",
+                        "outline-variant": "#474557",
+                        "surface-container-highest": "#343440",
+                        "on-primary-container": "#dcd4ff",
+                        "on-secondary": "#2f2e43",
+                        "secondary-fixed": "#e2e0fc",
+                        "surface-container-high": "#292935",
+                        "surface-variant": "#343440",
+                        "surface-tint": "#c8bfff",
+                        "primary-fixed": "#e5deff",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#1a1a2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "xxl": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #12121d; color: #e3e0f1; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+        .arabic-text { font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.6; }
+    </style>
+</head>
+<body class="bg-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar (Platform Admin) -->
+<aside class="docked fixed right-0 h-full w-[280px] border-l border-[#474557]/20 bg-[#0d0d18] flex flex-col h-full rtl z-50">
+<div class="p-8">
+<div class="flex items-center justify-end gap-4 mb-10">
+<div class="text-right">
+<p class="font-bold text-on-surface text-lg leading-tight">مدير المنصة</p>
+<p class="text-xs text-on-surface-variant opacity-70">نظام مرحّاب لإدارة الفعاليات</p>
+</div>
+<div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Professional portrait of a middle-eastern male executive in a sharp suit with confident expression, studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDYp4zBvZWOEulywSnp4IqoKecY1xthnJP2Ggho0twKX6w3aBNfOXsDEXSaK9xPqZMJrMtz2BZyCxCte-FLw04fIiv2YuJ2CMwnTSKN3-OQ-qGeHYltiZhHFR_fFIOUB_sMTUSrmKG_ZCn-Wjd_mTlIM9rnjGZgxdg5HF7pt1EYlkJvZHAJ_g96wpEBilLwnPNZrWgzBiZinn6l9c-79d7u-t8CKIrP_4wX8SZe2yR8xr2yP-CwFNuhURqbZI4nRhOe5brG8l2CkYL"/>
+</div>
+</div>
+<nav class="space-y-2">
+<a class="flex items-center justify-end gap-3 text-[#c9c3da] py-3 px-6 hover:bg-[#1b1a26] transition-colors rounded-lg group" href="#">
+<span class="arabic-text">لوحة التحكم</span>
+<span class="material-symbols-outlined text-xl group-hover:text-primary">dashboard</span>
+</a>
+<!-- Active Item: الفعاليات -->
+<a class="flex items-center justify-end gap-3 text-[#5B2EFF] border-r-4 border-[#5B2EFF] bg-gradient-to-l from-[#5B2EFF]/10 to-transparent py-3 px-6 transition-all duration-200" href="#">
+<span class="arabic-text font-bold">الفعاليات</span>
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+</a>
+<a class="flex items-center justify-end gap-3 text-[#c9c3da] py-3 px-6 hover:bg-[#1b1a26] transition-colors rounded-lg group" href="#">
+<span class="arabic-text">المستخدمين</span>
+<span class="material-symbols-outlined text-xl group-hover:text-primary">group</span>
+</a>
+<a class="flex items-center justify-end gap-3 text-[#c9c3da] py-3 px-6 hover:bg-[#1b1a26] transition-colors rounded-lg group" href="#">
+<span class="arabic-text">التقارير</span>
+<span class="material-symbols-outlined text-xl group-hover:text-primary">analytics</span>
+</a>
+<a class="flex items-center justify-end gap-3 text-[#c9c3da] py-3 px-6 hover:bg-[#1b1a26] transition-colors rounded-lg group" href="#">
+<span class="arabic-text">الاشتراكات</span>
+<span class="material-symbols-outlined text-xl group-hover:text-primary">card_membership</span>
+</a>
+<a class="flex items-center justify-end gap-3 text-[#c9c3da] py-3 px-6 hover:bg-[#1b1a26] transition-colors rounded-lg group" href="#">
+<span class="arabic-text">الإعدادات</span>
+<span class="material-symbols-outlined text-xl group-hover:text-primary">settings</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-8">
+<div class="bg-surface-container-low p-4 rounded-xxl border border-outline-variant/10">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] uppercase tracking-widest text-primary font-bold">Storage</span>
+<span class="text-[10px] text-on-surface-variant">85%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="mr-[280px] min-h-screen">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 sticky z-40 bg-[#0d0d18]/80 backdrop-blur-xl shadow-[0px_20px_40px_rgba(13,13,24,0.6)]">
+<div class="flex flex-row-reverse justify-between items-center w-full px-8 py-4">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/20"></div>
+<div class="flex items-center gap-3 bg-surface-container-high px-4 py-2 rounded-xl border border-outline-variant/10 cursor-pointer hover:bg-surface-container-highest transition-all group">
+<span class="material-symbols-outlined text-primary-fixed-dim">swap_horiz</span>
+<span class="arabic-text text-sm font-medium">Event Switcher</span>
+</div>
+</div>
+<div class="flex-1 max-w-xl mx-12">
+<div class="relative group">
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl py-3 pr-12 pl-4 text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary/50 transition-all text-right arabic-text" placeholder="البحث عن المناسبات، المنظمين..." type="text"/>
+</div>
+</div>
+<div class="flex items-center">
+<h1 class="text-2xl font-bold bg-gradient-to-r from-[#5B2EFF] to-[#c8bfff] bg-clip-text text-transparent font-headline">مرحّاب</h1>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="p-10">
+<!-- Hero Stats / Filter Header -->
+<div class="flex flex-row-reverse justify-between items-end mb-12">
+<div class="text-right">
+<h2 class="text-4xl font-extrabold text-on-surface mb-2 font-headline tracking-tight">إدارة المناسبات</h2>
+<p class="text-on-surface-variant text-lg arabic-text opacity-80">نظرة شاملة على جميع الفعاليات الجارية والمستقبلية في المنصة.</p>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 bg-primary-container text-on-primary-container px-6 py-3 rounded-xl font-bold arabic-text hover:brightness-110 shadow-[0px_15px_30px_rgba(91,46,255,0.3)] transition-all active:scale-95">
+<span>إضافة مناسبة جديدة</span>
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="p-3 bg-surface-container-high rounded-xl border border-outline-variant/10 text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+</div>
+<!-- Bento Grid of Event Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+<!-- Event Card 1: Active -->
+<div class="group bg-surface-container-high rounded-xxl p-6 border border-outline-variant/5 hover:border-primary/20 transition-all duration-300 relative overflow-hidden flex flex-col h-full">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-50"></div>
+<div class="flex flex-row-reverse justify-between items-start mb-6">
+<div class="flex flex-col items-end">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 arabic-text mb-2">نشط</span>
+<h3 class="text-xl font-bold text-on-surface arabic-text">حفل تدشين الهوية الجديدة</h3>
+</div>
+<div class="w-14 h-14 rounded-xl bg-surface-container-lowest flex items-center justify-center overflow-hidden border border-outline-variant/10">
+<img class="w-full h-full object-cover" data-alt="Modern stage setup with violet and blue laser lighting, futuristic corporate event atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsFtDBNVgqRrPzThc5Z8TxSckZijdIp2X5G9iv765TzAOH6sivStpZIsEAEc9LxpAzAJa-x7ROUddnYWwWiCd98ObzIRMzVMH6ca9Pq6BN4zoAY4FnMxhhaojXrw1QPtcMQpbJouK3cpH2KkrTBfSr4B8L_rjlTIa1xWkUCLaz63cwM-W1leM7p5hDpSJLZrsAqBOXjGkuC-SWA90PNW8ZXhqEY-FWSqGw4c62hbm5AWHjYPHYM_hbnGtOaIPXPay0cHBFqhtRI32W"/>
+</div>
+</div>
+<div class="space-y-4 mb-8 flex-grow">
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">person</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">صاحب الفعالية</p>
+<p class="text-sm font-semibold arabic-text">شركة الحلول المتقدمة</p>
+</div>
+</div>
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">group</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">عدد المدعوين</p>
+<p class="text-sm font-semibold arabic-text">1,250 ضيف</p>
+</div>
+</div>
+</div>
+<div class="flex flex-row-reverse justify-between items-center pt-6 border-t border-outline-variant/10">
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-primary hover:bg-surface-container-highest transition-all group/btn">
+<span class="material-symbols-outlined text-xl group-hover/btn:scale-110">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-tertiary hover:bg-surface-container-highest transition-all group/btn">
+<span class="material-symbols-outlined text-xl group-hover/btn:scale-110">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-error hover:bg-surface-container-highest transition-all group/btn">
+<span class="material-symbols-outlined text-xl group-hover/btn:scale-110">delete</span>
+</button>
+</div>
+<p class="text-xs text-on-surface-variant arabic-text">تم التعديل: منذ ساعة</p>
+</div>
+</div>
+<!-- Event Card 2: Draft -->
+<div class="group bg-surface-container-high rounded-xxl p-6 border border-outline-variant/5 hover:border-primary/20 transition-all duration-300 relative overflow-hidden flex flex-col h-full">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-400 opacity-50"></div>
+<div class="flex flex-row-reverse justify-between items-start mb-6">
+<div class="flex flex-col items-end">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20 arabic-text mb-2">مسودة</span>
+<h3 class="text-xl font-bold text-on-surface arabic-text">مؤتمر الاستدامة السنوي</h3>
+</div>
+<div class="w-14 h-14 rounded-xl bg-surface-container-lowest flex items-center justify-center overflow-hidden border border-outline-variant/10">
+<img class="w-full h-full object-cover opacity-60 grayscale group-hover:grayscale-0 transition-all" data-alt="Large empty conference hall with eco-friendly digital banners and green decorative plants" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrKcxwu3eykDMqERqRf_gL_01JZGImmc9zQLsb5yV5upjcc9Qa-HVGOCF3OanCoK8BWKaL0MRHu2JaSDlx1_5gOuAgmqYiRLmYysJ2EmmryZZ0vsMVindKMAuTpvEg71AIM_of6V6wsn2skywr-jAI4o3t4eYSFBJ3elfwgoUOTjKqIipUye8kcyUovGevulYW0XRPaBSPATA08ZP-IhOfeLqEYaUPX7lO3ZTOTVM9ZFebFRJGbrCLufKN8zjFH0N4V9gCz-PYS-tt"/>
+</div>
+</div>
+<div class="space-y-4 mb-8 flex-grow">
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">person</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">صاحب الفعالية</p>
+<p class="text-sm font-semibold arabic-text">مركز الابتكار الأخضر</p>
+</div>
+</div>
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">group</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">عدد المدعوين</p>
+<p class="text-sm font-semibold arabic-text">450 ضيف</p>
+</div>
+</div>
+</div>
+<div class="flex flex-row-reverse justify-between items-center pt-6 border-t border-outline-variant/10">
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-tertiary transition-all">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-error transition-all">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+<p class="text-xs text-on-surface-variant arabic-text">تم التعديل: يوم أمس</p>
+</div>
+</div>
+<!-- Event Card 3: Completed -->
+<div class="group bg-surface-container-high rounded-xxl p-6 border border-outline-variant/5 hover:border-primary/20 transition-all duration-300 relative overflow-hidden flex flex-col h-full">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-400 opacity-50"></div>
+<div class="flex flex-row-reverse justify-between items-start mb-6">
+<div class="flex flex-col items-end">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20 arabic-text mb-2">مكتمل</span>
+<h3 class="text-xl font-bold text-on-surface arabic-text">معرض الفن الرقمي 2023</h3>
+</div>
+<div class="w-14 h-14 rounded-xl bg-surface-container-lowest flex items-center justify-center overflow-hidden border border-outline-variant/10">
+<img class="w-full h-full object-cover" data-alt="Abstract colorful digital projections on dark gallery walls with silhouettes of guests observing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTrfGJgFq5nON2LtqdYmq7kajKJ2YK_4Ag3LZ5ib0QE6xUSHSCAQBSiw5MDxukxypPRZugeam68kN8n-5e13fw-cvW2atYGhKmTHrYX3an254rtLQbJP0v9I5j05ulZUM57QIW55_Gh6ptwge_Xgch2La_-QC1EOywtpabD9B990BjuFmnS8X2JuHpnV60bHQIrIZjCnocXrkvSDGeNOj3kdu4tzonlqIGqh9fKY_NiKewiiBdPJqsFy0q56oXqOLYHzNPgSdD5cd7"/>
+</div>
+</div>
+<div class="space-y-4 mb-8 flex-grow">
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">person</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">صاحب الفعالية</p>
+<p class="text-sm font-semibold arabic-text">هيئة الفنون البصرية</p>
+</div>
+</div>
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">group</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">عدد المدعوين</p>
+<p class="text-sm font-semibold arabic-text">3,000 ضيف</p>
+</div>
+</div>
+</div>
+<div class="flex flex-row-reverse justify-between items-center pt-6 border-t border-outline-variant/10">
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-tertiary transition-all">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-error transition-all">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+<p class="text-xs text-on-surface-variant arabic-text">أرشيف: 12 ديسمبر</p>
+</div>
+</div>
+<!-- Event Card 4: Active -->
+<div class="group bg-surface-container-high rounded-xxl p-6 border border-outline-variant/5 hover:border-primary/20 transition-all duration-300 relative overflow-hidden flex flex-col h-full">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-50"></div>
+<div class="flex flex-row-reverse justify-between items-start mb-6">
+<div class="flex flex-col items-end">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 arabic-text mb-2">نشط</span>
+<h3 class="text-xl font-bold text-on-surface arabic-text">ملتقى ريادة الأعمال</h3>
+</div>
+<div class="w-14 h-14 rounded-xl bg-surface-container-lowest flex items-center justify-center overflow-hidden border border-outline-variant/10">
+<img class="w-full h-full object-cover" data-alt="Bright high-tech networking space with people interacting in professional business attire, blurred background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2Jdcps3CE1pP16ZqT4Jy6mwR7Pi9LvoFWqgAjloBnGBGdnBwNu-0oXvbA4bxabVtq9PJUWhI1aWI46NF74iRnnNo22acwv_4G0j-E6viLa-Tw0qaSDCSzyTYCoJwRzJ6LY7NCNrVLXHfNquCy7ETiAaj90qSfuALHG1aUWzhk74vogpEmtee6frCqM4spM3vAbfJpGeiYw15FzqXIESD_RBz7zlfHOCWG3Lt_OfsH8ZQIvaBO4GtNaBZcCz4YGl1X0q9rFpp4JNzq"/>
+</div>
+</div>
+<div class="space-y-4 mb-8 flex-grow">
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">person</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">صاحب الفعالية</p>
+<p class="text-sm font-semibold arabic-text">مبادرة مستقبل الوطن</p>
+</div>
+</div>
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">group</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">عدد المدعوين</p>
+<p class="text-sm font-semibold arabic-text">850 ضيف</p>
+</div>
+</div>
+</div>
+<div class="flex flex-row-reverse justify-between items-center pt-6 border-t border-outline-variant/10">
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-tertiary transition-all">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-error transition-all">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+<p class="text-xs text-on-surface-variant arabic-text">تم التعديل: منذ 3 ساعات</p>
+</div>
+</div>
+<!-- Event Card 5: Draft -->
+<div class="group bg-surface-container-high rounded-xxl p-6 border border-outline-variant/5 hover:border-primary/20 transition-all duration-300 relative overflow-hidden flex flex-col h-full">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-400 opacity-50"></div>
+<div class="flex flex-row-reverse justify-between items-start mb-6">
+<div class="flex flex-col items-end">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20 arabic-text mb-2">مسودة</span>
+<h3 class="text-xl font-bold text-on-surface arabic-text">حفل تكريم الموظفين المثاليين</h3>
+</div>
+<div class="w-14 h-14 rounded-xl bg-surface-container-lowest flex items-center justify-center overflow-hidden border border-outline-variant/10">
+<img class="w-full h-full object-cover opacity-60" data-alt="Elegant banquet table setting with crystal glasses, fine china, and warm golden candle lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApL2pM1bVu2phTp5ZqO7xXyn_Y6KOn_MrXtP3dfWLlswuzI8vSM76ZRD1NjhUq-MjZAVONtuBARLorZrx1kMSIpBgAxD2-uJcc31ik-iXWOfxioVXKth94qu6cQUS55rDaay_pZSDLIf69nA0C3O8eMa_CHwcuJ0NYlqEMNCANrn5ZF8fIxrl3oULUS0VUTjXvZktWu1TIWeqPRVCQuyK0Up1p_-KsoZuWB34q6g9j_fLT8rQUazRArCzHARQFNIJuapbPHYAT5s_C"/>
+</div>
+</div>
+<div class="space-y-4 mb-8 flex-grow">
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">person</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">صاحب الفعالية</p>
+<p class="text-sm font-semibold arabic-text">مجموعة بن لادن العالمية</p>
+</div>
+</div>
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">group</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">عدد المدعوين</p>
+<p class="text-sm font-semibold arabic-text">150 ضيف</p>
+</div>
+</div>
+</div>
+<div class="flex flex-row-reverse justify-between items-center pt-6 border-t border-outline-variant/10">
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-tertiary transition-all">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-error transition-all">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+<p class="text-xs text-on-surface-variant arabic-text">تم التعديل: 18 يناير</p>
+</div>
+</div>
+<!-- Event Card 6: Completed -->
+<div class="group bg-surface-container-high rounded-xxl p-6 border border-outline-variant/5 hover:border-primary/20 transition-all duration-300 relative overflow-hidden flex flex-col h-full">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-400 opacity-50"></div>
+<div class="flex flex-row-reverse justify-between items-start mb-6">
+<div class="flex flex-col items-end">
+<span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20 arabic-text mb-2">مكتمل</span>
+<h3 class="text-xl font-bold text-on-surface arabic-text">ندوة مستقبل الطاقة النظيفة</h3>
+</div>
+<div class="w-14 h-14 rounded-xl bg-surface-container-lowest flex items-center justify-center overflow-hidden border border-outline-variant/10">
+<img class="w-full h-full object-cover" data-alt="Digital representation of clean energy network with glowing blue icons over a dark tech background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9jndIaXKlwoek-Ob7yuxCc_rWY2WvY66dhY3zuRiPHbumg-_7EaOwCsRBuWNmXnn3d3eDe4jj_XcBGQmcBBEzB_a2uexIPFi2ej3w9zsSuFoH7IuOXU44PWDnAgxBZhOVE2zItOXej0gL8EogfmwUbCeRYxNCmrZ8-YAiYcHeUzP2TS-kxjOYIhXJTCb36sr4qaR3EdUl4-kJkUpwnIJ4tSYhuTCLZynFdc3TMX7VvNo98hairIaH7mx_OuxrzCbL50GVyXPBU6Cd"/>
+</div>
+</div>
+<div class="space-y-4 mb-8 flex-grow">
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">person</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">صاحب الفعالية</p>
+<p class="text-sm font-semibold arabic-text">وزارة الطاقة</p>
+</div>
+</div>
+<div class="flex flex-row-reverse items-center gap-3">
+<span class="material-symbols-outlined text-primary/60 text-lg">group</span>
+<div class="text-right">
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">عدد المدعوين</p>
+<p class="text-sm font-semibold arabic-text">2,100 ضيف</p>
+</div>
+</div>
+</div>
+<div class="flex flex-row-reverse justify-between items-center pt-6 border-t border-outline-variant/10">
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-tertiary transition-all">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-container-lowest text-on-surface-variant hover:text-error transition-all">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+<p class="text-xs text-on-surface-variant arabic-text">أرشيف: 05 يناير</p>
+</div>
+</div>
+</div>
+</div>
+<!-- FAB for Quick Actions (Hidden per suppression rule on management screens, but included if needed contextually) -->
+<!-- Suppressed for Focus -->
+</main>
+</body></html>

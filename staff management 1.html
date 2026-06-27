@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>مرحّاب - فريق العمل</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#190064",
+                    "surface-dim": "#12121d",
+                    "outline": "#928ea3",
+                    "on-tertiary-fixed": "#380d00",
+                    "inverse-on-surface": "#302f3b",
+                    "secondary-fixed-dim": "#c6c4df",
+                    "tertiary-fixed": "#ffdbcf",
+                    "tertiary-container": "#aa3800",
+                    "surface-container-lowest": "#0d0d18",
+                    "inverse-surface": "#e3e0f1",
+                    "surface-container-high": "#292935",
+                    "on-secondary-fixed-variant": "#45455b",
+                    "error": "#ffb4ab",
+                    "background": "#12121d",
+                    "surface-container-highest": "#343440",
+                    "primary-container": "#5b2eff",
+                    "surface-container": "#1f1e2a",
+                    "inverse-primary": "#5a2dfe",
+                    "on-secondary": "#2f2e43",
+                    "on-surface": "#e3e0f1",
+                    "primary-fixed": "#e5deff",
+                    "on-secondary-container": "#b8b6d0",
+                    "on-surface-variant": "#c9c3da",
+                    "tertiary-fixed-dim": "#ffb59b",
+                    "secondary": "#c6c4df",
+                    "primary": "#c8bfff",
+                    "on-background": "#e3e0f1",
+                    "surface": "#12121d",
+                    "error-container": "#93000a",
+                    "surface-bright": "#383845",
+                    "outline-variant": "#474557",
+                    "on-primary": "#2d009d",
+                    "on-primary-fixed-variant": "#4200da",
+                    "primary-fixed-dim": "#c8bfff",
+                    "on-secondary-fixed": "#1a1a2e",
+                    "on-error": "#690005",
+                    "on-primary-container": "#dcd4ff",
+                    "surface-container-low": "#1b1a26",
+                    "surface-variant": "#343440",
+                    "surface-tint": "#c8bfff",
+                    "secondary-container": "#47475d",
+                    "on-tertiary-fixed-variant": "#812800",
+                    "tertiary": "#ffb59b",
+                    "on-tertiary": "#5b1a00",
+                    "secondary-fixed": "#e2e0fc",
+                    "on-tertiary-container": "#ffcfbf",
+                    "on-error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "1rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #12121d; color: #e3e0f1; }
+        .font-plus-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-texture { background: linear-gradient(135deg, rgba(91, 46, 255, 0.1) 0%, rgba(200, 191, 255, 0.05) 100%); backdrop-filter: blur(20px); }
+        .primary-glow { box-shadow: 0px 15px 30px -5px rgba(66, 0, 218, 0.3); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar (RTL) -->
+<aside class="fixed top-0 right-0 h-full w-[280px] border-l border-outline-variant/20 bg-[#0d0d18]/80 backdrop-blur-xl shadow-2xl shadow-[#0d0d18]/60 z-50 flex flex-col h-full py-8 pr-4 pl-2 font-plus-jakarta text-on-surface-variant leading-relaxed tracking-wide">
+<div class="px-6 mb-12">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-container to-primary flex items-center justify-center primary-glow">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">fluid</span>
+</div>
+<div>
+<h1 class="text-2xl font-bold text-[#e3e0f1] tracking-tighter">مرحّاب</h1>
+<p class="text-[10px] text-primary/60 font-medium tracking-[0.2em] uppercase">The Digital Majlis</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-2 overflow-y-auto hide-scrollbar">
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-all duration-300 hover:bg-[#292935] px-6 py-3.5 rounded-r-full group" href="#">
+<span class="material-symbols-outlined ml-4 group-hover:text-primary">dashboard</span>
+<span class="text-sm">لوحة الفعالية</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-all duration-300 hover:bg-[#292935] px-6 py-3.5 rounded-r-full group" href="#">
+<span class="material-symbols-outlined ml-4 group-hover:text-primary">group</span>
+<span class="text-sm">الضيوف</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-all duration-300 hover:bg-[#292935] px-6 py-3.5 rounded-r-full group" href="#">
+<span class="material-symbols-outlined ml-4 group-hover:text-primary">grid_view</span>
+<span class="text-sm">الأقسام</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-all duration-300 hover:bg-[#292935] px-6 py-3.5 rounded-r-full group" href="#">
+<span class="material-symbols-outlined ml-4 group-hover:text-primary">schedule</span>
+<span class="text-sm">الجدول الزمني</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-all duration-300 hover:bg-[#292935] px-6 py-3.5 rounded-r-full group" href="#">
+<span class="material-symbols-outlined ml-4 group-hover:text-primary">event_seat</span>
+<span class="text-sm">توزيع المقاعد</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-all duration-300 hover:bg-[#292935] px-6 py-3.5 rounded-r-full group" href="#">
+<span class="material-symbols-outlined ml-4 group-hover:text-primary">chat</span>
+<span class="text-sm">الرسائل</span>
+</a>
+<!-- Active Navigation -->
+<a class="relative flex items-center justify-start text-[#c8bfff] font-bold before:absolute before:right-0 before:w-1 before:h-6 before:bg-[#5b2eff] before:rounded-full bg-gradient-to-l from-[#5b2eff]/10 to-transparent px-6 py-3.5 rounded-r-full" href="#">
+<span class="material-symbols-outlined ml-4" style="font-variation-settings: 'FILL' 1;">badge</span>
+<span class="text-sm">فريق العمل</span>
+</a>
+<a class="flex items-center justify-start text-[#c9c3da] opacity-70 hover:opacity-100 transition-all duration-300 hover:bg-[#292935] px-6 py-3.5 rounded-r-full group" href="#">
+<span class="material-symbols-outlined ml-4 group-hover:text-primary">settings</span>
+<span class="text-sm">الإعدادات</span>
+</a>
+</nav>
+<div class="mt-auto px-6 pt-6 border-t border-outline-variant/10">
+<div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-2xl">
+<img class="w-10 h-10 rounded-xl object-cover" data-alt="portrait of a professional Middle Eastern man in business attire, studio lighting, confident expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFg-XBouO4hES7zh3ojsNjMCgs7pwJAi6rxgcpjStQzrGcBTQMwKwXM6CxH-rPNvMuR152VrsL1LTxLeHnCVA_t9_eBeZvTSb9hKYfn0xhSnGiw1G9079K9wYByXW6SCxowNb8U2FsRDKyVaKIond_8IRR3VLeB7vSY0ZQHQW4c0mMlIms_HgBdNTcMK-BrQjU0EEIKgHF3unfrEJlffkORFq7CdUdURVVmSXll1H8KTi7YUUl1NjrsJ9VH7ltEnNzNMKd9jLMg1qc"/>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">مدير المنصة</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Admin Account</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 right-[280px] h-16 bg-[#0d0d18]/80 backdrop-blur-xl z-40 flex items-center justify-between px-8 border-b border-[#474557]/20 font-plus-jakarta text-on-surface-variant">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-xl border border-outline-variant/10 cursor-pointer hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-primary text-lg">event</span>
+<span class="text-sm font-semibold">حفل الافتتاح الملكي 2024</span>
+<span class="material-symbols-outlined text-on-surface-variant/50 text-base">expand_more</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#292935]/50 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-[#0d0d18]"></span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[#292935]/50 transition-colors">
+<span class="material-symbols-outlined">apps</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="mr-[280px] pt-24 pb-12 px-10 min-h-screen bg-surface">
+<!-- Page Header -->
+<div class="flex items-center justify-between mb-10">
+<div class="space-y-1">
+<h2 class="text-4xl font-extrabold text-on-surface tracking-tight">إدارة فريق العمل</h2>
+<p class="text-on-surface-variant text-lg">تحكم في صلاحيات المنظمين والمنسقين</p>
+</div>
+<button class="flex items-center gap-2 px-6 py-3 bg-primary-container text-on-primary-container rounded-xl font-bold primary-glow hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+<span>إضافة عضو جديد</span>
+</button>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Stats Column -->
+<div class="col-span-12 lg:col-span-3 space-y-6">
+<div class="bg-surface-container-low p-6 rounded-xl space-y-4">
+<p class="text-xs font-bold text-on-surface-variant/60 uppercase tracking-widest">إجمالي الفريق</p>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-black text-primary tracking-tighter">12</span>
+<span class="text-on-surface-variant">منظم</span>
+</div>
+<div class="pt-4 space-y-2">
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">الحالة النشطة</span>
+<span class="text-primary font-bold">8</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-2/3"></div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl space-y-6">
+<h3 class="text-sm font-bold text-on-surface tracking-wide">توزيع الأدوار</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#c8bfff]"></div>
+<span class="text-sm text-on-surface-variant">منسق رجال</span>
+</div>
+<span class="text-sm font-bold">4</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#ffb59b]"></div>
+<span class="text-sm text-on-surface-variant">منسقة نساء</span>
+</div>
+<span class="text-sm font-bold">3</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary-container"></div>
+<span class="text-sm text-on-surface-variant">مدير دخول</span>
+</div>
+<span class="text-sm font-bold">5</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Team Members List -->
+<div class="col-span-12 lg:col-span-9">
+<div class="bg-surface-container-low rounded-xl overflow-hidden">
+<!-- Table Header -->
+<div class="grid grid-cols-12 gap-4 px-8 py-5 bg-surface-container-high/50 border-b border-outline-variant/10">
+<div class="col-span-4 text-xs font-bold text-on-surface-variant uppercase tracking-widest">العضو والدور</div>
+<div class="col-span-2 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-center">ماسح QR</div>
+<div class="col-span-2 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-center">تعديل الضيوف</div>
+<div class="col-span-2 text-xs font-bold text-on-surface-variant uppercase tracking-widest text-center">إرسال رسائل</div>
+<div class="col-span-2"></div>
+</div>
+<!-- Member Row 1 -->
+<div class="grid grid-cols-12 gap-4 px-8 py-6 items-center border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors group">
+<div class="col-span-4 flex items-center gap-4">
+<div class="relative">
+<img class="w-12 h-12 rounded-xl object-cover" data-alt="professional portrait of a man with spectacles, modern dark suit, soft natural lighting, high end corporate photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKJ-wbz1iwRbZgL-ZxsMux6Cw2iuZt7oXrgcjh-_WskqI3cDTGAZbYtheejpYcEXbUComwqFABExsSFlgIzLII1vbzymhyr1WpTL01sk2Z60vP4dXvW8_uMWt4DliLjGgcgOws379G661fHToJrdsF62WFn86CNXztJbCxn0fkBg2Okxn8HH8wewB6xsTXTW65CMpUegm9XUHglAaePjHVDTXTyTZS3zypG4Cqj4pedh6skg7PKzMf9X5-ilVpEiXWToE5PtpVKxQh"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-surface-container-low rounded-full"></div>
+</div>
+<div>
+<h4 class="font-bold text-on-surface group-hover:text-primary transition-colors">عمر بن خالد</h4>
+<span class="text-xs px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded-md font-medium">منسق رجال</span>
+</div>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-end gap-2">
+<button class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-highest text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-error-container/20 text-error transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Member Row 2 -->
+<div class="grid grid-cols-12 gap-4 px-8 py-6 items-center border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors group">
+<div class="col-span-4 flex items-center gap-4">
+<div class="relative">
+<img class="w-12 h-12 rounded-xl object-cover" data-alt="portrait of a young woman with dark hair, minimal makeup, elegant professional style, soft daylight background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPDEFgb2cV2Dsm9fL7wK8VzN1HiN8_JHJtWjInLno9zKKwfmeavX9UbAUlpOYn0lOfBCDj2g6NxeOxNS_u5P98EG6tTDycsylEy2YyqdORSz-pFOUnbmQKaRuy3v94ls9QKx3cgfVxtEWMKqOFLfGMCKWL3G5oOiMRBsJ7I25FOYzFHvWc2ZHtCWNlMLsbhQ11UCk3Egfg-95PLPk1JrtQsSt6eZBNWKj7QYbiISwNmaWAikpK3oINmkPc2-XpMaoiWw5AMFBtuo74"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-surface-container-low rounded-full"></div>
+</div>
+<div>
+<h4 class="font-bold text-on-surface group-hover:text-primary transition-colors">ليلى المنصور</h4>
+<span class="text-xs px-2 py-0.5 bg-tertiary-fixed-dim text-on-tertiary-fixed-variant rounded-md font-medium">منسقة نساء</span>
+</div>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-end gap-2">
+<button class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-highest text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-error-container/20 text-error transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Member Row 3 -->
+<div class="grid grid-cols-12 gap-4 px-8 py-6 items-center border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors group">
+<div class="col-span-4 flex items-center gap-4">
+<div class="relative">
+<img class="w-12 h-12 rounded-xl object-cover grayscale" data-alt="side profile of a professional man, sleek grooming, cinematic lighting, dark background, premium feel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpfKVeKmVrOV5cVxyyEErx3aVyYiLq18iLpUZHO9jdspuhJWp-tlfUdOQOvktlFT9ocZa75gaikTC2eFDRJQ1zyIsmhtjiTlC5M4oX5kFM0YEVY6ityVNvaqEzO30tknVzp14hYbaIQ8EZ0SqMMUcVwLXaCFkhgXH_W_4-aCkaHxjRGCLBPDTPnpVG8_gWiZsH0R7JlHrZE_8OF_Xj2vbQPKS38OfX1emLKK3hfVrr-0xar9F-Bg67w6QjQWpysprmzVgcj3V3Hj8u"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-on-surface-variant/30 border-4 border-surface-container-low rounded-full"></div>
+</div>
+<div>
+<h4 class="font-bold text-on-surface group-hover:text-primary transition-colors">فهد السديري</h4>
+<span class="text-xs px-2 py-0.5 bg-primary-container text-on-primary-container rounded-md font-medium">مدير دخول</span>
+</div>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-end gap-2">
+<button class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-highest text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-error-container/20 text-error transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Member Row 4 -->
+<div class="grid grid-cols-12 gap-4 px-8 py-6 items-center border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors group">
+<div class="col-span-4 flex items-center gap-4">
+<div class="relative">
+<img class="w-12 h-12 rounded-xl object-cover" data-alt="headshot of a smiling young woman, creative professional, studio portrait with purple lighting accents, high resolution" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJ9d9x9rhnf7xR9lHILjFEFTDwgzQdnrGfAM48Apf3a5qrO68AcAUR9dNB7vvA7sNhayF2GcsT-rO4W7IVFZJhqgY-VCSVOO1Hu8p9TPz-hlWN5pMIG0E1wnPjFkCL1BT0DE_whQn3LA1acowic6tu3WcNixr6ZBJg2-andqBBxNNyw3d_HuZNFwq86gRphmmqehWh5gSsHFobDwCQxda8yEHifrG6tqbYXcypvsJbjT6BkAF5bechm9vHsCf0idkRJK_Ot5H9xyj2"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-surface-container-low rounded-full"></div>
+</div>
+<div>
+<h4 class="font-bold text-on-surface group-hover:text-primary transition-colors">سارة العتيبي</h4>
+<span class="text-xs px-2 py-0.5 bg-outline-variant/20 text-on-surface-variant rounded-md font-medium">دعم فني</span>
+</div>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-center">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="col-span-2 flex justify-end gap-2">
+<button class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-surface-container-highest text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-error-container/20 text-error transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Pagination/Load More (Subtle) -->
+<div class="mt-8 flex justify-center">
+<button class="px-8 py-2.5 rounded-full border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all font-medium">عرض المزيد من الأعضاء</button>
+</div>
+</div>
+</div>
+<!-- Recent Activity Logs (Asymmetric Feature) -->
+<div class="mt-16 bg-surface-container-low p-8 rounded-xl relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] -mr-32 -mt-32"></div>
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold tracking-tight">سجل نشاط الفريق (آخر 24 ساعة)</h3>
+<span class="text-xs text-primary bg-primary/10 px-3 py-1 rounded-full font-bold">تحديث مباشر</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="flex items-start gap-4 p-4 rounded-xl hover:bg-surface-container-high transition-colors border border-outline-variant/5">
+<div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+<span class="material-symbols-outlined text-sm">qr_code_scanner</span>
+</div>
+<div>
+<p class="text-sm text-on-surface">مسح 42 رمز QR بنجاح</p>
+<p class="text-[10px] text-on-surface-variant mt-1">عمر بن خالد • منذ 5 دقائق</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 rounded-xl hover:bg-surface-container-high transition-colors border border-outline-variant/5">
+<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm">mail</span>
+</div>
+<div>
+<p class="text-sm text-on-surface">إرسال 120 رسالة تذكيرية</p>
+<p class="text-[10px] text-on-surface-variant mt-1">ليلى المنصور • منذ 12 دقيقة</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 rounded-xl hover:bg-surface-container-high transition-colors border border-outline-variant/5">
+<div class="w-8 h-8 rounded-lg bg-tertiary-fixed-dim/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+</div>
+<div>
+<p class="text-sm text-on-surface">تحديث بيانات كبار الشخصيات</p>
+<p class="text-[10px] text-on-surface-variant mt-1">فهد السديري • منذ ساعة</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

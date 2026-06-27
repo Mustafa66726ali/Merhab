@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>إدارة المستخدمين - مرحّاب</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=Noto+Kufi+Arabic:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-container": "#5b2eff",
+                    "on-tertiary": "#5b1a00",
+                    "on-error": "#690005",
+                    "primary-fixed": "#e5deff",
+                    "on-surface-variant": "#c9c3da",
+                    "tertiary-fixed-dim": "#ffb59b",
+                    "surface-tint": "#c8bfff",
+                    "inverse-primary": "#5a2dfe",
+                    "on-tertiary-fixed": "#380d00",
+                    "tertiary-fixed": "#ffdbcf",
+                    "tertiary-container": "#aa3800",
+                    "surface-container-highest": "#343440",
+                    "surface-container-high": "#292935",
+                    "secondary-fixed": "#e2e0fc",
+                    "inverse-surface": "#e3e0f1",
+                    "primary-fixed-dim": "#c8bfff",
+                    "error-container": "#93000a",
+                    "surface": "#12121d",
+                    "on-tertiary-container": "#ffcfbf",
+                    "on-surface": "#e3e0f1",
+                    "error": "#ffb4ab",
+                    "primary": "#c8bfff",
+                    "outline": "#928ea3",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#4200da",
+                    "on-secondary-fixed": "#1a1a2e",
+                    "background": "#12121d",
+                    "inverse-on-surface": "#302f3b",
+                    "on-primary-container": "#dcd4ff",
+                    "surface-container-low": "#1b1a26",
+                    "surface-dim": "#12121d",
+                    "surface-container-lowest": "#0d0d18",
+                    "on-primary": "#2d009d",
+                    "on-background": "#e3e0f1",
+                    "secondary-fixed-dim": "#c6c4df",
+                    "secondary-container": "#47475d",
+                    "tertiary": "#ffb59b",
+                    "on-secondary-container": "#b8b6d0",
+                    "on-secondary-fixed-variant": "#45455b",
+                    "on-secondary": "#2f2e43",
+                    "on-primary-fixed": "#190064",
+                    "secondary": "#c6c4df",
+                    "surface-container": "#1f1e2a",
+                    "on-tertiary-fixed-variant": "#812800",
+                    "outline-variant": "#474557",
+                    "surface-bright": "#383845",
+                    "surface-variant": "#343440"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1.25rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans", "Noto Kufi Arabic"],
+                    "body": ["Inter", "Noto Kufi Arabic"],
+                    "label": ["Inter", "Noto Kufi Arabic"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', 'Noto Kufi Arabic', sans-serif; }
+        .plus-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { backdrop-filter: blur(20px); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container/30">
+<!-- App Shell Layout -->
+<div class="flex min-h-screen">
+<!-- SideNavBar (RTL) -->
+<aside class="fixed top-0 right-0 h-screen w-[280px] bg-[#0d0d18]/80 backdrop-blur-xl border-l border-[#474557]/20 shadow-[0px_20px_40px_rgba(13,13,24,0.6)] flex flex-col p-6 rtl z-50">
+<div class="flex items-center gap-4 mb-10">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-container to-primary flex items-center justify-center shadow-lg shadow-primary-container/20">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">castle</span>
+</div>
+<div>
+<h1 class="text-lg font-bold tracking-tight text-[#e3e0f1]">المجلس الرقمي</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant">مدير المنصة</p>
+</div>
+</div>
+<nav class="space-y-2 flex-1">
+<a class="flex items-center gap-3 text-[#c9c3da] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl hover:bg-[#5b2eff]/5" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium">لوحة التحكم</span>
+</a>
+<a class="flex items-center gap-3 text-[#c9c3da] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl hover:bg-[#5b2eff]/5" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-medium">المناسبات</span>
+</a>
+<a class="relative flex items-center gap-3 text-[#e3e0f1] bg-[#5b2eff]/10 p-3 rounded-xl before:absolute before:right-0 before:w-1 before:h-8 before:bg-[#5b2eff] before:rounded-full brightness-125 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-medium">المستخدمين</span>
+</a>
+<a class="flex items-center gap-3 text-[#c9c3da] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl hover:bg-[#5b2eff]/5" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium">التقارير</span>
+</a>
+<a class="flex items-center gap-3 text-[#c9c3da] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl hover:bg-[#5b2eff]/5" href="#">
+<span class="material-symbols-outlined">card_membership</span>
+<span class="font-medium">الاشتراكات</span>
+</a>
+<a class="flex items-center gap-3 text-[#c9c3da] hover:text-[#e3e0f1] transition-all duration-300 p-3 rounded-xl hover:bg-[#5b2eff]/5" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-medium">الإعدادات</span>
+</a>
+</nav>
+<button class="mt-auto bg-primary-container text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-container/30 hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+                إضافة مناسبة
+            </button>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 mr-[280px] ml-0 p-8 min-h-screen relative overflow-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 right-[280px] z-40 bg-[#0d0d18]/80 backdrop-blur-xl h-20 px-8 flex justify-between items-center rtl">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-bold text-[#e3e0f1]">إدارة المستخدمين</h2>
+<span class="text-[10px] bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full uppercase tracking-tighter">PLATFORM ADMIN</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="absolute inset-y-0 right-3 flex items-center text-on-surface-variant group-focus-within:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl">search</span>
+</span>
+<input class="bg-surface-container-lowest border-none outline-none focus:ring-2 focus:ring-primary/50 text-sm rounded-2xl w-72 pr-10 pl-4 py-2.5 transition-all text-on-surface placeholder:text-outline/50" placeholder="البحث عن مستخدم..." type="text"/>
+</div>
+<div class="flex gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-low text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-low text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant/20 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-left text-xs">
+<p class="font-bold text-on-surface">عبدالله محمد</p>
+<p class="text-on-surface-variant">المدير العام</p>
+</div>
+<img alt="صورة المدير" class="w-10 h-10 rounded-xl object-cover ring-2 ring-primary-container/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvIyv0v49QvQP0iAeyytZx_70L4bwDY-tle9gFbK5J6DQh46780FtQVuVGvqG-e63D_Ry6rNzw5nGaAJcdMbWaFS3al8ZwF83vPnRcAQT6jp3oAl0CxjDZ2XV96v8DcRQMWGORLbmNSygSkCHY4XD9S8qw0PPi4_9bCYYhITh8Acju0TtI1b23j82nmQ4yj00TL3o2r5zvlFqtnLTpcFEhz_Kvjf-dNzGsuqpui-4p-wxQvA8m9TNXThnemQXG7hK60oIGgo350gkW"/>
+</div>
+</div>
+</header>
+<!-- Page Content Padding -->
+<div class="mt-24 space-y-8">
+<!-- Action Bar & Filters -->
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="bg-surface-container-low p-1.5 rounded-2xl flex gap-2">
+<select class="bg-transparent border-none text-sm text-on-surface-variant focus:ring-0 cursor-pointer pr-8">
+<option>حسب النوع</option>
+<option>Admin</option>
+<option>Owner</option>
+<option>Staff</option>
+</select>
+<div class="w-[1px] h-6 bg-outline-variant/30 self-center"></div>
+<select class="bg-transparent border-none text-sm text-on-surface-variant focus:ring-0 cursor-pointer pr-8">
+<option>حسب الحالة</option>
+<option>نشط</option>
+<option>موقوف</option>
+</select>
+</div>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high rounded-2xl text-on-surface border border-outline-variant/10 hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-xl">filter_list</span>
+<span>تصفية متقدمة</span>
+</button>
+</div>
+<button class="bg-primary-container text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-primary-container/30 hover:scale-[1.02] transition-all">
+<span class="material-symbols-outlined">person_add</span>
+                        إضافة مستخدم
+                    </button>
+</div>
+<!-- Main Table Card -->
+<div class="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/5">
+<table class="w-full text-right border-collapse">
+<thead>
+<tr class="bg-surface-container-high/50 text-on-surface-variant text-sm border-b border-outline-variant/10">
+<th class="p-5 font-medium">الاسم</th>
+<th class="p-5 font-medium">البريد / الجوال</th>
+<th class="p-5 font-medium text-center">نوع المستخدم</th>
+<th class="p-5 font-medium text-center">عدد الفعاليات</th>
+<th class="p-5 font-medium text-center">الحالة</th>
+<th class="p-5 font-medium text-left">الإجراءات</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Row 1 (Selected) -->
+<tr class="bg-primary-container/5 border-r-4 border-primary shadow-sm">
+<td class="p-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary font-bold">ف</div>
+<div>
+<p class="font-semibold text-on-surface">فهد العتيبي</p>
+<p class="text-xs text-on-surface-variant">انضم منذ ٤ أشهر</p>
+</div>
+</div>
+</td>
+<td class="p-5">
+<p class="text-sm plus-jakarta">fahad@example.com</p>
+<p class="text-xs text-on-surface-variant plus-jakarta">050XXXXX44</p>
+</td>
+<td class="p-5 text-center">
+<span class="px-3 py-1 rounded-lg bg-secondary-container/50 text-on-secondary-container text-[11px] font-bold">OWNER</span>
+</td>
+<td class="p-5 text-center">
+<span class="plus-jakarta font-bold text-lg">12</span>
+</td>
+<td class="p-5 text-center">
+<div class="flex items-center justify-center gap-1.5 text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full text-xs font-bold w-fit mx-auto">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        نشط
+                                    </div>
+</td>
+<td class="p-5">
+<div class="flex justify-end gap-2">
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-high hover:bg-primary-container hover:text-white transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-high hover:bg-primary-container hover:text-white transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">edit</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-high hover:bg-error-container hover:text-white transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="p-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary font-bold">س</div>
+<div>
+<p class="font-semibold text-on-surface">سارة الغامدي</p>
+<p class="text-xs text-on-surface-variant">انضم منذ شهر</p>
+</div>
+</div>
+</td>
+<td class="p-5">
+<p class="text-sm plus-jakarta">sara@merhab.sa</p>
+<p class="text-xs text-on-surface-variant plus-jakarta">055XXXXX21</p>
+</td>
+<td class="p-5 text-center">
+<span class="px-3 py-1 rounded-lg bg-primary-container/20 text-primary text-[11px] font-bold">ADMIN</span>
+</td>
+<td class="p-5 text-center">
+<span class="plus-jakarta font-bold text-lg">48</span>
+</td>
+<td class="p-5 text-center">
+<div class="flex items-center justify-center gap-1.5 text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full text-xs font-bold w-fit mx-auto">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        نشط
+                                    </div>
+</td>
+<td class="p-5">
+<div class="flex justify-end gap-2">
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-high hover:bg-primary-container hover:text-white transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-high hover:bg-primary-container hover:text-white transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">edit</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-high hover:bg-error-container hover:text-white transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-high/40 transition-colors">
+<td class="p-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary font-bold">م</div>
+<div>
+<p class="font-semibold text-on-surface">محمد الحربي</p>
+<p class="text-xs text-on-surface-variant">انضم منذ سنة</p>
+</div>
+</div>
+</td>
+<td class="p-5">
+<p class="text-sm plus-jakarta">m.harbi@test.com</p>
+<p class="text-xs text-on-surface-variant plus-jakarta">059XXXXX88</p>
+</td>
+<td class="p-5 text-center">
+<span class="px-3 py-1 rounded-lg bg-surface-container-highest text-on-surface-variant text-[11px] font-bold">STAFF</span>
+</td>
+<td class="p-5 text-center">
+<span class="plus-jakarta font-bold text-lg">5</span>
+</td>
+<td class="p-5 text-center">
+<div class="flex items-center justify-center gap-1.5 text-error bg-error/10 px-3 py-1 rounded-full text-xs font-bold w-fit mx-auto">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                        موقوف
+                                    </div>
+</td>
+<td class="p-5">
+<div class="flex justify-end gap-2">
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-high hover:bg-primary-container hover:text-white transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-surface-container-high hover:bg-primary-container hover:text-white transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">edit</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center bg-primary-container text-white transition-all shadow-md shadow-primary-container/20">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination -->
+<div class="p-5 flex items-center justify-between border-t border-outline-variant/10 text-on-surface-variant">
+<div class="flex gap-2 items-center">
+<span class="text-xs">عرض صفحة</span>
+<div class="bg-surface-container-high px-3 py-1 rounded-lg text-on-surface font-bold plus-jakarta">1 من 14</div>
+</div>
+<div class="flex gap-1">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-primary-container hover:text-white transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary-container text-white font-bold plus-jakarta">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-primary-container hover:text-white transition-all font-bold plus-jakarta">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-primary-container hover:text-white transition-all font-bold plus-jakarta">3</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-high hover:bg-primary-container hover:text-white transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Details Drawer (Floating on the left since RTL side panel) -->
+<aside class="fixed top-24 left-8 bottom-8 w-[380px] bg-surface-container-low/95 glass-panel rounded-2xl border border-outline-variant/10 shadow-[0px_20px_40px_rgba(13,13,24,0.6)] flex flex-col z-30 overflow-hidden rtl">
+<div class="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-high/50">
+<h3 class="font-bold text-lg">تفاصيل المستخدم</h3>
+<button class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined text-xl">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8">
+<!-- User Profile Header -->
+<div class="text-center space-y-4">
+<div class="relative w-24 h-24 mx-auto">
+<img alt="صورة فهد العتيبي" class="w-full h-full rounded-3xl object-cover ring-4 ring-primary/20 shadow-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvERSquVBKasNSAflLxtl0n_IMy7fsWtZf-v42rXewKGgTnhxwEArcSAnFbOt07q_J8ep4HDT8tv9IhaizRecFZic2V_-ln5bv3ooYZrRCAUAj3RBvwYq7DdheUCokA6pd0qsNfbGFg16TnYGlp0vxvsk3CBhGLFo2sTGOovfzdSFWvKYKHDqwfyNQX8nEQ-3O7qxHy0YXiOSOB1Q1TVi6w48jjRPbE4PFjcIbMc9M8Ha5K61pxcUpmRgKUX8tC-I4fcnez2gZseE0"/>
+<span class="absolute bottom-0 left-0 w-6 h-6 bg-emerald-400 border-4 border-surface-container-low rounded-full"></span>
+</div>
+<div>
+<h4 class="text-xl font-bold text-on-surface">فهد العتيبي</h4>
+<p class="text-primary text-sm font-bold tracking-widest mt-1">OWNER</p>
+</div>
+</div>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/5">
+<p class="text-xs text-on-surface-variant mb-1">الفعاليات</p>
+<p class="text-2xl font-bold plus-jakarta">12</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/5">
+<p class="text-xs text-on-surface-variant mb-1">إجمالي الحضور</p>
+<p class="text-2xl font-bold plus-jakarta">1.4K</p>
+</div>
+</div>
+<!-- Assigned Events -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h5 class="font-bold text-sm">الفعاليات التابعة له</h5>
+<button class="text-xs text-primary font-bold">عرض الكل</button>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/5 hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="luxury wedding setup with purple lighting and floral arrangements on round tables" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIP4e40qGDKL5tXiDi7WWepyEtTY_nrmOt-1KiNHFBe9SP6vZhbUBPiUQPS1cP1DsYw43AOY1hmN0yGb0dtR0FHGRMlwnCEaD1DDu5OVdwa3qgXWM77i5O4mOLkmq90Rqxs93djR-2aBqYx54VUSRJHTyeXO4kXQJHXkVj2woNmNQd22_NShbip8FI8-8qSBPgcQOEjmRpuje_zo3rvs-9H2ucg5Tug5BfKnpLoB08txvFph7N6sgLEA6kO4Ctm_LrbM4y3fWLhy3V"/>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold text-on-surface truncate">حفل زواج آل سعود</p>
+<p class="text-[10px] text-on-surface-variant">٢٤ مايو ٢٠٢٤</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-lg">chevron_left</span>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/5 hover:border-primary/20 transition-all cursor-pointer">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="minimalist corporate conference stage with blue backlighting and large screens" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhfZi_NNSp3fX21q2JrEGYnXWncMItQcTu36FWHwJZu38lxZbbC6GIqrYpm_tflGMA-32ca09h0iZLXJEi91w3DH3e5tZs4Zf1AZRc8EWWXjkiwJJxszybGwhDXMak8btWr_ryhC6puPEXjpqtM3ctQMVSaFFsYsmSv52EYa0KbMQPYv8thT2ZGc9lXIkDbYGd_V3r4BL_bySv04F9-QfxyHCeQ8dc5DA2BSCeO7-ZFA4gN9O1EG3x9Hzn94y4z2zIp4bdd1NBy74T"/>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold text-on-surface truncate">مؤتمر الرياض للتقنية</p>
+<p class="text-[10px] text-on-surface-variant">١٢ يونيو ٢٠٢٤</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-lg">chevron_left</span>
+</div>
+</div>
+</div>
+<!-- Last Activity -->
+<div class="space-y-4 pb-4">
+<h5 class="font-bold text-sm">آخر نشاط</h5>
+<div class="relative space-y-6 mr-3 border-r border-outline-variant/20 pr-6">
+<div class="relative">
+<span class="absolute top-1 -right-[29px] w-4 h-4 rounded-full bg-primary ring-4 ring-surface-container-low shadow-lg shadow-primary/30"></span>
+<p class="text-sm text-on-surface font-medium">إضافة منظم جديد للمناسبة</p>
+<p class="text-xs text-on-surface-variant mt-1 plus-jakarta">منذ ٢ ساعة</p>
+</div>
+<div class="relative">
+<span class="absolute top-1 -right-[29px] w-4 h-4 rounded-full bg-surface-container-highest ring-4 ring-surface-container-low"></span>
+<p class="text-sm text-on-surface-variant">تعديل بيانات الحضور في حفل الزواج</p>
+<p class="text-xs text-on-surface-variant mt-1 plus-jakarta">أمس الساعة ٩:٠٠ م</p>
+</div>
+<div class="relative">
+<span class="absolute top-1 -right-[29px] w-4 h-4 rounded-full bg-surface-container-highest ring-4 ring-surface-container-low"></span>
+<p class="text-sm text-on-surface-variant">تسجيل الدخول من جهاز جديد</p>
+<p class="text-xs text-on-surface-variant mt-1 plus-jakarta">١٥ يونيو ٢٠٢٤</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Drawer CTA -->
+<div class="p-6 bg-surface-container-high/50 border-t border-outline-variant/10">
+<button class="w-full bg-surface-container-highest text-on-surface py-3 rounded-xl font-bold border border-outline-variant/10 hover:bg-primary-container hover:text-white transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">analytics</span>
+                    تنزيل سجل النشاط الكامل
+                </button>
+</div>
+</aside>
+</div>
+</body></html>
