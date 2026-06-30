@@ -9,6 +9,11 @@ class Message(models.Model):
         INCOMING = "incoming", "وارد"
         OUTGOING = "outgoing", "صادر"
 
+    class Kind(models.TextChoices):
+        GENERAL = "general", "عام"
+        GREETING = "greeting", "تهنئة"
+        INQUIRY = "inquiry", "استفسار للمنسق"
+
     event = models.ForeignKey(
         Event, on_delete=models.CASCADE, related_name="messages", verbose_name="الفعالية"
     )
@@ -27,11 +32,25 @@ class Message(models.Model):
         related_name="sent_messages",
         verbose_name="المرسل",
     )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="received_guest_messages",
+        verbose_name="المستلم",
+    )
     direction = models.CharField(
         max_length=10,
         choices=Direction.choices,
         default=Direction.OUTGOING,
         verbose_name="الاتجاه",
+    )
+    kind = models.CharField(
+        max_length=20,
+        choices=Kind.choices,
+        default=Kind.GENERAL,
+        verbose_name="نوع الرسالة",
     )
     content = models.TextField(verbose_name="المحتوى")
     is_read = models.BooleanField(default=False, verbose_name="مقروءة")

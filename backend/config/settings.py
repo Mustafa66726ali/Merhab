@@ -165,7 +165,25 @@ WHATSAPP_BOT_URL = config("WHATSAPP_BOT_URL", default="http://127.0.0.1:8088").r
 # مفتاح حماية بسيط للتواصل مع البوت
 WHATSAPP_BOT_TOKEN = config("WHATSAPP_BOT_TOKEN", default="merhab-bot-dev")
 
+# قوالب Meta المعتمدة (الإنتاج) — يُستبدل من صفحة التكاملات أيضاً
+WHATSAPP_TEMPLATE_INVITATION = config(
+    "WHATSAPP_TEMPLATE_INVITATION", default="event_invitation"
+)
+WHATSAPP_TEMPLATE_REMINDER = config(
+    "WHATSAPP_TEMPLATE_REMINDER", default="event_reminder"
+)
+WHATSAPP_TEMPLATE_LANGUAGE = config("WHATSAPP_TEMPLATE_LANGUAGE", default="ar")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# خلف بروكسي عكسي (nginx) في الإنتاج
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+    CSRF_TRUSTED_ORIGINS = config(
+        "CSRF_TRUSTED_ORIGINS",
+        default=config("FRONTEND_URL", default="http://localhost:3000"),
+    ).split(",")
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = DEBUG

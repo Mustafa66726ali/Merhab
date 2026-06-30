@@ -16,7 +16,7 @@ const path = require("path");
 const express = require("express");
 const qrcode = require("qrcode-terminal");
 const QRImage = require("qrcode");
-const { Client, LocalAuth } = require("whatsapp-web.js");
+const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
 
 const QR_PNG_PATH = path.join(__dirname, "qr.png");
 let lastQr = "";
@@ -154,7 +154,25 @@ client.on("disconnected", (reason) => {
 });
 
 // ===== معالجة الطابور بمحاكاة بشرية =====
+async function humanSendImage(item) {
+  const numberId = await client.getNumberId(item.to);
+  if (!numberId) {
+    throw new Error("الرقم غير مسجّل في واتساب");
+  }
+  const chatId = numberId._serialized;
+  await sleep(randomInt(1200, 2800));
+  const media = new MessageMedia(
+    item.mimetype || "image/png",
+    item.image_base64,
+    "guest-qr.png"
+  );
+  await client.sendMessage(chatId, media, { caption: item.caption || "" });
+}
+
 async function humanSend(item) {
+  if (item.type === "image") {
+    return humanSendImage(item);
+  }
   // التحقق من تسجيل الرقم في واتساب
   const numberId = await client.getNumberId(item.to);
   if (!numberId) {
@@ -242,7 +260,7 @@ async function processQueue() {
       sentThisHour += 1;
       sentSinceBreak += 1;
       console.log(
-        `[مرحّاب-بوت] أُرسلت إلى ${item.to} (المتبقي: ${queue.length})`
+        `[مرحّاب-بوت] أُرسلت ${item.type === "image" ? "صورة" : "رسالة"} إلى ${item.to} (المتبقي: ${queue.length})`
       );
     } catch (err) {
       // خطأ جلسة قاتل (انقطاع الإطار) → أعد الرسالة للطابور وأعد تهيئة العميل
@@ -335,9 +353,30 @@ app.post("/send", auth, (req, res) => {
   if (!to || !message.trim()) {
     return res.status(400).json({ error: "to و message مطلوبان" });
   }
-  queue.push({ to, message, queuedAt: Date.now() });
+  queue.push({ type: "text", to, message, queuedAt: Date.now() });
   stats.queued += 1;
-  // إطلاق المعالجة إن كانت متوقفة
+  processQueue();
+  res.status(202).json({ queued: true, position: queue.length });
+});
+
+// إرسال صورة (مثل QR الضيف) — base64 PNG
+app.post("/send-image", auth, (req, res) => {
+  const to = onlyDigits(req.body && req.body.to);
+  const image_base64 = (req.body && req.body.image_base64) || "";
+  const caption = (req.body && req.body.caption) || "";
+  const mimetype = (req.body && req.body.mimetype) || "image/png";
+  if (!to || !image_base64) {
+    return res.status(400).json({ error: "to و image_base64 مطلوبان" });
+  }
+  queue.push({
+    type: "image",
+    to,
+    image_base64,
+    caption,
+    mimetype,
+    queuedAt: Date.now(),
+  });
+  stats.queued += 1;
   processQueue();
   res.status(202).json({ queued: true, position: queue.length });
 });

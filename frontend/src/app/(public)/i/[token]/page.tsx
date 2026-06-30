@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { publicInvitationAPI, type PublicInvitation } from "@/lib/api";
+import { publicInvitationAPI, type PublicInvitation, type PublicInvitationCoordinator } from "@/lib/api";
 
 /**
  * صفحة الدعوة العامة — يفتحها الضيف عبر رابط فريد.
@@ -340,41 +340,9 @@ export default function PublicInvitationPage() {
         {/* Greeting message */}
         <GreetingBox token={token} initial={guest.greeting} />
 
-        {/* Coordinator */}
+        {/* Coordinator inquiry */}
         {coordinator && (
-          <section className="bg-surface-container-highest p-6 rounded-[2rem] flex items-center justify-between">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-primary">support_agent</span>
-              </div>
-              <div className="min-w-0">
-                <h4 className="arabic-display font-bold text-on-surface truncate">
-                  {coordinator.name}
-                </h4>
-                <p className="text-xs text-on-surface-variant">منسّق الحفل — لأي استفسار</p>
-              </div>
-            </div>
-            {coordinator.phone && (
-              <div className="flex gap-2 shrink-0">
-                {coordinator.whatsapp_url && (
-                  <a
-                    href={coordinator.whatsapp_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center"
-                  >
-                    <span className="material-symbols-outlined">chat</span>
-                  </a>
-                )}
-                <a
-                  href={`tel:${coordinator.phone}`}
-                  className="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center"
-                >
-                  <span className="material-symbols-outlined">call</span>
-                </a>
-              </div>
-            )}
-          </section>
+          <CoordinatorInquiryBox token={token} coordinator={coordinator} />
         )}
 
         {/* Footer */}
@@ -475,6 +443,9 @@ function GreetingBox({ token, initial }: { token: string; initial: string }) {
       <label className="arabic-display font-bold px-2 block text-on-surface">
         كلمة تهنئة لأهل الحفل
       </label>
+      <p className="text-xs text-on-surface-variant px-2">
+        تُعرض في لوحة التحكم ضمن «تهنئات واستفسارات الضيوف»
+      </p>
       <div className="relative">
         <textarea
           value={value}
@@ -497,6 +468,94 @@ function GreetingBox({ token, initial }: { token: string; initial: string }) {
       {saved && value && (
         <p className="text-xs text-emerald-400 px-2">تم إرسال كلمتك — شكراً لك</p>
       )}
+    </section>
+  );
+}
+
+function CoordinatorInquiryBox({
+  token,
+  coordinator,
+}: {
+  token: string;
+  coordinator: PublicInvitationCoordinator;
+}) {
+  const [value, setValue] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  const send = async () => {
+    if (!value.trim()) return;
+    setSaving(true);
+    setError("");
+    try {
+      await publicInvitationAPI.inquiry(token, value.trim());
+      setSaved(true);
+      setValue("");
+    } catch {
+      setError("تعذّر إرسال الاستفسار — حاول مرة أخرى");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="bg-surface-container-highest p-6 rounded-[2rem] space-y-4">
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+          <span className="material-symbols-outlined text-primary">support_agent</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <h4 className="arabic-display font-bold text-on-surface">{coordinator.name}</h4>
+          <p className="text-xs text-on-surface-variant mt-1">
+            منسّق الحفل — اكتب استفسارك وسيصل مباشرة للمنسّق
+          </p>
+        </div>
+        {coordinator.phone && (
+          <div className="flex gap-2 shrink-0">
+            {coordinator.whatsapp_url && (
+              <a
+                href={coordinator.whatsapp_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center"
+                title="واتساب"
+              >
+                <span className="material-symbols-outlined">chat</span>
+              </a>
+            )}
+            <a
+              href={`tel:${coordinator.phone}`}
+              className="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center"
+              title="اتصال"
+            >
+              <span className="material-symbols-outlined">call</span>
+            </a>
+          </div>
+        )}
+      </div>
+      <textarea
+        value={value}
+        onChange={(e) => {
+          setValue(e.target.value);
+          setSaved(false);
+        }}
+        placeholder="اكتب استفسارك هنا..."
+        className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-primary text-on-surface arabic-display h-28 outline-none resize-none"
+      />
+      {error && <p className="text-xs text-error px-1">{error}</p>}
+      {saved && <p className="text-xs text-emerald-400 px-1">تم إرسال استفسارك للمنسّق — سيتواصل معك قريباً</p>}
+      <button
+        type="button"
+        onClick={send}
+        disabled={saving || !value.trim()}
+        className="w-full py-3.5 rounded-xl font-bold text-white disabled:opacity-50"
+        style={{
+          backgroundImage: "linear-gradient(135deg, #5b2eff 0%, #7b52ff 100%)",
+        }}
+      >
+        {saving ? "جارِ الإرسال..." : "إرسال للمنسّق"}
+      </button>
     </section>
   );
 }

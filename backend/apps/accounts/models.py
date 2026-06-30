@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
 
 
@@ -24,8 +25,8 @@ class User(AbstractUser):
     )
     phone = models.CharField(max_length=20, blank=True, verbose_name="رقم الهاتف")
     recovery_email_enabled = models.BooleanField(
-        default=False,
-        verbose_name="تفعيل بريد استرداد كلمة المرور",
+        default=True,
+        verbose_name="تفعيل استعادة كلمة المرور عبر البريد",
     )
     two_factor_enabled = models.BooleanField(
         default=False,
@@ -51,3 +52,30 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.get_full_name() or self.username
+
+
+class PasswordResetCode(models.Model):
+    """رمز تحقق لمرة واحدة لاستعادة كلمة المرور عبر البريد."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="password_reset_codes",
+        verbose_name="المستخدم",
+    )
+    code_hash = models.CharField(max_length=128, verbose_name="تجزئة الرمز")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    expires_at = models.DateTimeField(verbose_name="ينتهي في")
+    attempts = models.PositiveSmallIntegerField(default=0, verbose_name="محاولات خاطئة")
+    used_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الاستخدام")
+
+    class Meta:
+        verbose_name = "رمز استعادة كلمة المرور"
+        verbose_name_plural = "رموز استعادة كلمة المرور"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"reset:{self.user_id}@{self.created_at:%Y-%m-%d %H:%M}"

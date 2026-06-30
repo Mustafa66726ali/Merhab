@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: deploy-merhab
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: نشر على السيرفر عبر SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          envs: DEPLOY_PATH
+          script: |
+            set -e
+            APP_DIR="${DEPLOY_PATH:-/opt/merhab}"
+            cd "$APP_DIR"
+            echo "==> سحب آخر التغييرات من GitHub"
+            git fetch origin main master 2>/dev/null || git fetch origin
+            BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo main)
+            git reset --hard "origin/${BRANCH}"
+            echo "==> بناء وتشغيل الحاويات"
+            docker compose build
+            docker compose up -d --remove-orphans
+            echo "==> تنظيف الصور القديمة"
+            docker image prune -f
+            echo "==> الحالة:"
+            docker compose ps

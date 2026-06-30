@@ -827,6 +827,102 @@ export default function IntegrationsView() {
                   </div>
                 )}
 
+                {form.provider === "whatsapp_cloud" && (
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                    <h4 className="text-sm font-bold text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-lg">
+                        chat
+                      </span>
+                      قوالب Meta للرسائل (يُضاف لاحقاً عند الإنتاج)
+                    </h4>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      أسماء القوالب المعتمدة في Meta Business. المتغيرات: الاسم،
+                      المناسبة، التاريخ، الموقع، الرابط.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-on-surface-variant mb-2">
+                          قالب الدعوة (event_invitation)
+                        </label>
+                        <input
+                          value={
+                            String(
+                              (form.config as Record<string, string>)
+                                ?.template_invitation ?? "event_invitation"
+                            )
+                          }
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              config: {
+                                ...(f.config ?? {}),
+                                template_invitation: e.target.value,
+                              },
+                            }))
+                          }
+                          className="input-field w-full font-mono text-sm"
+                          dir="ltr"
+                          placeholder="event_invitation"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-on-surface-variant mb-2">
+                          قالب التذكير (event_reminder)
+                        </label>
+                        <input
+                          value={
+                            String(
+                              (form.config as Record<string, string>)
+                                ?.template_reminder ?? "event_reminder"
+                            )
+                          }
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              config: {
+                                ...(f.config ?? {}),
+                                template_reminder: e.target.value,
+                              },
+                            }))
+                          }
+                          className="input-field w-full font-mono text-sm"
+                          dir="ltr"
+                          placeholder="event_reminder"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-on-surface-variant mb-2">
+                          لغة القالب
+                        </label>
+                        <input
+                          value={
+                            String(
+                              (form.config as Record<string, string>)
+                                ?.template_language ?? "ar"
+                            )
+                          }
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              config: {
+                                ...(f.config ?? {}),
+                                template_language: e.target.value,
+                              },
+                            }))
+                          }
+                          className="input-field w-full font-mono text-sm"
+                          dir="ltr"
+                          placeholder="ar"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant">
+                      رسالة QR تُرسل كصورة PNG مباشرة بعد تأكيد الحضور (بدون
+                      قالب نصي).
+                    </p>
+                  </div>
+                )}
+
                 {showField("from_email") && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -857,6 +953,31 @@ export default function IntegrationsView() {
                 )}
 
                 {(showField("smtp_host") || form.provider === "email_smtp") && (
+                  <>
+                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
+                      <p className="text-xs text-on-surface-variant leading-relaxed">
+                        <strong className="text-on-surface">بريد استعادة كلمات المرور:</strong>{" "}
+                        يُستخدم هذا التكامل لإرسال رموز التحقق لجميع المستخدمين عند نسيان
+                        كلمة المرور. في Gmail استخدم{" "}
+                        <span className="font-mono">smtp.gmail.com:587</span> وكلمة مرور
+                        التطبيق (App Password) في حقل المفتاح.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            smtp_host: "smtp.gmail.com",
+                            smtp_port: 587,
+                            smtp_use_tls: true,
+                            name: f.name || "Gmail — استعادة كلمة المرور",
+                          }))
+                        }
+                        className="text-xs font-bold text-emerald-400 hover:underline"
+                      >
+                        تعبئة إعدادات Gmail تلقائياً
+                      </button>
+                    </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-medium text-on-surface-variant mb-2">
@@ -896,6 +1017,7 @@ export default function IntegrationsView() {
                       استخدام TLS/SSL
                     </label>
                   </div>
+                  </>
                 )}
 
                 {showField("webhook_url") && (

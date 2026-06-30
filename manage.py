@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -16,7 +17,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 BACKEND = ROOT / "backend"
 FRONTEND = ROOT / "frontend"
-LOGIN_URL = "http://localhost:3000/login"
+LANDING_URL = "http://localhost:3000/landing"
+# الفاصل الزمني (ثوانٍ) لفحص التذكيرات التلقائية المستحقّة قبل الحفل
+REMINDER_INTERVAL_SEC = int(os.environ.get("REMINDER_INTERVAL_SEC", "300"))
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -102,13 +105,39 @@ def wait_for(url: str, timeout: int = 90) -> bool:
     return False
 
 
+def reminder_scheduler(py: str) -> None:
+    """مجدوِل بسيط للتذكيرات التلقائية: يفحص الفعاليات المستحقّة دورياً.
+
+    يستدعي أمر ``send_due_reminders`` كل ``REMINDER_INTERVAL_SEC`` ثانية. الأمر
+    نفسه آمن للتكرار (idempotent) ويعمل فقط عند وجود مزوّد رسمي نشط (Twilio/Cloud).
+    في الإنتاج يُفضَّل استخدام cron / Task Scheduler بدل هذا الخيط.
+    """
+    env = os.environ.copy()
+    env.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    env["PYTHONIOENCODING"] = "utf-8"
+    # امهل الخادم وقتاً للإقلاع قبل أول فحص
+    time.sleep(20)
+    while True:
+        try:
+            subprocess.run(
+                [py, "manage.py", "send_due_reminders"],
+                cwd=str(BACKEND),
+                env=env,
+                capture_output=True,
+                timeout=120,
+            )
+        except Exception:  # noqa: BLE001
+            pass
+        time.sleep(REMINDER_INTERVAL_SEC)
+
+
 def print_login_info() -> None:
     print("\n" + "=" * 52)
     print("  مرحّاب - بيانات دخول مدير النظام")
     print("=" * 52)
     print("  البريد:       admin@merhab.sa")
     print("  كلمة المرور:  Merhab@2024")
-    print(f"  الرابط:       {LOGIN_URL}")
+    print(f"  الرابط:       {LANDING_URL}")
     print("=" * 52 + "\n")
 
 
@@ -121,13 +150,24 @@ def main() -> int:
     backend_env = os.environ.copy()
     backend_env.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     frontend_env = os.environ.copy()
-    frontend_env["NEXT_PUBLIC_API_URL"] = "http://127.0.0.1:8000/api/v1"
+    # نفس الأصل: المتصفح ينادي /api/v1 على منفذ الواجهة، وخادم الواجهة يُمرّرها
+    # داخليًا إلى الباك-إند (rewrites). هكذا يعمل من أي جهاز دون فتح المنفذ 8000.
+    frontend_env["NEXT_PUBLIC_API_URL"] = "/api/v1"
 
     print("\n[مرحّاب] تشغيل Backend على http://127.0.0.1:8000")
     backend_proc = subprocess.Popen(
         [py, "manage.py", "runserver", "8000"],
         cwd=str(BACKEND),
         env=backend_env,
+    )
+
+    # مجدوِل التذكيرات التلقائية (خيط خلفي يعمل طوال تشغيل المشروع)
+    threading.Thread(
+        target=reminder_scheduler, args=(py,), daemon=True
+    ).start()
+    print(
+        f"[مرحّاب] مجدوِل التذكيرات التلقائية يعمل كل {REMINDER_INTERVAL_SEC}ث "
+        "(يتطلّب مزوّداً رسمياً نشطاً)"
     )
 
     print("[مرحّاب] تشغيل Frontend على http://localhost:3000")
@@ -140,12 +180,12 @@ def main() -> int:
 
     print_login_info()
     backend_ready = wait_for("http://127.0.0.1:8000/api/docs/", 90)
-    frontend_ready = wait_for("http://localhost:3000/login", 120)
+    frontend_ready = wait_for(LANDING_URL, 120)
     if backend_ready:
         verify_login_api(py)
     if backend_ready and frontend_ready:
-        webbrowser.open(LOGIN_URL)
-        print(f"[مرحّاب] تم فتح المتصفح: {LOGIN_URL}")
+        webbrowser.open(LANDING_URL)
+        print(f"[مرحّاب] تم فتح المتصفح: {LANDING_URL}")
 
     print("\n[مرحّاب] المشروع يعمل. اضغط Ctrl+C للإيقاف.\n")
     try:

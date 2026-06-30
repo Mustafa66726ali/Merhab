@@ -46,6 +46,26 @@ export const authAPI = {
     api.patch("/auth/recovery-email/", { recovery_email_enabled }),
   setTwoFactor: (two_factor_enabled: boolean) =>
     api.patch("/auth/two-factor/", { two_factor_enabled }),
+  recoveryStatus: () =>
+    api.get<{ configured: boolean }>("/auth/recovery-status/", {
+      headers: { Authorization: undefined },
+    }),
+  forgotPassword: (email: string) =>
+    api.post<{ detail: string }>(
+      "/auth/forgot-password/",
+      { email: email.trim().toLowerCase() },
+      { headers: { Authorization: undefined } }
+    ),
+  resetPassword: (email: string, code: string, new_password: string) =>
+    api.post<{ detail: string }>(
+      "/auth/reset-password/",
+      {
+        email: email.trim().toLowerCase(),
+        code: code.trim(),
+        new_password: new_password.trim(),
+      },
+      { headers: { Authorization: undefined } }
+    ),
 };
 
 export const eventsAPI = {
@@ -189,6 +209,9 @@ export interface InvitationTemplate {
   invitation_title: string;
   invitation_message: string;
   default_template: string;
+  auto_reminder_enabled?: boolean;
+  auto_reminder_hours_before?: number;
+  auto_reminder_sent_at?: string | null;
   placeholders: string[];
 }
 
@@ -210,7 +233,10 @@ export interface InvitationReminderResult extends InvitationSendResult {
 }
 
 export interface WhatsappBotStatus {
-  provider: "manual" | "bot" | "api" | string;
+  provider: "manual" | "bot" | "api" | "cloud" | "twilio" | string;
+  configured?: string;
+  label?: string;
+  automated?: boolean;
   ready: boolean;
   state?: string;
   queue?: number;
@@ -224,9 +250,11 @@ export const invitationsAPI = {
     event: number;
     invitation_title: string;
     invitation_message: string;
+    auto_reminder_enabled?: boolean;
+    auto_reminder_hours_before?: number;
   }) => api.put<InvitationTemplate>("/invitations/template/", data),
   botStatus: () => api.get<WhatsappBotStatus>("/invitations/bot-status/"),
-  sendOne: (data: { guest_id: number; message: string }) =>
+  sendOne: (data: { guest_id: number; message: string; kind?: "invite" | "remind" }) =>
     api.post<{
       guest_id: number;
       sent: boolean;
@@ -328,6 +356,8 @@ export const publicInvitationAPI = {
       `/public/invitation/${token}/greeting/`,
       { message }
     ),
+  inquiry: (token: string, message: string) =>
+    api.post<{ ok: boolean }>(`/public/invitation/${token}/inquiry/`, { message }),
 };
 
 export interface SeatingPlanRow {
@@ -570,7 +600,12 @@ export interface GuestMessageItem {
   guest_name: string;
   sender: number | null;
   sender_name: string;
+  recipient?: number | null;
+  recipient_name?: string;
   direction: string;
+  direction_label?: string;
+  kind?: string;
+  kind_label?: string;
   content: string;
   is_read: boolean;
   created_at: string;
@@ -656,6 +691,16 @@ export const commsAPI = {
     content: string;
     via_whatsapp?: boolean;
   }) => api.post<GuestMessageItem>("/platforms/comms/guest-messages/send/", data),
+  guestMessagesInbound: (params?: { event?: number; kind?: "greeting" | "inquiry" }) =>
+    api.get<{ messages: GuestMessageItem[] }>(
+      "/platforms/comms/guest-messages/inbound/",
+      {
+        params: {
+          ...(params?.event ? { event: params.event } : {}),
+          ...(params?.kind ? { kind: params.kind } : {}),
+        },
+      }
+    ),
   notificationsInbox: () =>
     api.get<{ unread_count: number; notifications: UserNotificationItem[] }>(
       "/platforms/comms/notifications/inbox/"
@@ -1279,6 +1324,7 @@ export interface EventGuestRow {
 export interface EventGuestDetail extends EventGuestRow {
   notes: string;
   dietary_requirements: string;
+  greeting: string;
   qr_code: string;
   user: number | null;
 }

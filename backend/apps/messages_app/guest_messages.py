@@ -99,6 +99,45 @@ def guest_contacts_for_user(user: User, event_id=None):
     return contacts
 
 
+def guest_inbound_queryset(user: User, kind: str | None = None, event_id=None):
+    """رسائل واردة من الضيوف (تهنئة / استفسار) لعرضها في لوحة التحكم."""
+    if not _user_can_message_guests(user):
+        return Message.objects.none()
+
+    qs = Message.objects.select_related(
+        "guest", "sender", "recipient", "event"
+    ).filter(
+        guest__isnull=False,
+        direction=Message.Direction.INCOMING,
+        kind__in=(Message.Kind.GREETING, Message.Kind.INQUIRY),
+    )
+
+    if user.role == User.Role.SYSTEM_MANAGER:
+        pass
+    elif user.role == User.Role.PLATFORM_ADMIN:
+        platform = get_platform_for_user(user)
+        if not platform:
+            return Message.objects.none()
+        qs = qs.filter(event__platform_id=platform.id)
+    else:
+        platform = get_platform_for_user(user)
+        if not platform:
+            return Message.objects.none()
+        from apps.events.models import Event
+
+        accessible_event_ids = []
+        for event in Event.objects.filter(platform_id=platform.id).prefetch_related("managers"):
+            if user_can_access_event(user, event):
+                accessible_event_ids.append(event.id)
+        qs = qs.filter(event_id__in=accessible_event_ids)
+
+    if kind in (Message.Kind.GREETING, Message.Kind.INQUIRY):
+        qs = qs.filter(kind=kind)
+    if event_id:
+        qs = qs.filter(event_id=event_id)
+    return qs.order_by("-created_at")
+
+
 def send_guest_message(user: User, guest_id: int, content: str, via_whatsapp: bool = False):
     if not _user_can_message_guests(user):
         raise PermissionDenied("غير مصرح — لا تملك صلاحية إرسال الرسائل")

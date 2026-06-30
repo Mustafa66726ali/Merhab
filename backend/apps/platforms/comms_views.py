@@ -22,6 +22,7 @@ from apps.platforms.platform_permissions import (
 from apps.messages_app.guest_messages import (
     guest_contacts_for_user,
     guest_messages_queryset,
+    guest_inbound_queryset,
     send_guest_message,
 )
 from apps.messages_app.serializers import MessageSerializer
@@ -507,3 +508,17 @@ class CommsViewSet(viewsets.ViewSet):
                 raise exc
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["get"], url_path="guest-messages/inbound")
+    def guest_messages_inbound(self, request):
+        """تهنئات واستفسارات واردة من صفحة الدعوة."""
+        event_id = request.query_params.get("event")
+        kind = (request.query_params.get("kind") or "").strip().lower()
+        qs = guest_inbound_queryset(
+            request.user,
+            kind=kind if kind in ("greeting", "inquiry") else None,
+            event_id=int(event_id) if event_id else None,
+        )[:500]
+        return Response({
+            "messages": MessageSerializer(qs, many=True).data,
+        })

@@ -277,11 +277,19 @@ export default function InvitationBuilder({ eventId }: Props) {
   const [autoSend, setAutoSend] = useState(false);
   const [bot, setBot] = useState<{
     provider: string;
+    configured?: string;
+    label?: string;
+    automated?: boolean;
     ready: boolean;
     state?: string;
     queue?: number;
     error?: string;
   } | null>(null);
+
+  // التذكير التلقائي قبل الحفل (يُرسل عبر Twilio دون تدخّل)
+  const [autoReminderEnabled, setAutoReminderEnabled] = useState(false);
+  const [autoReminderHours, setAutoReminderHours] = useState(3);
+  const [savingReminder, setSavingReminder] = useState(false);
 
   // وضع العمل: دعوة جديدة أو تذكير
   const [mode, setMode] = useState<"invite" | "remind">("invite");
@@ -294,6 +302,20 @@ export default function InvitationBuilder({ eventId }: Props) {
   const [reminderResults, setReminderResults] = useState<
     InvitationReminderResult[] | null
   >(null);
+
+  // إرسال عام لكل الضيوف عبر المزوّد الرسمي (Twilio/Cloud) مع نافذة متابعة منبثقة
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkPhase, setBulkPhase] = useState<"sending" | "done" | "error">(
+    "sending"
+  );
+  const [bulkSummary, setBulkSummary] = useState<{
+    kind: "invite" | "remind";
+    total: number;
+    sent: number;
+    failed: number;
+    skipped?: number;
+  } | null>(null);
+  const [bulkError, setBulkError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -317,6 +339,8 @@ export default function InvitationBuilder({ eventId }: Props) {
         time: evRes.data.time || "",
         venue: evRes.data.venue || "",
       });
+      setAutoReminderEnabled(!!tplRes.data.auto_reminder_enabled);
+      setAutoReminderHours(tplRes.data.auto_reminder_hours_before || 3);
       setGuests(normalizeGuests(guestsRes.data as ListResponse));
       setSections((groupsRes.data.sections ?? []).map((s) => ({ id: s.id, name: s.name })));
       setGroups((groupsRes.data.groups ?? []).map((g) => ({ id: g.id, name: g.name })));
@@ -384,6 +408,35 @@ export default function InvitationBuilder({ eventId }: Props) {
       setError(errMessage(e, "تعذّر حفظ القالب."));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveReminderSettings = async (
+    enabled: boolean,
+    hours: number
+  ) => {
+    setSavingReminder(true);
+    setError("");
+    setNotice("");
+    try {
+      await invitationsAPI.saveTemplate({
+        event: eventId,
+        invitation_title: title,
+        invitation_message: assembleTemplate(inviteFields),
+        auto_reminder_enabled: enabled,
+        auto_reminder_hours_before: hours,
+      });
+      setAutoReminderEnabled(enabled);
+      setAutoReminderHours(hours);
+      setNotice(
+        enabled
+          ? `تم تفعيل التذكير التلقائي قبل الحفل بـ ${hours} ساعة.`
+          : "تم إيقاف التذكير التلقائي."
+      );
+    } catch (e) {
+      setError(errMessage(e, "تعذّر حفظ إعدادات التذكير التلقائي."));
+    } finally {
+      setSavingReminder(false);
     }
   };
 
@@ -457,13 +510,74 @@ export default function InvitationBuilder({ eventId }: Props) {
   };
 
   const canAuto = !!bot && bot.provider !== "manual";
+
+  // الإرسال العام لكل الضيوف متاح فقط مع مزوّد رسمي (Twilio/Cloud) — لا البوت
+  const isOfficialApi =
+    !!bot && (bot.provider === "twilio" || bot.provider === "cloud");
+
+  const sendToAll = async () => {
+    if (!isOfficialApi) return;
+    if (guests.length === 0) {
+      setError("لا يوجد ضيوف لإرسال الرسائل إليهم.");
+      return;
+    }
+    setBulkSummary(null);
+    setBulkError("");
+    setBulkPhase("sending");
+    setBulkOpen(true);
+    setSending(true);
+    try {
+      if (mode === "invite") {
+        const res = await invitationsAPI.sendBatch({
+          event: eventId,
+          title,
+          message: assembleTemplate(inviteFields),
+          auto: true,
+        });
+        const list = res.data.invitations || [];
+        setResults(list);
+        const total = res.data.count ?? list.length;
+        const sent = list.filter((r) => r.sent).length;
+        setBulkSummary({ kind: "invite", total, sent, failed: total - sent });
+      } else {
+        const res = await invitationsAPI.remindBatch({
+          event: eventId,
+          message_unconfirmed: assembleTemplate(remindUnconf),
+          message_confirmed: assembleTemplate(remindConf),
+          auto: true,
+        });
+        const list = res.data.reminders || [];
+        setReminderResults(list);
+        const total = res.data.count ?? list.length;
+        const sent = list.filter((r) => r.sent).length;
+        setBulkSummary({
+          kind: "remind",
+          total,
+          sent,
+          failed: total - sent,
+          skipped: res.data.skipped,
+        });
+      }
+      setBulkPhase("done");
+    } catch (e) {
+      setBulkError(errMessage(e, "تعذّر إتمام الإرسال العام."));
+      setBulkPhase("error");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const [sendingOne, setSendingOne] = useState<Set<number>>(new Set());
 
   const sendOne = async (guestId: number, msg: string) => {
     setSendingOne((p) => new Set(p).add(guestId));
     setError("");
     try {
-      const res = await invitationsAPI.sendOne({ guest_id: guestId, message: msg });
+      const res = await invitationsAPI.sendOne({
+        guest_id: guestId,
+        message: msg,
+        kind: mode === "remind" ? "remind" : "invite",
+      });
       const { sent, detail } = res.data;
       setResults((prev) =>
         prev
@@ -563,13 +677,10 @@ export default function InvitationBuilder({ eventId }: Props) {
                     ? "smart_toy"
                     : "cloud_done"}
               </span>
-              {bot.provider === "manual"
-                ? "وضع يدوي"
-                : bot.provider === "bot"
-                  ? bot.ready
-                    ? "البوت متصل"
-                    : "البوت غير جاهز"
-                  : "مزوّد API"}
+              {bot.provider === "bot" && !bot.ready
+                ? "البوت غير جاهز"
+                : bot.label ||
+                  (bot.provider === "manual" ? "وضع يدوي" : "مزوّد API")}
             </span>
           )}
           <button
@@ -583,7 +694,7 @@ export default function InvitationBuilder({ eventId }: Props) {
             }`}
             title={
               bot && bot.provider === "manual"
-                ? "فعّل WHATSAPP_PROVIDER=bot أو api لتمكين الإرسال التلقائي"
+                ? "أضِف اعتماد تكامل نشط (Twilio/Cloud) أو فعّل البوت لتمكين الإرسال التلقائي"
                 : "إرسال تلقائي دون فتح واتساب يدوياً"
             }
           >
@@ -592,8 +703,126 @@ export default function InvitationBuilder({ eventId }: Props) {
             </span>
             إرسال تلقائي {autoSend ? "(مفعّل)" : ""}
           </button>
+
+          {/* إرسال عام لكل الضيوف — متاح فقط مع مزوّد رسمي (Twilio/Cloud) */}
+          <button
+            type="button"
+            onClick={sendToAll}
+            disabled={!isOfficialApi || sending}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-on-primary hover:opacity-90"
+            title={
+              isOfficialApi
+                ? "إرسال مباشر لكل الضيوف عبر Twilio"
+                : "متاح فقط عند تفعيل مزوّد رسمي (Twilio/Cloud) — غير متاح مع البوت"
+            }
+          >
+            <span className="material-symbols-outlined text-base">campaign</span>
+            {mode === "invite"
+              ? "إرسال الدعوات للجميع"
+              : "إرسال التذكيرات للجميع"}
+          </button>
         </div>
       </div>
+
+      {bulkOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-3xl bg-surface-container-high border border-outline-variant/15 shadow-2xl p-6 text-center">
+            {bulkPhase === "sending" && (
+              <>
+                <div className="mx-auto mb-4 h-14 w-14 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
+                <h3 className="text-lg font-extrabold text-on-surface">
+                  {mode === "invite"
+                    ? "جارٍ إرسال الدعوات للجميع…"
+                    : "جارٍ إرسال التذكيرات للجميع…"}
+                </h3>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                  يتم الإرسال مباشرة عبر {bot?.label || "Twilio"} لكل الضيوف
+                  ({guests.length}). يرجى الانتظار…
+                </p>
+              </>
+            )}
+
+            {bulkPhase === "done" && bulkSummary && (
+              <>
+                <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-emerald-500/15 text-emerald-400 grid place-items-center">
+                  <span className="material-symbols-outlined text-3xl">
+                    check_circle
+                  </span>
+                </div>
+                <h3 className="text-lg font-extrabold text-on-surface">
+                  اكتمل الإرسال
+                </h3>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl bg-surface-container p-3">
+                    <div className="text-xl font-extrabold text-on-surface">
+                      {bulkSummary.total}
+                    </div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      الإجمالي
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-emerald-500/10 p-3">
+                    <div className="text-xl font-extrabold text-emerald-400">
+                      {bulkSummary.sent}
+                    </div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      تم الإرسال
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-rose-500/10 p-3">
+                    <div className="text-xl font-extrabold text-rose-400">
+                      {bulkSummary.failed}
+                    </div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      فشل
+                    </div>
+                  </div>
+                </div>
+                {typeof bulkSummary.skipped === "number" &&
+                  bulkSummary.skipped > 0 && (
+                    <p className="mt-3 text-xs text-on-surface-variant">
+                      تم تجاوز {bulkSummary.skipped} ضيفاً (معتذر).
+                    </p>
+                  )}
+                <button
+                  type="button"
+                  onClick={() => setBulkOpen(false)}
+                  className="mt-5 w-full rounded-xl bg-primary text-on-primary py-2.5 font-bold hover:opacity-90"
+                >
+                  تم
+                </button>
+              </>
+            )}
+
+            {bulkPhase === "error" && (
+              <>
+                <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-rose-500/15 text-rose-400 grid place-items-center">
+                  <span className="material-symbols-outlined text-3xl">
+                    error
+                  </span>
+                </div>
+                <h3 className="text-lg font-extrabold text-on-surface">
+                  تعذّر الإرسال
+                </h3>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                  {bulkError}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setBulkOpen(false)}
+                  className="mt-5 w-full rounded-xl bg-surface-container text-on-surface py-2.5 font-bold hover:opacity-90"
+                >
+                  إغلاق
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-5">
         {/* المحرّر */}
@@ -679,6 +908,79 @@ export default function InvitationBuilder({ eventId }: Props) {
               <span className="font-bold text-primary tabular-nums">{targetGuests.length}</span>{" "}
               ضيف.
             </p>
+          </div>
+
+          {/* التذكير التلقائي قبل الحفل (Twilio) */}
+          <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-low p-5">
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="font-bold text-on-surface mb-1 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-xl">
+                  schedule_send
+                </span>
+                التذكير التلقائي قبل الحفل
+              </h3>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={autoReminderEnabled}
+                onClick={() =>
+                  saveReminderSettings(!autoReminderEnabled, autoReminderHours)
+                }
+                disabled={savingReminder}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+                  autoReminderEnabled ? "bg-primary" : "bg-surface-container-highest"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    autoReminderEnabled ? "left-0.5" : "right-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+            <p className="text-xs text-on-surface-variant mb-3">
+              يُرسل تويليو التذكيرات تلقائياً لكل الضيوف قبل موعد الحفل دون أي
+              تدخّل (تذكير تأكيد لغير المؤكّدين، وتذكير موعد للمؤكّدين).
+            </p>
+
+            <label className="text-xs font-bold text-on-surface-variant mb-1.5 block">
+              الإرسال قبل الحفل بـ
+            </label>
+            <div className="flex items-center gap-2">
+              <select
+                value={autoReminderHours}
+                onChange={(e) =>
+                  saveReminderSettings(
+                    autoReminderEnabled,
+                    Number(e.target.value)
+                  )
+                }
+                disabled={savingReminder}
+                className="w-full bg-surface-container-high border border-outline-variant/15 rounded-xl px-3 py-2.5 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+              >
+                {[1, 2, 3, 6, 10, 12, 24, 48].map((h) => (
+                  <option key={h} value={h}>
+                    {h} ساعة
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {!isOfficialApi && (
+              <p className="mt-3 text-xs text-amber-300 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">info</span>
+                لن يعمل التذكير التلقائي إلا بعد تفعيل مزوّد رسمي (Twilio/Cloud)
+                — لا يعمل عبر البوت.
+              </p>
+            )}
+            {autoReminderEnabled && isOfficialApi && (
+              <p className="mt-3 text-xs text-emerald-300 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">
+                  check_circle
+                </span>
+                مُفعّل — سيُرسل تلقائياً قبل الحفل بـ {autoReminderHours} ساعة.
+              </p>
+            )}
           </div>
 
           {/* القالب — دعوة (بطاقة بحقول) */}

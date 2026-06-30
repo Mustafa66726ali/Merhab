@@ -156,9 +156,24 @@ def test_integration(credential: IntegrationCredential) -> tuple[bool, str]:
         IntegrationCredential.Provider.CUSTOM: lambda c: c.api_key,
     }
     checker = required_map.get(provider, lambda c: c.api_key)
-    if checker(credential):
-        return True, "تم التحقق من اكتمال الحقول المطلوبة بنجاح"
-    return False, "بعض الحقول المطلوبة غير مكتملة — راجع إعدادات التكامل"
+    if not checker(credential):
+        return False, "بعض الحقول المطلوبة غير مكتملة — راجع إعدادات التكامل"
+
+    if provider == IntegrationCredential.Provider.EMAIL_SMTP:
+        from apps.integrations.email_send import send_smtp_email
+
+        test_to = credential.from_email
+        if not test_to:
+            return False, "أدخل البريد المرسل للاختبار"
+        ok, msg = send_smtp_email(
+            credential,
+            test_to,
+            "اختبار بريد مرحّاب",
+            "تم إعداد بريد الاستعادة بنجاح.\n— مرحّاب",
+        )
+        return ok, msg if ok else msg
+
+    return True, "تم التحقق من اكتمال الحقول المطلوبة بنجاح"
 
 
 def run_test_and_save(credential: IntegrationCredential) -> dict:

@@ -18,6 +18,11 @@ from django.conf import settings
 
 from apps.integrations.models import IntegrationCredential
 
+# أسماء قوالب Meta الافتراضية (يُستبدلها من .env أو إعدادات التكامل)
+META_TEMPLATE_INVITATION = "event_invitation"
+META_TEMPLATE_REMINDER = "event_reminder"
+META_TEMPLATE_LANGUAGE = "ar"
+
 
 def normalize_phone_digits(phone: str) -> str:
     return re.sub(r"\D", "", (phone or "").strip())
@@ -62,6 +67,41 @@ def _http_post_form(url: str, form: dict, auth: tuple[str, str]) -> tuple[int, s
         return 0, str(exc.reason)
 
 
+def _active_cloud_credential():
+    """اعتماد WhatsApp Cloud API نشط ومكتمل الحقول، أو None."""
+    cred = (
+        IntegrationCredential.objects.filter(
+            provider=IntegrationCredential.Provider.WHATSAPP_CLOUD,
+            is_active=True,
+        )
+        .order_by("-updated_at")
+        .first()
+    )
+    if cred and cred.api_key and cred.phone_number_id:
+        return cred
+    return None
+
+
+def _active_twilio_credential():
+    """اعتماد Twilio WhatsApp نشط ومكتمل الحقول، أو None."""
+    cred = (
+        IntegrationCredential.objects.filter(
+            provider=IntegrationCredential.Provider.WHATSAPP_TWILIO,
+            is_active=True,
+        )
+        .order_by("-updated_at")
+        .first()
+    )
+    if cred and cred.api_key and cred.api_secret and cred.phone_number_id:
+        return cred
+    return None
+
+
+def has_active_whatsapp_credential() -> bool:
+    """هل يوجد اعتماد رسمي نشط (Cloud API أو Twilio) جاهز للإرسال؟"""
+    return bool(_active_cloud_credential() or _active_twilio_credential())
+
+
 def send_whatsapp_text(phone: str, text: str) -> dict:
     """
     يحاول الإرسال عبر WhatsApp Cloud API إن وُجدت credentials نشطة.
@@ -77,34 +117,20 @@ def send_whatsapp_text(phone: str, text: str) -> dict:
             "detail": "رقم الهاتف أو المحتوى غير متوفر",
         }
 
-    cred = (
-        IntegrationCredential.objects.filter(
-            provider=IntegrationCredential.Provider.WHATSAPP_CLOUD,
-            is_active=True,
-        )
-        .order_by("-updated_at")
-        .first()
-    )
+    cloud_cred = _active_cloud_credential()
+    if cloud_cred:
+        return _send_cloud_api(cloud_cred, digits, text, fallback_url)
 
-    if not cred or not cred.api_key or not cred.phone_number_id:
-        cred = (
-            IntegrationCredential.objects.filter(
-                provider=IntegrationCredential.Provider.WHATSAPP_TWILIO,
-                is_active=True,
-            )
-            .order_by("-updated_at")
-            .first()
-        )
-        if cred and cred.api_key and cred.api_secret and cred.phone_number_id:
-            return _send_twilio_whatsapp(cred, digits, text, fallback_url)
+    twilio_cred = _active_twilio_credential()
+    if twilio_cred:
+        return _send_twilio_whatsapp(twilio_cred, digits, text, fallback_url)
 
+    if not has_active_whatsapp_credential():
         return {
             "sent": False,
             "whatsapp_url": fallback_url,
             "detail": "لم يُكوَّن WhatsApp API — استخدم رابط واتساب",
         }
-
-    return _send_cloud_api(cred, digits, text, fallback_url)
 
 
 def _send_cloud_api(cred, digits: str, text: str, fallback_url: str) -> dict:
@@ -130,6 +156,175 @@ def _send_cloud_api(cred, digits: str, text: str, fallback_url: str) -> dict:
         "sent": False,
         "whatsapp_url": fallback_url,
         "detail": body[:200] or "فشل إرسال واتساب",
+    }
+
+
+def send_whatsapp_template(
+    phone: str,
+    template_name: str,
+    body_params: list[str],
+    language: str = "ar",
+    fallback_url: str = "",
+) -> dict:
+    """إرسال قالب Meta معتمد (Cloud API).
+
+    ``body_params`` تُطابق {{1}}, {{2}}, ... في جسم القالب.
+    """
+    digits = normalize_phone_digits(phone)
+    if not digits or not template_name:
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": "بيانات القالب غير مكتملة",
+        }
+
+    cred = _active_cloud_credential()
+    if not cred:
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": "لا يوجد اعتماد WhatsApp Cloud API نشط",
+        }
+
+    url = f"https://graph.facebook.com/v18.0/{cred.phone_number_id}/messages"
+    headers = {
+        "Authorization": f"Bearer {cred.api_key}",
+        "Content-Type": "application/json",
+    }
+    parameters = [{"type": "text", "text": str(p)} for p in body_params]
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": digits,
+        "type": "template",
+        "template": {
+            "name": template_name,
+            "language": {"code": language},
+            "components": [{"type": "body", "parameters": parameters}],
+        },
+    }
+    status_code, body = _http_post_json(url, payload, headers)
+    if status_code in (200, 201):
+        return {
+            "sent": True,
+            "whatsapp_url": fallback_url,
+            "detail": f"تم الإرسال عبر قالب Meta: {template_name}",
+            "template": template_name,
+        }
+    return {
+        "sent": False,
+        "whatsapp_url": fallback_url,
+        "detail": body[:300] or "فشل إرسال قالب Meta",
+    }
+
+
+def send_whatsapp_image(
+    phone: str,
+    image_url: str,
+    caption: str = "",
+    fallback_url: str = "",
+) -> dict:
+    """إرسال صورة (مثل QR) عبر Cloud API أو Twilio."""
+    digits = normalize_phone_digits(phone)
+    if not digits or not image_url:
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": "رقم أو رابط الصورة غير متوفر",
+        }
+
+    cloud_cred = _active_cloud_credential()
+    if cloud_cred:
+        url = f"https://graph.facebook.com/v18.0/{cloud_cred.phone_number_id}/messages"
+        headers = {
+            "Authorization": f"Bearer {cloud_cred.api_key}",
+            "Content-Type": "application/json",
+        }
+        image_payload: dict = {"link": image_url}
+        if caption:
+            image_payload["caption"] = caption
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": digits,
+            "type": "image",
+            "image": image_payload,
+        }
+        status_code, body = _http_post_json(url, payload, headers)
+        if status_code in (200, 201):
+            return {
+                "sent": True,
+                "whatsapp_url": fallback_url,
+                "detail": "تم إرسال صورة QR عبر WhatsApp Cloud API",
+            }
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": body[:300] or "فشل إرسال الصورة",
+        }
+
+    twilio_cred = _active_twilio_credential()
+    if twilio_cred:
+        from_number = twilio_cred.phone_number_id.strip()
+        if not from_number.startswith("whatsapp:"):
+            from_number = f"whatsapp:+{normalize_phone_digits(from_number)}"
+        to_number = f"whatsapp:+{digits}"
+        api_url = (
+            f"https://api.twilio.com/2010-04-01/Accounts/{twilio_cred.api_key}/Messages.json"
+        )
+        form = {"From": from_number, "To": to_number, "MediaUrl": image_url}
+        if caption:
+            form["Body"] = caption
+        status_code, body = _http_post_form(
+            api_url, form, (twilio_cred.api_key, twilio_cred.api_secret)
+        )
+        if status_code in (200, 201):
+            return {
+                "sent": True,
+                "whatsapp_url": fallback_url,
+                "detail": "تم إرسال صورة QR عبر Twilio",
+            }
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": body[:300] or "فشل إرسال الصورة عبر Twilio",
+        }
+
+    return {
+        "sent": False,
+        "whatsapp_url": fallback_url,
+        "detail": "لا يوجد مزوّد لإرسال الصور",
+    }
+
+
+def send_via_bot_image(
+    phone: str, image_bytes: bytes, caption: str = ""
+) -> dict:
+    """إرسال صورة PNG عبر بوت الاختبار (base64)."""
+    digits = normalize_phone_digits(phone)
+    if not digits or not image_bytes:
+        return {"sent": False, "detail": "رقم أو صورة غير متوفرة"}
+
+    url = f"{settings.WHATSAPP_BOT_URL}/send-image"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {settings.WHATSAPP_BOT_TOKEN}",
+    }
+    payload = {
+        "to": digits,
+        "image_base64": base64.b64encode(image_bytes).decode("ascii"),
+        "mimetype": "image/png",
+        "caption": caption,
+    }
+    status_code, body = _http_post_json(url, payload, headers)
+    if status_code in (200, 201, 202):
+        return {
+            "sent": True,
+            "queued": True,
+            "detail": "تمت إضافة صورة QR لطابور البوت",
+        }
+    return {
+        "sent": False,
+        "detail": (body[:200] if body else "تعذّر إرسال الصورة عبر البوت")
+        or "تعذّر إرسال الصورة عبر البوت",
     }
 
 
@@ -174,6 +369,12 @@ def send_via_bot(phone: str, text: str) -> dict:
 def dispatch_whatsapp(phone: str, text: str) -> dict:
     """يوجّه الإرسال إلى المزوّد المُكوَّن (manual/bot/api)."""
     provider = (getattr(settings, "WHATSAPP_PROVIDER", "manual") or "manual").lower()
+
+    # اعتماد رسمي نشط (Twilio/Cloud) يتقدّم تلقائياً على البوت — دون الحاجة
+    # لتعديل WHATSAPP_PROVIDER يدوياً. الوضع اليدوي (manual) يبقى صريحاً.
+    if provider != "manual" and has_active_whatsapp_credential():
+        return send_whatsapp_text(phone, text)
+
     if provider == "bot":
         return send_via_bot(phone, text)
     if provider in ("api", "cloud", "twilio"):

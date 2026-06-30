@@ -8,10 +8,8 @@ import { useAuthStore } from "@/lib/store";
 export default function LoginPage() {
   const router = useRouter();
   const { login, setUser } = useAuthStore();
-  const [email, setEmail] = useState("admin@merhab.sa");
-  const [password, setPassword] = useState(
-    process.env.NODE_ENV === "development" ? "Merhab@2024" : ""
-  );
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -159,9 +157,6 @@ export default function LoginPage() {
           >
             مرحّاب
           </h1>
-          <p className="text-sm" style={{ color: "#928ea3" }}>
-            تسجيل الدخول إلى لوحة تحكم المدير
-          </p>
         </div>
 
         {/* Error */}
@@ -222,7 +217,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-xl py-3 pr-10 pl-4 text-sm outline-none transition-all"
-                placeholder="admin@merhab.sa"
+                placeholder="you@example.com"
                 style={{
                   background: "rgba(13, 13, 24, 0.8)",
                   border: "1px solid rgba(71, 69, 87, 0.5)",
@@ -299,6 +294,15 @@ export default function LoginPage() {
                 </span>
               </button>
             </div>
+            <p className="text-left mt-2">
+              <a
+                href="/forgot-password"
+                className="text-xs hover:underline"
+                style={{ color: "#a78bfa" }}
+              >
+                نسيت كلمة المرور؟
+              </a>
+            </p>
           </div>
 
           {/* Submit */}
@@ -337,44 +341,6 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-
-        {/* Footer */}
-        <div
-          className="mt-6 pt-5 text-center text-xs space-y-2"
-          style={{ borderTop: "1px solid rgba(71,69,87,0.3)", color: "#474557" }}
-        >
-          <p>
-            <span style={{ color: "#928ea3" }}>الحساب الافتراضي: </span>
-            <span style={{ color: "#c8bfff", fontFamily: "'Inter', monospace" }}>
-              admin@merhab.sa
-            </span>
-          </p>
-          {process.env.NODE_ENV === "development" && (
-            <p className="text-[10px] text-center text-outline">
-              كلمة المرور الافتراضية: Merhab@2024 (11 حرفاً)
-            </p>
-          )}
-          {process.env.NODE_ENV === "development" && (
-            <button
-              type="button"
-              onClick={() => {
-                setEmail("admin@merhab.sa");
-                setPassword("Merhab@2024");
-                setError("");
-                const form = document.getElementById("login-form") as HTMLFormElement | null;
-                if (form) {
-                  const emailEl = form.elements.namedItem("email") as HTMLInputElement | null;
-                  const passEl = form.elements.namedItem("password") as HTMLInputElement | null;
-                  if (emailEl) emailEl.value = "admin@merhab.sa";
-                  if (passEl) passEl.value = "Merhab@2024";
-                }
-              }}
-              className="text-[11px] font-bold text-primary hover:text-primary-fixed-dim transition-colors"
-            >
-              تعبئة بيانات مدير النظام الافتراضية
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );

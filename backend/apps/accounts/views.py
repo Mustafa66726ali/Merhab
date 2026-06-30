@@ -17,7 +17,11 @@ from .serializers import (
     ChangePasswordSerializer,
     RecoveryEmailSerializer,
     TwoFactorSerializer,
+    ForgotPasswordSerializer,
+    ResetPasswordSerializer,
 )
+from .password_recovery import request_password_reset, reset_password_with_code
+from apps.integrations.email_send import is_password_recovery_configured
 
 
 class AuthViewSet(viewsets.GenericViewSet):
@@ -280,6 +284,54 @@ class AuthViewSet(viewsets.GenericViewSet):
         user.two_factor_enabled = serializer.validated_data["two_factor_enabled"]
         user.save(update_fields=["two_factor_enabled"])
         return Response(UserSerializer(user).data)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        authentication_classes=[],
+        permission_classes=[permissions.AllowAny],
+        url_path="recovery-status",
+    )
+    def recovery_status(self, request):
+        """هل استعادة كلمة المرور عبر البريد مفعّلة (SMTP مُكوَّن)؟"""
+        return Response({"configured": is_password_recovery_configured()})
+
+    @action(
+        detail=False,
+        methods=["post"],
+        authentication_classes=[],
+        permission_classes=[permissions.AllowAny],
+        url_path="forgot-password",
+    )
+    def forgot_password(self, request):
+        """إرسال رمز تحقق إلى بريد المستخدم لاستعادة كلمة المرور."""
+        serializer = ForgotPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = request_password_reset(serializer.validated_data["email"])
+        status_code = (
+            status.HTTP_200_OK if result.get("ok") else status.HTTP_400_BAD_REQUEST
+        )
+        return Response({"detail": result.get("detail", "")}, status=status_code)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        authentication_classes=[],
+        permission_classes=[permissions.AllowAny],
+        url_path="reset-password",
+    )
+    def reset_password(self, request):
+        """التحقق من الرمز وتعيين كلمة مرور جديدة."""
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        result = reset_password_with_code(
+            data["email"], data["code"], data["new_password"]
+        )
+        status_code = (
+            status.HTTP_200_OK if result.get("ok") else status.HTTP_400_BAD_REQUEST
+        )
+        return Response({"detail": result.get("detail", "")}, status=status_code)
 
 
 class UserViewSet(viewsets.ModelViewSet):

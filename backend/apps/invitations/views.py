@@ -14,7 +14,12 @@ from rest_framework.response import Response
 from apps.accounts.models import User
 from apps.events.models import Event
 from apps.guests.models import Guest
-from apps.integrations.whatsapp_send import build_whatsapp_url, dispatch_whatsapp
+from apps.integrations.whatsapp_send import (
+    build_whatsapp_url,
+    has_active_whatsapp_credential,
+    _active_cloud_credential,
+)
+from apps.integrations.whatsapp_messages import send_guest_invitation, send_guest_reminder
 from apps.platforms.platform_permissions import (
     PERM_SEND_MESSAGES,
     get_platform_for_user,
@@ -115,16 +120,88 @@ def _render_message(
     return out
 
 
-def _dispatch_split(phone: str, text_body: str, invite_url: str) -> dict:
-    """يُرسل رسالتين منفصلتين: النص أولاً ثم الرابط وحده (قابل للنقر).
+def process_event_reminders(
+    event,
+    guests,
+    tpl_unconfirmed: str | None = None,
+    tpl_confirmed: str | None = None,
+    auto: bool = False,
+):
+    """يُرسل تذكيرات لمجموعة ضيوف حسب حالتهم — منطق مشترك بين الإرسال اليدوي
+    (``remind_batch``) والتذكير التلقائي المجدوَل (أمر ``send_due_reminders``).
 
-    يُرجع نتيجة مجمّعة: ``sent`` يكون True فقط إذا نجح إرسال الرسالتين.
+    - من لم يؤكّد الحضور → تذكير بالتأكيد عبر الرابط.
+    - من أكّد/حضر/جلس   → تذكير بموعد المناسبة وبطاقة الدخول.
+    - من اعتذر          → يُتجاوز.
+
+    يُرجع: ``(results, skipped, sent_count)``.
     """
-    out_text = dispatch_whatsapp(phone, text_body)
-    out_link = dispatch_whatsapp(phone, invite_url)
-    sent = bool(out_text.get("sent")) and bool(out_link.get("sent"))
-    detail = out_link.get("detail") or out_text.get("detail") or ""
-    return {"sent": sent, "detail": detail}
+    tpl_unconfirmed = tpl_unconfirmed or DEFAULT_REMINDER_UNCONFIRMED
+    tpl_confirmed = tpl_confirmed or DEFAULT_REMINDER_CONFIRMED
+    confirmed_states = (
+        Guest.Status.CONFIRMED,
+        Guest.Status.ATTENDED,
+        Guest.Status.SEATED,
+    )
+
+    results = []
+    skipped = 0
+    sent_count = 0
+    for guest in guests:
+        if guest.status == Guest.Status.DECLINED:
+            skipped += 1
+            continue
+        is_confirmed = guest.status in confirmed_states
+        template = tpl_confirmed if is_confirmed else tpl_unconfirmed
+        invite_url = f"{settings.FRONTEND_URL}/i/{guest.public_token}"
+        body = _render_message(template, guest, invite_url)
+        prefix = "تذكير بموعد: " if is_confirmed else "تذكير بتأكيد الحضور: "
+        subject = prefix + (event.invitation_title or event.title)
+
+        sent = False
+        detail = ""
+        if auto:
+            custom = _render_message(
+                template, guest, invite_url, include_link=False
+            )
+            outcome = send_guest_reminder(guest, custom_body=custom)
+            sent = bool(outcome.get("sent"))
+            detail = outcome.get("detail", "")
+        if sent:
+            sent_count += 1
+
+        Invitation.objects.create(
+            event=event,
+            guest=guest,
+            method=Invitation.Method.WHATSAPP,
+            status=(
+                Invitation.Status.SENT
+                if (not auto or sent)
+                else Invitation.Status.FAILED
+            ),
+            subject=subject,
+            message=body,
+            sent_at=timezone.now(),
+        )
+        results.append(
+            {
+                "guest_id": guest.id,
+                "full_name": guest.full_name,
+                "phone": guest.phone,
+                "status": guest.status,
+                "kind": "confirmed" if is_confirmed else "unconfirmed",
+                "invite_url": invite_url,
+                "message": body,
+                "auto": auto,
+                "sent": sent,
+                "detail": detail,
+                "whatsapp_url": build_whatsapp_url(guest.phone, body)
+                if guest.phone
+                else None,
+            }
+        )
+
+    return results, skipped, sent_count
 
 
 class InvitationViewSet(viewsets.ModelViewSet):
@@ -171,7 +248,25 @@ class InvitationViewSet(viewsets.ModelViewSet):
             event.invitation_message = request.data.get(
                 "invitation_message", event.invitation_message
             )
-            event.save(update_fields=["invitation_title", "invitation_message"])
+            update_fields = ["invitation_title", "invitation_message"]
+
+            if "auto_reminder_enabled" in request.data:
+                event.auto_reminder_enabled = bool(
+                    request.data.get("auto_reminder_enabled")
+                )
+                update_fields.append("auto_reminder_enabled")
+            if "auto_reminder_hours_before" in request.data:
+                try:
+                    hours = int(request.data.get("auto_reminder_hours_before"))
+                except (TypeError, ValueError):
+                    hours = event.auto_reminder_hours_before
+                event.auto_reminder_hours_before = max(1, min(hours, 168))
+                update_fields.append("auto_reminder_hours_before")
+                # تغيير الإعداد يعيد فتح إمكانية الإرسال التلقائي مجدداً
+                event.auto_reminder_sent_at = None
+                update_fields.append("auto_reminder_sent_at")
+
+            event.save(update_fields=update_fields)
 
         return Response(
             {
@@ -179,6 +274,9 @@ class InvitationViewSet(viewsets.ModelViewSet):
                 "invitation_title": event.invitation_title,
                 "invitation_message": event.invitation_message or DEFAULT_TEMPLATE,
                 "default_template": DEFAULT_TEMPLATE,
+                "auto_reminder_enabled": event.auto_reminder_enabled,
+                "auto_reminder_hours_before": event.auto_reminder_hours_before,
+                "auto_reminder_sent_at": event.auto_reminder_sent_at,
                 "placeholders": [
                     "name", "event", "date", "time", "venue", "section", "group", "link",
                 ],
@@ -218,13 +316,13 @@ class InvitationViewSet(viewsets.ModelViewSet):
         )
         require_event_access(request.user, event)
 
-        # افصل الرابط في رسالة مستقلة قابلة للنقر إن وُجد ضمن النص
         invite_url = f"{settings.FRONTEND_URL}/i/{guest.public_token}"
-        if invite_url in message:
-            text_body = message.replace(invite_url, "").rstrip()
-            outcome = _dispatch_split(guest.phone, text_body, invite_url)
+        text_body = message.replace(invite_url, "").rstrip() if invite_url in message else message
+        kind = (request.data.get("kind") or request.data.get("message_kind") or "invite").lower()
+        if kind == "remind":
+            outcome = send_guest_reminder(guest, custom_body=text_body)
         else:
-            outcome = dispatch_whatsapp(guest.phone, message)
+            outcome = send_guest_invitation(guest, custom_body=text_body)
         sent = bool(outcome.get("sent"))
         Invitation.objects.create(
             event=event,
@@ -248,15 +346,45 @@ class InvitationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="bot-status")
     def bot_status(self, request):
-        """حالة مزوّد الإرسال — يفيد الواجهة لمعرفة هل الأتمتة جاهزة."""
-        provider = (
+        """حالة مزوّد الإرسال الفعّال — يفيد الواجهة لمعرفة هل الأتمتة جاهزة.
+
+        يحسب المزوّد *الفعّال* بنفس منطق ``dispatch_whatsapp``: أي اعتماد رسمي
+        نشط (Cloud/Twilio) يتقدّم تلقائياً على البوت ما لم يكن الوضع ``manual``.
+        """
+        configured = (
             getattr(settings, "WHATSAPP_PROVIDER", "manual") or "manual"
         ).lower()
-        info = {"provider": provider, "ready": provider != "manual"}
-        if provider == "bot":
+
+        labels = {
+            "cloud": "WhatsApp Cloud API",
+            "twilio": "Twilio WhatsApp",
+            "bot": "بوت محلي (اختبار)",
+            "manual": "روابط يدوية",
+        }
+
+        # المزوّد الرسمي يتقدّم تلقائياً متى وُجد اعتماد نشط
+        if configured != "manual" and has_active_whatsapp_credential():
+            effective = "cloud" if _active_cloud_credential() else "twilio"
+            return Response(
+                {
+                    "provider": effective,
+                    "configured": configured,
+                    "label": labels[effective],
+                    "ready": True,
+                    "automated": True,
+                }
+            )
+
+        if configured == "bot":
+            info = {
+                "provider": "bot",
+                "configured": configured,
+                "label": labels["bot"],
+                "ready": False,
+                "automated": True,
+            }
             import urllib.request
 
-            info["ready"] = False
             try:
                 req = urllib.request.Request(
                     f"{settings.WHATSAPP_BOT_URL}/status",
@@ -273,7 +401,30 @@ class InvitationViewSet(viewsets.ModelViewSet):
                     info["queue"] = payload.get("queue")
             except Exception as exc:  # noqa: BLE001
                 info["error"] = f"تعذّر الاتصال بالبوت: {exc}"[:160]
-        return Response(info)
+            return Response(info)
+
+        if configured in ("api", "cloud", "twilio"):
+            # وضع api لكن لا يوجد اعتماد نشط بعد
+            return Response(
+                {
+                    "provider": "api",
+                    "configured": configured,
+                    "label": "WhatsApp API (لم يُكوَّن بعد)",
+                    "ready": False,
+                    "automated": True,
+                    "error": "لا يوجد اعتماد تكامل نشط — أضِفه من صفحة التكاملات",
+                }
+            )
+
+        return Response(
+            {
+                "provider": "manual",
+                "configured": configured,
+                "label": labels["manual"],
+                "ready": False,
+                "automated": False,
+            }
+        )
 
     @action(detail=False, methods=["post"], url_path="send-batch")
     def send_batch(self, request):
@@ -311,11 +462,10 @@ class InvitationViewSet(viewsets.ModelViewSet):
             sent = False
             detail = ""
             if auto:
-                # رسالتان منفصلتان: النص ثم الرابط القابل للنقر
-                text_body = _render_message(
+                custom = _render_message(
                     template, guest, invite_url, include_link=False
                 )
-                outcome = _dispatch_split(guest.phone, text_body, invite_url)
+                outcome = send_guest_invitation(guest, custom_body=custom)
                 sent = bool(outcome.get("sent"))
                 detail = outcome.get("detail", "")
 
@@ -384,67 +534,11 @@ class InvitationViewSet(viewsets.ModelViewSet):
         tpl_confirmed = (
             request.data.get("message_confirmed") or DEFAULT_REMINDER_CONFIRMED
         )
-        confirmed_states = (
-            Guest.Status.CONFIRMED,
-            Guest.Status.ATTENDED,
-            Guest.Status.SEATED,
-        )
         auto = bool(request.data.get("auto"))
 
-        results = []
-        skipped = 0
-        for guest in guests:
-            if guest.status == Guest.Status.DECLINED:
-                skipped += 1
-                continue
-            is_confirmed = guest.status in confirmed_states
-            template = tpl_confirmed if is_confirmed else tpl_unconfirmed
-            invite_url = f"{settings.FRONTEND_URL}/i/{guest.public_token}"
-            body = _render_message(template, guest, invite_url)
-            prefix = "تذكير بموعد: " if is_confirmed else "تذكير بتأكيد الحضور: "
-            subject = prefix + (event.invitation_title or event.title)
-
-            sent = False
-            detail = ""
-            if auto:
-                # رسالتان منفصلتان: النص ثم الرابط القابل للنقر
-                text_body = _render_message(
-                    template, guest, invite_url, include_link=False
-                )
-                outcome = _dispatch_split(guest.phone, text_body, invite_url)
-                sent = bool(outcome.get("sent"))
-                detail = outcome.get("detail", "")
-
-            Invitation.objects.create(
-                event=event,
-                guest=guest,
-                method=Invitation.Method.WHATSAPP,
-                status=(
-                    Invitation.Status.SENT
-                    if (not auto or sent)
-                    else Invitation.Status.FAILED
-                ),
-                subject=subject,
-                message=body,
-                sent_at=timezone.now(),
-            )
-            results.append(
-                {
-                    "guest_id": guest.id,
-                    "full_name": guest.full_name,
-                    "phone": guest.phone,
-                    "status": guest.status,
-                    "kind": "confirmed" if is_confirmed else "unconfirmed",
-                    "invite_url": invite_url,
-                    "message": body,
-                    "auto": auto,
-                    "sent": sent,
-                    "detail": detail,
-                    "whatsapp_url": build_whatsapp_url(guest.phone, body)
-                    if guest.phone
-                    else None,
-                }
-            )
+        results, skipped, _sent = process_event_reminders(
+            event, guests, tpl_unconfirmed, tpl_confirmed, auto
+        )
 
         return Response(
             {

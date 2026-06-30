@@ -208,6 +208,16 @@ export default function GuestDetailView({
           </dl>
         </div>
 
+        {guest.greeting && (
+          <div className="lg:col-span-2 bg-surface-container-low rounded-2xl border border-emerald-500/20 p-5 sm:p-6 space-y-2">
+            <h2 className="text-sm font-bold text-emerald-300 uppercase tracking-widest flex items-center gap-2">
+              <span className="material-symbols-outlined text-base">celebration</span>
+              كلمة تهنئة من الضيف
+            </h2>
+            <p className="text-sm text-on-surface whitespace-pre-wrap arabic-display">{guest.greeting}</p>
+          </div>
+        )}
+
         {(guest.notes || guest.dietary_requirements) && (
           <div className="lg:col-span-2 bg-surface-container-low rounded-2xl border border-outline-variant/10 p-5 sm:p-6 space-y-4">
             <h2 className="text-sm font-bold text-on-surface-variant uppercase tracking-widest">

@@ -52,6 +52,21 @@ class Event(models.Model):
         verbose_name="نص الدعوة الافتراضي",
         help_text="يدعم الحقول: {name} {event} {date} {time} {venue} {link}",
     )
+    auto_reminder_enabled = models.BooleanField(
+        default=False,
+        verbose_name="تفعيل التذكير التلقائي قبل الحفل",
+        help_text="يتطلّب مزوّداً رسمياً نشطاً (Twilio/Cloud) ليُرسل تلقائياً.",
+    )
+    auto_reminder_hours_before = models.PositiveSmallIntegerField(
+        default=3,
+        verbose_name="عدد الساعات قبل الحفل لإرسال التذكير",
+    )
+    auto_reminder_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="وقت إرسال التذكير التلقائي",
+        help_text="يُضبط تلقائياً عند الإرسال لمنع التكرار.",
+    )
     platform = models.ForeignKey(
         "platforms.Platform",
         on_delete=models.SET_NULL,

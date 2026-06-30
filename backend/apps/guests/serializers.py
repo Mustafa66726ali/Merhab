@@ -18,7 +18,7 @@ class GuestSerializer(serializers.ModelSerializer):
             "id", "event", "event_title", "user", "full_name", "email", "phone",
             "status", "status_label", "section", "section_name", "group", "group_name",
             "qr_code", "qr_code_url", "public_token", "invite_url", "responded_at",
-            "notes", "dietary_requirements", "created_at",
+            "greeting", "notes", "dietary_requirements", "created_at",
         ]
         read_only_fields = [
             "qr_code", "qr_code_url", "public_token", "invite_url",

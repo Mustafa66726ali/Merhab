@@ -184,10 +184,21 @@ export default function GuestMessagesView() {
                   messages.map((m) => (
                     <div
                       key={m.id}
-                      className="p-3 rounded-xl bg-surface-container-high border border-outline-variant/10"
+                      className={`p-3 rounded-xl border border-outline-variant/10 ${
+                        m.direction === "incoming"
+                          ? "bg-primary/5 border-primary/20"
+                          : "bg-surface-container-high"
+                      }`}
                     >
-                      <div className="flex justify-between gap-2 text-xs text-on-surface-variant mb-1">
-                        <span>{m.sender_name || "النظام"}</span>
+                      <div className="flex justify-between gap-2 text-xs text-on-surface-variant mb-1 flex-wrap">
+                        <span className="flex items-center gap-2 flex-wrap">
+                          <span>{m.direction === "incoming" ? m.guest_name : m.sender_name || "النظام"}</span>
+                          {m.kind && m.kind !== "general" && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-surface-container-high">
+                              {m.kind_label}
+                            </span>
+                          )}
+                        </span>
                         <span>{formatDateTime(m.created_at)}</span>
                       </div>
                       <p className="text-on-surface text-sm whitespace-pre-wrap">{m.content}</p>

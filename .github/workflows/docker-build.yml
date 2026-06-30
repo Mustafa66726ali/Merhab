@@ -1,0 +1,19 @@
+name: Docker Build Check
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: إنشاء ملف .env للاختبار
+        run: cp .env.example .env
+
+      - name: بناء صور Docker
+        run: docker compose build

@@ -515,6 +515,13 @@ export default function LandingPageView() {
             </div>
 
             <div className="col-auto d-flex align-items-center gap-2 ms-auto">
+              <Link
+                href="/login"
+                className="landing-btn-primary !py-2 !px-3 sm:!px-4 !text-xs sm:!text-sm inline-flex items-center gap-1.5"
+              >
+                <MsIcon name="login" className="!text-base" />
+                <span>تسجيل الدخول</span>
+              </Link>
               <div className="hidden sm:flex items-center gap-1.5">
                 {utilityPages.map((p) => (
                   <Link
@@ -618,6 +625,14 @@ export default function LandingPageView() {
                 ))}
               </div>
             )}
+            <Link
+              href="/login"
+              onClick={() => setMobileNav(false)}
+              className="mt-4 landing-btn-primary w-full justify-center inline-flex items-center gap-2"
+            >
+              <MsIcon name="login" className="!text-base" />
+              تسجيل الدخول
+            </Link>
           </nav>
         </aside>
       </header>

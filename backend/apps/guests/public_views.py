@@ -16,6 +16,11 @@ from rest_framework.views import APIView
 
 from apps.integrations.whatsapp_send import build_whatsapp_url
 
+from .inbound_messages import (
+    record_guest_greeting,
+    record_guest_inquiry,
+    resolve_event_coordinator,
+)
 from .models import Guest
 
 GOING_STATUSES = (
@@ -47,7 +52,7 @@ def _initials(name: str) -> str:
 
 
 def _coordinator(event) -> dict | None:
-    user = event.created_by
+    user = resolve_event_coordinator(event)
     if not user:
         return None
     name = (user.get_full_name() or "").strip() or "منسّق الحفل"
@@ -174,8 +179,13 @@ class PublicInvitationRespondView(APIView):
             guest.status = Guest.Status.CONFIRMED
             guest.save(update_fields=["status", "responded_at"])
             from .qr_utils import ensure_guest_qr
+            from apps.integrations.whatsapp_messages import send_guest_qr
 
             ensure_guest_qr(guest)
+            guest.refresh_from_db()
+            # إرسال صورة QR مباشرة عبر واتساب (بوت في التطوير / Meta في الإنتاج)
+            if guest.phone:
+                send_guest_qr(guest)
         else:
             guest.status = Guest.Status.DECLINED
             guest.save(update_fields=["status", "responded_at"])
@@ -193,6 +203,33 @@ class PublicInvitationGreetingView(APIView):
     def post(self, request, token):
         guest = _get_guest(token)
         message = (request.data.get("message") or "").strip()[:2000]
-        guest.greeting = message
-        guest.save(update_fields=["greeting"])
+        if not message:
+            return Response(
+                {"detail": "نص التهنئة مطلوب"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        record_guest_greeting(guest, message)
         return Response({"ok": True, "greeting": guest.greeting})
+
+
+class PublicInvitationInquiryView(APIView):
+    """إرسال استفسار مباشر من الضيف إلى منسّق الحفل."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request, token):
+        guest = _get_guest(token)
+        message = (request.data.get("message") or "").strip()[:2000]
+        if not message:
+            return Response(
+                {"detail": "نص الاستفسار مطلوب"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        _, coordinator = record_guest_inquiry(guest, message)
+        if not coordinator:
+            return Response(
+                {"detail": "لا يوجد منسّق معيّن لهذه المناسبة حالياً"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response({"ok": True})
