@@ -1,12 +1,17 @@
 from datetime import timedelta
 
 from django.db.models import Count, Q
-from django.db.models.functions import ExtractMonth
+from django.db.models.functions import Coalesce, ExtractMonth
 from django.utils import timezone
 
 from apps.events.cover_media import event_cover_url
 from apps.events.models import Event, Schedule
 from apps.guests.models import Guest
+from apps.guests.status_utils import (
+    CONFIRMED_ATTENDANCE_STATUSES,
+    PHYSICAL_PRESENCE_STATUSES,
+    rate_percent,
+)
 from apps.platforms.member_profile import (
     _empty_guest_stats,
     _guest_stats_bulk,
@@ -54,18 +59,21 @@ def compute_kpis(platform_id: int | None = None) -> dict:
     if event_ids:
         guest_agg = Guest.objects.filter(event_id__in=event_ids).aggregate(
             guests_count=Count("id"),
-            attended=Count("id", filter=Q(status=Guest.Status.ATTENDED)),
+            attended=Count(
+                "id",
+                filter=Q(status__in=PHYSICAL_PRESENCE_STATUSES),
+            ),
             confirmed=Count(
                 "id",
-                filter=Q(status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]),
+                filter=Q(status__in=CONFIRMED_ATTENDANCE_STATUSES),
             ),
         )
         guests_count = guest_agg["guests_count"] or 0
         if guests_count:
-            attended = guest_agg["attended"] or 0
             confirmed = guest_agg["confirmed"] or 0
-            attendance_rate = round(attended / guests_count * 100, 1)
-            confirmation_rate = round(confirmed / guests_count * 100, 1)
+            attended = guest_agg["attended"] or 0
+            attendance_rate = rate_percent(attended, guests_count)
+            confirmation_rate = rate_percent(confirmed, guests_count)
 
     return {
         "activities_count": activities_count,
@@ -86,25 +94,46 @@ def monthly_rsvp_chart(event_ids: list[int]) -> dict:
     invited = [0] * 12
 
     if event_ids:
-        rows = (
-            Guest.objects.filter(event_id__in=event_ids, created_at__year=year)
-            .annotate(month=ExtractMonth("created_at"))
+        ref_qs = Guest.objects.filter(event_id__in=event_ids).annotate(
+            ref=Coalesce("responded_at", "created_at"),
+        ).filter(ref__year=year)
+
+        confirmed_rows = (
+            ref_qs.filter(status__in=CONFIRMED_ATTENDANCE_STATUSES)
+            .annotate(month=ExtractMonth("ref"))
             .values("month")
-            .annotate(
-                confirmed=Count(
-                    "id",
-                    filter=Q(status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]),
-                ),
-                declined=Count("id", filter=Q(status=Guest.Status.DECLINED)),
-                invited=Count("id", filter=Q(status=Guest.Status.INVITED)),
-            )
+            .annotate(total=Count("id"))
         )
-        for row in rows:
+        for row in confirmed_rows:
             month_idx = (row["month"] or 1) - 1
             if 0 <= month_idx < 12:
-                confirmed[month_idx] = row["confirmed"] or 0
-                declined[month_idx] = row["declined"] or 0
-                invited[month_idx] = row["invited"] or 0
+                confirmed[month_idx] = row["total"] or 0
+
+        declined_rows = (
+            ref_qs.filter(status=Guest.Status.DECLINED)
+            .annotate(month=ExtractMonth("ref"))
+            .values("month")
+            .annotate(total=Count("id"))
+        )
+        for row in declined_rows:
+            month_idx = (row["month"] or 1) - 1
+            if 0 <= month_idx < 12:
+                declined[month_idx] = row["total"] or 0
+
+        invited_rows = (
+            Guest.objects.filter(
+                event_id__in=event_ids,
+                status=Guest.Status.INVITED,
+                created_at__year=year,
+            )
+            .annotate(month=ExtractMonth("created_at"))
+            .values("month")
+            .annotate(total=Count("id"))
+        )
+        for row in invited_rows:
+            month_idx = (row["month"] or 1) - 1
+            if 0 <= month_idx < 12:
+                invited[month_idx] = row["total"] or 0
 
     max_val = max(max(confirmed + declined, default=0), 1)
     confirmed_heights = [f"{max(round(v / max_val * 100), 5)}%" for v in confirmed]
@@ -174,10 +203,8 @@ def _confirmation_rate(qs) -> float:
     total = qs.count()
     if not total:
         return 0.0
-    confirmed = qs.filter(
-        status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]
-    ).count()
-    return round(confirmed / total * 100, 1)
+    confirmed = qs.filter(status__in=CONFIRMED_ATTENDANCE_STATUSES).count()
+    return rate_percent(confirmed, total)
 
 
 def compute_kpi_cards(platform_id: int) -> list[dict]:

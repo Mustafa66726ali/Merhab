@@ -3,6 +3,7 @@ from django.urls import path
 from .public_views import (
     PublicInvitationGreetingView,
     PublicInvitationInquiryView,
+    PublicInvitationLiveMediaView,
     PublicInvitationRespondView,
     PublicInvitationView,
 )
@@ -27,5 +28,10 @@ urlpatterns = [
         "invitation/<uuid:token>/inquiry/",
         PublicInvitationInquiryView.as_view(),
         name="public-invitation-inquiry",
+    ),
+    path(
+        "invitation/<uuid:token>/live-media/",
+        PublicInvitationLiveMediaView.as_view(),
+        name="public-invitation-live-media",
     ),
 ]

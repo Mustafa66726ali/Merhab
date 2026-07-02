@@ -8,6 +8,7 @@ interface Membership {
   perm_edit_guests: boolean;
   perm_send_messages: boolean;
   coordinator_label?: string;
+  assigned_event_ids?: number[];
 }
 
 interface User {

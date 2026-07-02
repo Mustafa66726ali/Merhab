@@ -5,8 +5,8 @@ from django.conf import settings
 class Event(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "مسودة"
-        ACTIVE = "active", "نشط"
-        COMPLETED = "completed", "مكتمل"
+        ACTIVE = "active", "تعمل الآن"
+        COMPLETED = "completed", "منتهية"
         CANCELLED = "cancelled", "ملغي"
         ARCHIVED = "archived", "مؤرشف"
 
@@ -89,6 +89,58 @@ class Event(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
+    started_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="وقت بدء التشغيل"
+    )
+    ended_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="وقت إنهاء التشغيل"
+    )
+    live_media_enabled = models.BooleanField(
+        default=False,
+        verbose_name="تفعيل البث للضيوف",
+    )
+    live_media_mode = models.CharField(
+        max_length=20,
+        choices=[
+            ("off", "متوقف"),
+            ("audio_file", "ملف صوتي"),
+            ("youtube", "يوتيوب"),
+            ("microphone", "ميكروفون مباشر"),
+            ("camera", "كamera مباشر"),
+        ],
+        default="off",
+        verbose_name="نوع البث",
+    )
+    live_youtube_url = models.CharField(
+        max_length=500,
+        blank=True,
+        verbose_name="رابط يوتيوب",
+    )
+    live_audio_file = models.FileField(
+        upload_to="events/live_audio/",
+        blank=True,
+        verbose_name="ملف صوتي للبث",
+    )
+    live_stream_file = models.FileField(
+        upload_to="events/live_stream/",
+        blank=True,
+        verbose_name="آخر مقطع بث مباشر",
+    )
+    live_stream_active = models.BooleanField(
+        default=False,
+        verbose_name="البث المباشر نشط",
+    )
+    live_stream_rev = models.PositiveIntegerField(
+        default=0,
+        verbose_name="إصدار البث",
+    )
+    live_broadcast_token = models.UUIDField(
+        unique=True,
+        null=True,
+        blank=True,
+        editable=False,
+        verbose_name="رمز رابط البث العام",
+    )
 
     class Meta:
         verbose_name = "فعالية"

@@ -15,6 +15,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.integrations.whatsapp_send import build_whatsapp_url
+from apps.platforms.platform_events import _location_label
+
+from apps.events.live_media import build_live_media_payload
 
 from .inbound_messages import (
     record_guest_greeting,
@@ -119,11 +122,13 @@ def invitation_payload(request, guest: Guest) -> dict:
             "geo_address": event.geo_address,
             "latitude": event.latitude,
             "longitude": event.longitude,
+            "location": _location_label(event),
             "cover_image": _abs_url(request, event.cover_image),
             "platform_name": event.platform.name if event.platform_id else "",
             "invitation_title": event.invitation_title,
             "invitation_message": event.invitation_message,
         },
+        "live_media": build_live_media_payload(event),
         "schedules": schedules,
         "group_members": group_members,
         "coordinator": _coordinator(event),
@@ -140,6 +145,17 @@ def _get_guest(token):
         ),
         public_token=token,
     )
+
+
+class PublicInvitationLiveMediaView(APIView):
+    """استطلاع خفيف لحالة البث — للضيوف أثناء البث المباشر."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, token):
+        guest = _get_guest(token)
+        return Response(build_live_media_payload(guest.event))
 
 
 class PublicInvitationView(APIView):
@@ -189,6 +205,14 @@ class PublicInvitationRespondView(APIView):
         else:
             guest.status = Guest.Status.DECLINED
             guest.save(update_fields=["status", "responded_at"])
+
+        from apps.platforms.notification_service import notify_rsvp_response
+
+        notify_rsvp_response(
+            guest.event,
+            guest.full_name,
+            confirmed=action == "confirm",
+        )
 
         guest.refresh_from_db()
         return Response(invitation_payload(request, guest))

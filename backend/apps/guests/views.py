@@ -5,12 +5,15 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.models import User
+from apps.events.event_lifecycle import require_event_live
 from apps.platforms.platform_permissions import (
     PERM_EDIT_GUESTS,
     PERM_SCAN_QR,
     get_platform_for_user,
     require_event_access,
     require_platform_permission,
+    require_staff_event_assignment,
+    staff_assigned_event_ids,
 )
 
 from .models import Guest, GuestQrScanLog
@@ -35,12 +38,10 @@ class GuestViewSet(viewsets.ModelViewSet):
             else:
                 return Guest.objects.none()
         elif user.role == User.Role.STAFF:
-            # المنسق ومدير الدخول: ضيوف كامل فعاليات منصتهم (لمسح الحضور والإجلاس)
-            platform = get_platform_for_user(user)
-            if platform:
-                qs = qs.filter(event__platform_id=platform.id)
-            else:
+            event_ids = staff_assigned_event_ids(user)
+            if not event_ids:
                 return Guest.objects.none()
+            qs = qs.filter(event_id__in=event_ids)
         elif user.role in (
             User.Role.EVENT_MANAGER,
             User.Role.EVENT_ORGANIZER,
@@ -66,7 +67,11 @@ class GuestViewSet(viewsets.ModelViewSet):
         require_platform_permission(user, PERM_EDIT_GUESTS, "غير مصرح — لا تملك صلاحية تعديل الضيوف")
         event = serializer.validated_data.get("event")
         require_event_access(user, event)
-        serializer.save()
+        require_event_live(event)
+        guest = serializer.save()
+        from apps.platforms.notification_service import maybe_notify_preparation_complete
+
+        maybe_notify_preparation_complete(guest.event)
 
     def perform_update(self, serializer):
         user = self.request.user
@@ -95,6 +100,7 @@ class GuestViewSet(viewsets.ModelViewSet):
 
             event = Event.objects.select_related("platform").get(pk=guest_data.get("event"))
             require_event_access(request.user, event)
+            require_event_live(event)
             guest, _ = Guest.objects.get_or_create(
                 event_id=guest_data.get("event"),
                 email=guest_data.get("email", ""),
@@ -112,6 +118,8 @@ class GuestViewSet(viewsets.ModelViewSet):
             "غير مصرح — لا تملك صلاحية مسح QR / تسجيل الحضور",
         )
         require_event_access(request.user, guest.event)
+        require_staff_event_assignment(request.user, guest.event)
+        require_event_live(guest.event)
         guest.status = Guest.Status.ATTENDED
         guest.save(update_fields=["status"])
         GuestQrScanLog.objects.create(
@@ -119,6 +127,9 @@ class GuestViewSet(viewsets.ModelViewSet):
             event=guest.event,
             scanner=request.user,
         )
+        from apps.platforms.notification_service import notify_guest_checked_in
+
+        notify_guest_checked_in(guest.event, guest.full_name, actor=request.user)
         return Response(GuestSerializer(guest, context={"request": request}).data)
 
     @action(detail=True, methods=["post"], url_path="scan-qr")
@@ -149,11 +160,16 @@ class GuestViewSet(viewsets.ModelViewSet):
             "غير مصرح — لا تملك صلاحية مسح QR / تسجيل الحضور",
         )
         require_event_access(request.user, guest.event)
+        require_staff_event_assignment(request.user, guest.event)
+        require_event_live(guest.event)
 
         already = guest.status in (Guest.Status.ATTENDED, Guest.Status.SEATED)
         if not already:
             guest.status = Guest.Status.ATTENDED
             guest.save(update_fields=["status"])
+            from apps.platforms.notification_service import notify_guest_checked_in
+
+            notify_guest_checked_in(guest.event, guest.full_name, actor=request.user)
 
         GuestQrScanLog.objects.create(
             guest=guest,

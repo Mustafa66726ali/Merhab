@@ -5,7 +5,6 @@ from __future__ import annotations
 from apps.guests.models import Guest
 from apps.integrations.whatsapp_send import dispatch_whatsapp
 from apps.messages_app.models import Message
-from apps.platforms.models import UserNotification
 from apps.staff.models import StaffMember
 
 
@@ -26,7 +25,7 @@ def resolve_event_coordinator(event):
 
 
 def record_guest_greeting(guest: Guest, text: str) -> Message:
-    """يحفظ التهنئة على الضيف ويسجّلها في قسم التهنئات."""
+    """يحفظ التهنئة — تظهر في أيقونة الرسائل (تهنئات واستفسارات) وليس الإشعارات."""
     guest.greeting = text
     guest.save(update_fields=["greeting"])
     Message.objects.filter(guest=guest, kind=Message.Kind.GREETING).delete()
@@ -36,11 +35,12 @@ def record_guest_greeting(guest: Guest, text: str) -> Message:
         direction=Message.Direction.INCOMING,
         kind=Message.Kind.GREETING,
         content=text,
+        is_read=False,
     )
 
 
 def record_guest_inquiry(guest: Guest, text: str) -> tuple[Message, object | None]:
-    """يرسل استفساراً مباشرة للمنسّق: تسجيل داخلي + إشعار + واتساب."""
+    """استفسار للمنسّق — يظهر في الرسائل + واتساب اختياري."""
     coordinator = resolve_event_coordinator(guest.event)
     msg = Message.objects.create(
         event=guest.event,
@@ -49,15 +49,9 @@ def record_guest_inquiry(guest: Guest, text: str) -> tuple[Message, object | Non
         kind=Message.Kind.INQUIRY,
         recipient=coordinator,
         content=text,
+        is_read=False,
     )
     if coordinator:
-        platform = guest.event.platform if guest.event.platform_id else None
-        UserNotification.objects.create(
-            user=coordinator,
-            platform=platform,
-            title=f"استفسار من {guest.full_name}",
-            body=text[:500],
-        )
         phone = getattr(coordinator, "phone", "") or ""
         if phone:
             wa_body = (

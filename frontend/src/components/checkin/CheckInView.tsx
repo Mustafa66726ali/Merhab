@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { guestsAPI, type EventGuestRow } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 import QrScanner from "@/components/common/QrScanner";
+import { extractGuestScanToken, isCameraContextSecure } from "@/lib/camera";
 
 type ListResponse = EventGuestRow[] | { results?: EventGuestRow[] };
 
@@ -35,6 +36,13 @@ export default function CheckInView({
   const [toast, setToast] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [scanOpen, setScanOpen] = useState(false);
   const [lastScanned, setLastScanned] = useState("");
+  const [manualToken, setManualToken] = useState("");
+  const [manualPending, setManualPending] = useState(false);
+  const [cameraBlocked, setCameraBlocked] = useState(false);
+
+  useEffect(() => {
+    setCameraBlocked(!isCameraContextSecure());
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -76,8 +84,9 @@ export default function CheckInView({
   }, [guests]);
 
   const handleScan = async (token: string) => {
+    const normalized = extractGuestScanToken(token);
     try {
-      const res = await guestsAPI.scan(token);
+      const res = await guestsAPI.scan(normalized);
       const g = res.data;
       setGuests((prev) =>
         prev.map((x) =>
@@ -95,6 +104,18 @@ export default function CheckInView({
       const msg = "رمز غير صالح أو خارج نطاق صلاحياتك";
       setLastScanned(msg);
       setToast({ type: "err", msg });
+    }
+  };
+
+  const handleManualScan = async () => {
+    const raw = manualToken.trim();
+    if (!raw) return;
+    setManualPending(true);
+    try {
+      await handleScan(raw);
+      setManualToken("");
+    } finally {
+      setManualPending(false);
     }
   };
 
@@ -160,13 +181,50 @@ export default function CheckInView({
             className="w-full h-14 pr-12 pl-4 bg-surface-container-low border border-outline-variant/10 rounded-2xl text-on-surface outline-none focus:ring-2 focus:ring-primary/40"
           />
         </div>
+        {!cameraBlocked && (
+          <button
+            type="button"
+            onClick={() => setScanOpen(true)}
+            className="h-14 px-6 inline-flex items-center justify-center gap-2 bg-primary text-on-primary rounded-2xl font-bold text-sm hover:brightness-110 transition-all shrink-0"
+          >
+            <span className="material-symbols-outlined">qr_code_scanner</span>
+            مسح بالكاميرا
+          </button>
+        )}
+      </div>
+
+      {cameraBlocked && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <p className="font-bold">الكاميرا غير متاحة عبر HTTP من جهاز آخر</p>
+          <p className="text-xs mt-1 text-amber-200/90">
+            افتح الموقع عبر <span dir="ltr">https://</span> (بعد إعادة تشغيل المشروع) أو
+            أدخل رمز الضيف يدوياً / سجّل الحضور من القائمة.
+          </p>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          value={manualToken}
+          onChange={(e) => setManualToken(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleManualScan()}
+          placeholder="رمز الضيف أو رابط الدعوة (للإدخال اليدوي)"
+          dir="ltr"
+          className="flex-1 h-12 px-4 bg-surface-container-low border border-outline-variant/10 rounded-2xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/40"
+        />
         <button
           type="button"
-          onClick={() => setScanOpen(true)}
-          className="h-14 px-6 inline-flex items-center justify-center gap-2 bg-primary text-on-primary rounded-2xl font-bold text-sm hover:brightness-110 transition-all shrink-0"
+          onClick={handleManualScan}
+          disabled={!manualToken.trim() || manualPending}
+          className="h-12 px-5 inline-flex items-center justify-center gap-2 bg-surface-container-highest text-on-surface rounded-2xl font-bold text-sm hover:bg-surface-container-highest/80 transition disabled:opacity-50 shrink-0"
         >
-          <span className="material-symbols-outlined">qr_code_scanner</span>
-          مسح بالكاميرا
+          {manualPending ? (
+            <span className="animate-spin w-4 h-4 border-2 border-on-surface border-t-transparent rounded-full" />
+          ) : (
+            <span className="material-symbols-outlined text-base">pin</span>
+          )}
+          تسجيل بالرمز
         </button>
       </div>
 

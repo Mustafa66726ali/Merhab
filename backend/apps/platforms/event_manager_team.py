@@ -4,6 +4,7 @@ from apps.accounts.models import User
 from apps.events.models import Event
 from apps.platforms.models import PlatformMember
 from apps.platforms.staff_preview import coordinator_role_label, member_role_label
+from apps.platforms.team_actions import assigned_events_for_users
 from apps.staff.models import StaffMember
 
 # الأدوار التي يديرها مدير الفعالية مباشرة (إنشاء حسابات تشغيلية)
@@ -42,7 +43,13 @@ def build_event_manager_staff_list(platform_id: int) -> dict:
         .select_related("user")
         .order_by("user__first_name", "user__email")
     )
-    rows = [_staff_row(pm) for pm in members]
+    user_ids = [pm.user_id for pm in members]
+    assigned_map = assigned_events_for_users(platform_id, user_ids)
+    rows = []
+    for pm in members:
+        row = _staff_row(pm)
+        row["assigned_events"] = assigned_map.get(pm.user_id, [])
+        rows.append(row)
     coordinators = sum(
         1 for r in rows if r["role_key"] == PlatformMember.MemberRole.COORDINATOR
     )
@@ -70,6 +77,15 @@ def get_event_manager_staff_row(platform_id: int, user_id: int) -> dict | None:
         .first()
     )
     return _staff_row(pm) if pm else None
+
+
+def get_event_manager_staff_row_with_events(platform_id: int, user_id: int) -> dict | None:
+    row = get_event_manager_staff_row(platform_id, user_id)
+    if not row:
+        return None
+    assigned = assigned_events_for_users(platform_id, [user_id])
+    row["assigned_events"] = assigned.get(user_id, [])
+    return row
 
 
 def build_event_manager_team_list(platform_id: int) -> dict:
@@ -128,18 +144,28 @@ def build_event_manager_team_list(platform_id: int) -> dict:
                 )
 
         for sm in event.staff_members.filter(is_active=True):
-            if sm.role != StaffMember.Role.COORDINATOR:
+            if sm.role not in (
+                StaffMember.Role.COORDINATOR,
+                StaffMember.Role.ENTRY_MANAGER,
+            ):
                 continue
             user = sm.user
             pm = pm_by_user.get(user.id)
-            coord_extra = (pm.coordinator_label or "").strip() if pm else ""
-            if not coord_extra and pm and pm.member_role == PlatformMember.MemberRole.COORDINATOR:
-                coord_extra = ""
-            role_label = coordinator_role_label(coord_extra)
-            append_row(user, event, "coordinator", role_label)
+            if sm.role == StaffMember.Role.ENTRY_MANAGER:
+                append_row(
+                    user,
+                    event,
+                    "entry_manager",
+                    member_role_label(PlatformMember.MemberRole.ENTRY_MANAGER, ""),
+                )
+            else:
+                coord_extra = (pm.coordinator_label or "").strip() if pm else ""
+                role_label = coordinator_role_label(coord_extra)
+                append_row(user, event, "coordinator", role_label)
 
     organizers = sum(1 for r in rows if r["role_key"] == "event_organizer")
     coordinators = sum(1 for r in rows if r["role_key"] == "coordinator")
+    entry_managers = sum(1 for r in rows if r["role_key"] == "entry_manager")
 
     return {
         "team": rows,
@@ -147,5 +173,6 @@ def build_event_manager_team_list(platform_id: int) -> dict:
             "total": len(rows),
             "organizers": organizers,
             "coordinators": coordinators,
+            "entry_managers": entry_managers,
         },
     }

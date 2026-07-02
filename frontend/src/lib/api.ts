@@ -87,6 +87,19 @@ export const eventsAPI = {
   },
   seatingOverview: (id: number) =>
     api.get<EventSeatingOverviewResponse>(`/events/events/${id}/seating-overview/`),
+  start: (id: number) => api.post<EventDetail>(`/events/events/${id}/start/`),
+  end: (id: number) => api.post<EventDetail>(`/events/events/${id}/end/`),
+  getLiveMedia: (id: number) => api.get<EventLiveMedia>(`/events/events/${id}/live-media/`),
+  updateLiveMedia: (id: number, data: FormData) =>
+    api.patch<EventLiveMedia>(`/events/events/${id}/live-media/`, data),
+  startLiveStream: (id: number) =>
+    api.post<EventLiveMedia>(`/events/events/${id}/live-media/stream-start/`),
+  uploadLiveStreamChunk: (id: number, data: FormData) =>
+    api.post<EventLiveMedia>(`/events/events/${id}/live-media/stream-chunk/`, data),
+  stopLiveStream: (id: number) =>
+    api.post<EventLiveMedia>(`/events/events/${id}/live-media/stream-stop/`),
+  sendBroadcastLink: (id: number) =>
+    api.post<BroadcastSendResult>(`/events/events/${id}/live-media/send-link/`),
 };
 
 export const sectionsAPI = {
@@ -314,6 +327,56 @@ export interface PublicInvitationCoordinator {
   whatsapp_url: string | null;
 }
 
+export interface PublicLiveMedia {
+  enabled: boolean;
+  mode: "off" | "audio_file" | "youtube" | "microphone" | "camera";
+  mode_label: string;
+  audio_url: string | null;
+  youtube_embed_url: string | null;
+  youtube_url: string | null;
+  stream_active: boolean;
+  stream_url: string | null;
+  stream_kind: "audio" | "video" | null;
+  stream_rev: number;
+  broadcast_url?: string | null;
+}
+
+export type EventLiveMedia = PublicLiveMedia;
+
+export interface BroadcastSendResult {
+  ok: boolean;
+  broadcast_url: string;
+  total: number;
+  sent: number;
+  skipped: number;
+  failed: number;
+  manual_pending?: number;
+  results: Array<{
+    guest_id: number;
+    full_name: string;
+    status: string;
+    sent: boolean;
+    skipped?: boolean;
+    detail: string;
+    whatsapp_url?: string | null;
+  }>;
+}
+
+export interface PublicBroadcast {
+  event: {
+    title: string;
+    cover_image: string | null;
+    platform_name: string;
+  };
+  live_media: PublicLiveMedia;
+}
+
+export const publicBroadcastAPI = {
+  get: (token: string) => api.get<PublicBroadcast>(`/public/broadcast/${token}/`),
+  liveMedia: (token: string) =>
+    api.get<PublicLiveMedia>(`/public/broadcast/${token}/live-media/`),
+};
+
 export interface PublicInvitation {
   guest: {
     full_name: string;
@@ -335,6 +398,7 @@ export interface PublicInvitation {
     geo_address: string;
     latitude: number | null;
     longitude: number | null;
+    location: string;
     cover_image: string | null;
     platform_name: string;
     invitation_title: string;
@@ -343,12 +407,15 @@ export interface PublicInvitation {
   schedules: PublicInvitationSchedule[];
   group_members: PublicInvitationGroupMember[];
   coordinator: PublicInvitationCoordinator | null;
+  live_media: PublicLiveMedia;
   qr_url: string | null;
   can_respond: boolean;
 }
 
 export const publicInvitationAPI = {
   get: (token: string) => api.get<PublicInvitation>(`/public/invitation/${token}/`),
+  liveMedia: (token: string) =>
+    api.get<PublicLiveMedia>(`/public/invitation/${token}/live-media/`),
   respond: (token: string, action: "confirm" | "decline") =>
     api.post<PublicInvitation>(`/public/invitation/${token}/respond/`, { action }),
   greeting: (token: string, message: string) =>
@@ -442,6 +509,15 @@ export const platformsAPI = {
     api.post<EventManagerStaffRow>("/platforms/platforms/my-staff-team/add/", data),
   myStaffTeamRemove: (userId: number) =>
     api.delete(`/platforms/platforms/my-staff-team/${userId}/remove/`),
+  myStaffTeamAssignEvent: (userId: number, eventId: number) =>
+    api.post<EventManagerStaffRow>(
+      `/platforms/platforms/my-staff-team/${userId}/assign-event/`,
+      { event_id: eventId }
+    ),
+  myStaffTeamUnassignEvent: (userId: number, eventId: number) =>
+    api.delete<EventManagerStaffRow>(
+      `/platforms/platforms/my-staff-team/${userId}/events/${eventId}/`
+    ),
   myManagedEvents: (params?: Record<string, unknown>) =>
     api.get<{ total: number; events: ManagedEventRow[] }>(
       "/platforms/platforms/my-managed-events/",
@@ -627,6 +703,12 @@ export interface UserNotificationItem {
   sender_name: string;
   platform: number | null;
   platform_name: string;
+  event?: number | null;
+  event_title?: string;
+  kind?: string;
+  kind_label?: string;
+  icon?: string;
+  action_path?: string;
   title: string;
   body: string;
   is_read: boolean;
@@ -648,11 +730,17 @@ export interface NotificationsListResponse {
   platform_options: { value: string; label: string }[];
 }
 
+export interface MessagesInboxResponse {
+  unread_count: number;
+  direct_unread: number;
+  guest_inbound_unread: number;
+  messages: DirectMessage[];
+  guest_messages: GuestMessageItem[];
+}
+
 export const commsAPI = {
   messagesInbox: () =>
-    api.get<{ unread_count: number; messages: DirectMessage[] }>(
-      "/platforms/comms/messages/inbox/"
-    ),
+    api.get<MessagesInboxResponse>("/platforms/comms/messages/inbox/"),
   messagesList: (box?: "inbox" | "outbox" | "all", filters?: MessageListFilters) =>
     api.get<MessagesListResponse>("/platforms/comms/messages/list/", {
       params: {
@@ -701,6 +789,10 @@ export const commsAPI = {
         },
       }
     ),
+  markGuestMessagesRead: (ids: number[]) =>
+    api.post<{ updated: number }>("/platforms/comms/guest-messages/mark-read/", { ids }),
+  markAllGuestMessagesRead: () =>
+    api.post<{ updated: number }>("/platforms/comms/guest-messages/mark-all-read/"),
   notificationsInbox: () =>
     api.get<{ unread_count: number; notifications: UserNotificationItem[] }>(
       "/platforms/comms/notifications/inbox/"
@@ -823,7 +915,7 @@ export interface EventManagerTeamMember {
   email: string;
   event_id: number;
   event_title: string;
-  role_key: "event_organizer" | "coordinator";
+  role_key: "event_organizer" | "coordinator" | "entry_manager";
   role_label: string;
   avatar_initial: string;
 }
@@ -841,6 +933,7 @@ export interface EventManagerStaffRow {
   account_status: string;
   is_active: boolean;
   avatar_initial: string;
+  assigned_events: { id: number; title: string }[];
 }
 
 export interface EventManagerStaffTeamResponse {
@@ -848,6 +941,7 @@ export interface EventManagerStaffTeamResponse {
   stats: { total: number; coordinators: number; entry_managers: number };
   assignable_roles: { value: string; label: string }[];
   permission_options: { key: string; label: string }[];
+  platform_events: { id: number; title: string }[];
 }
 
 export interface EventManagerStaffCreatePayload {
@@ -1243,8 +1337,21 @@ export interface EventDetail {
   phase: string;
   phase_label: string;
   recent_activity: EventActivityItem[];
+  guest_greetings?: EventGuestGreeting[];
+  started_at: string | null;
+  ended_at: string | null;
+  can_start: boolean;
+  can_end: boolean;
+  live_elapsed_seconds: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface EventGuestGreeting {
+  id: number;
+  guest_name: string;
+  content: string;
+  created_at: string;
 }
 
 export interface EventGroupItem {
@@ -1288,6 +1395,7 @@ export interface EventGuestStats {
   invited: number;
   confirmed: number;
   attended: number;
+  seated: number;
   declined: number;
   cancelled: number;
   responded: number;

@@ -6,11 +6,14 @@ from rest_framework.response import Response
 
 from apps.accounts.models import User
 from apps.events.models import Event
+from apps.events.event_lifecycle import require_event_live
 from apps.guests.models import Guest
 from apps.platforms.platform_permissions import (
     get_platform_for_user,
     is_platform_coordinator,
     require_event_access,
+    require_staff_event_assignment,
+    staff_assigned_event_ids,
 )
 
 from .models import SeatingPlan, Table, TableSeat
@@ -35,11 +38,10 @@ def scope_queryset_by_event(qs, user, event_path: str = "event"):
             return qs.filter(**{f"{event_path}__platform_id": platform.id})
         return qs.none()
     if user.role == User.Role.STAFF:
-        # المنسق يرى مخططات/طاولات كامل فعاليات منصته لإجلاس الضيوف
-        platform = get_platform_for_user(user)
-        if platform:
-            return qs.filter(**{f"{event_path}__platform_id": platform.id})
-        return qs.none()
+        event_ids = staff_assigned_event_ids(user)
+        if not event_ids:
+            return qs.none()
+        return qs.filter(**{f"{event_path}_id__in": event_ids})
     if user.role in (
         User.Role.EVENT_MANAGER,
         User.Role.EVENT_ORGANIZER,
@@ -55,6 +57,7 @@ def require_seating_manager(user, event: Event) -> None:
     """توزيع المقاعد من صلاحيات مدير/منظم الفعالية (والمنسق ومدير المنصة والنظام)."""
     if user.role in SEATING_MANAGER_ROLES or is_platform_coordinator(user):
         require_event_access(user, event)
+        require_staff_event_assignment(user, event)
         return
     raise PermissionDenied("توزيع المقاعد يقتصر على مدير الفعالية ومنظمها والمنسق")
 
@@ -166,6 +169,7 @@ class TableViewSet(viewsets.ModelViewSet):
         """إسناد ضيف إلى مقعد في الطاولة يدوياً (طريقة الإدراج) — مع التحقق من المجموعة."""
         table = self.get_object()
         require_seating_manager(request.user, table.event)
+        require_event_live(table.event)
 
         guest_id = request.data.get("guest_id") or request.data.get("guest")
         if not guest_id:
@@ -175,6 +179,12 @@ class TableViewSet(viewsets.ModelViewSet):
             raise ValidationError({"guest_id": "الضيف غير موجود في هذه الفعالية"})
 
         self._seat_guest(table, guest, request.data.get("seat_number"))
+        if guest.status != Guest.Status.SEATED:
+            guest.status = Guest.Status.SEATED
+            guest.save(update_fields=["status"])
+        from apps.platforms.notification_service import notify_guest_seated
+
+        notify_guest_seated(table.event, guest.full_name, actor=request.user)
         return Response(TableSerializer(table).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="scan-seat")
@@ -185,6 +195,7 @@ class TableViewSet(viewsets.ModelViewSet):
         """
         table = self.get_object()
         require_seating_manager(request.user, table.event)
+        require_event_live(table.event)
 
         token = request.data.get("token")
         if not token:
@@ -215,6 +226,9 @@ class TableViewSet(viewsets.ModelViewSet):
             guest.status = Guest.Status.SEATED
             guest.save(update_fields=["status"])
 
+        from apps.platforms.notification_service import notify_guest_seated
+
+        notify_guest_seated(table.event, guest.full_name, actor=request.user)
         data = TableSerializer(table).data
         data["seated_guest"] = {"id": guest.id, "full_name": guest.full_name}
         return Response(data, status=status.HTTP_200_OK)

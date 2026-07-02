@@ -167,16 +167,28 @@ def _platform_for_message(sender: User, recipient: User):
 class CommsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"], url_path="messages/inbox")
     def messages_inbox(self, request):
-        unread_qs = DirectMessage.objects.filter(recipient=request.user, is_read=False)
+        user = request.user
+        unread_qs = DirectMessage.objects.filter(recipient=user, is_read=False)
         qs = unread_qs.select_related(
             "sender", "recipient", "platform", "parent"
         ).order_by("-created_at")[:50]
-        unread = unread_qs.count()
+        direct_unread = unread_qs.count()
+
+        guest_qs = guest_inbound_queryset(user).filter(is_read=False)
+        guest_unread = guest_qs.count()
+        guest_preview = MessageSerializer(
+            guest_qs.order_by("-created_at")[:8],
+            many=True,
+        ).data
+
         return Response({
-            "unread_count": unread,
+            "unread_count": direct_unread + guest_unread,
+            "direct_unread": direct_unread,
+            "guest_inbound_unread": guest_unread,
             "messages": DirectMessageSerializer(
                 qs, many=True, context={"request": request}
             ).data,
+            "guest_messages": guest_preview,
         })
 
     @action(detail=False, methods=["get"], url_path="messages/list")
@@ -305,6 +317,9 @@ class CommsViewSet(viewsets.ViewSet):
             delivery_status=delivery_status,
             delivered_at=now if delivery_status == DirectMessage.DeliveryStatus.DELIVERED else None,
         )
+        from apps.platforms.notification_service import notify_direct_message
+
+        notify_direct_message(recipient, request.user, subject or "رسالة جديدة", body, platform)
         return Response(
             DirectMessageSerializer(msg, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
@@ -342,7 +357,7 @@ class CommsViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"], url_path="notifications/inbox")
     def notifications_inbox(self, request):
         qs = UserNotification.objects.filter(user=request.user).select_related(
-            "sender", "platform"
+            "sender", "platform", "event"
         ).order_by("-created_at")[:50]
         unread = UserNotification.objects.filter(
             user=request.user, is_read=False
@@ -522,3 +537,18 @@ class CommsViewSet(viewsets.ViewSet):
         return Response({
             "messages": MessageSerializer(qs, many=True).data,
         })
+
+    @action(detail=False, methods=["post"], url_path="guest-messages/mark-read")
+    def guest_messages_mark_read(self, request):
+        ids = request.data.get("ids") or []
+        if not ids:
+            return Response({"detail": "لا توجد رسائل محددة"}, status=status.HTTP_400_BAD_REQUEST)
+        qs = guest_inbound_queryset(request.user).filter(id__in=ids)
+        updated = qs.update(is_read=True)
+        return Response({"updated": updated})
+
+    @action(detail=False, methods=["post"], url_path="guest-messages/mark-all-read")
+    def guest_messages_mark_all_read(self, request):
+        qs = guest_inbound_queryset(request.user).filter(is_read=False)
+        updated = qs.update(is_read=True)
+        return Response({"updated": updated})

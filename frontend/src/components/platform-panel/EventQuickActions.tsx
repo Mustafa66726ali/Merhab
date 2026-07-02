@@ -51,6 +51,14 @@ const invitationsAction = {
   description: "تحرير الدعوة وإرسالها للضيوف",
 } as const;
 
+const broadcastAction = {
+  key: "broadcast",
+  suffix: "broadcast",
+  icon: "podcasts",
+  label: "البث المباشر",
+  description: "صوت أو فيديو أو يوتيوب للضيوف",
+} as const;
+
 export default function EventQuickActions({
   eventId,
   eventsBasePath = "/platform/events",
@@ -58,7 +66,9 @@ export default function EventQuickActions({
   const showInvitations =
     eventsBasePath.startsWith("/event-manager") ||
     eventsBasePath.startsWith("/event-organizer");
-  const actions = showInvitations ? [...actionDefs, invitationsAction] : actionDefs;
+  const actions = showInvitations
+    ? [...actionDefs, invitationsAction, broadcastAction]
+    : actionDefs;
 
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">

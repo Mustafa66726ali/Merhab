@@ -2,10 +2,10 @@
 
 1. **دعوة** — قالب Meta: ``event_invitation``
 2. **تذكير** — قالب Meta: ``event_reminder``
-3. **بطاقة QR** — صورة PNG مباشرة بعد تأكيد الحضور
+3. **بطاقة QR** — قالب Meta: ``rsvp_qr`` ثم صورة PNG
 
 في التطوير: البوت المحلي (نص + رابط منفصل / صورة base64).
-في الإنتاج: قوالب Meta المعتمدة + صورة QR عبر Cloud API.
+في الإنتاج: قوالب Meta المعتمدة عبر Cloud API أو Twilio ContentSid.
 """
 
 from __future__ import annotations
@@ -23,7 +23,9 @@ from .whatsapp_send import (
     send_via_bot_image,
     send_whatsapp_image,
     send_whatsapp_template,
+    send_twilio_content_template,
     _active_cloud_credential,
+    _active_twilio_credential,
 )
 
 # نصوص افتراضية للبوت (تحاكي قوالب Meta)
@@ -54,10 +56,27 @@ def _provider_mode() -> str:
 
 
 def _use_meta_templates() -> bool:
-    """قوالب Meta تُستخدم فقط مع اعتماد Cloud API نشط (الإنتاج)."""
+    """قوالب Meta عبر Cloud API."""
     if _provider_mode() == "manual":
         return False
     return bool(_active_cloud_credential())
+
+
+def _use_twilio_templates() -> bool:
+    """قوالب عبر Twilio ContentSid (بديل Cloud API)."""
+    if _provider_mode() == "manual":
+        return False
+    if _active_cloud_credential():
+        return False
+    cred = _active_twilio_credential()
+    if not cred:
+        return False
+    cfg = (cred.config or {}) if cred else {}
+    return bool(
+        cfg.get("content_invitation")
+        or cfg.get("content_reminder")
+        or cfg.get("content_qr")
+    )
 
 
 def _invite_url(guest: Guest) -> str:
@@ -91,9 +110,24 @@ def _format_bot_text(template: str, guest: Guest, invite_url: str) -> str:
     return template.format(name=name, event=event, date=date, venue=venue, link=link)
 
 
+def guest_qr_template_params(guest: Guest) -> list[str]:
+    """متغيرات قالب rsvp_qr: {{1}} اسم الضيف، {{2}} اسم المناسبة."""
+    event = guest.event
+    return [
+        guest.full_name or "ضيف",
+        event.title or "مناسبة",
+    ]
+
+
+def _twilio_template_variables(params: list[str]) -> dict[str, str]:
+    return {str(i + 1): str(v) for i, v in enumerate(params)}
+
+
 def _template_names() -> dict[str, str]:
     cred = _active_cloud_credential()
+    twilio = _active_twilio_credential()
     cfg = (cred.config if cred else {}) or {}
+    tw_cfg = (twilio.config if twilio else {}) or {}
     return {
         "invitation": (
             cfg.get("template_invitation")
@@ -103,10 +137,17 @@ def _template_names() -> dict[str, str]:
             cfg.get("template_reminder")
             or getattr(settings, "WHATSAPP_TEMPLATE_REMINDER", "event_reminder")
         ),
+        "qr": (
+            cfg.get("template_qr")
+            or getattr(settings, "WHATSAPP_TEMPLATE_QR", "rsvp_qr")
+        ),
         "language": (
             cfg.get("template_language")
             or getattr(settings, "WHATSAPP_TEMPLATE_LANGUAGE", "ar")
         ),
+        "twilio_invitation": tw_cfg.get("content_invitation", ""),
+        "twilio_reminder": tw_cfg.get("content_reminder", ""),
+        "twilio_qr": tw_cfg.get("content_qr", ""),
     }
 
 
@@ -153,6 +194,16 @@ def send_guest_invitation(
             fallback_url=fallback_url,
         )
 
+    if _use_twilio_templates():
+        names = _template_names()
+        if names["twilio_invitation"]:
+            return send_twilio_content_template(
+                phone,
+                names["twilio_invitation"],
+                _twilio_template_variables(guest_template_params(guest, invite_url)),
+                fallback_url=fallback_url,
+            )
+
     if _provider_mode() == "bot":
         if custom_body and "{link}" in custom_body:
             text_body = custom_body.replace("{link}", "").rstrip()
@@ -196,6 +247,16 @@ def send_guest_reminder(
             fallback_url=fallback_url,
         )
 
+    if _use_twilio_templates():
+        names = _template_names()
+        if names["twilio_reminder"]:
+            return send_twilio_content_template(
+                phone,
+                names["twilio_reminder"],
+                _twilio_template_variables(guest_template_params(guest, invite_url)),
+                fallback_url=fallback_url,
+            )
+
     if _provider_mode() == "bot":
         if custom_body and "{link}" in custom_body:
             text_body = custom_body.replace("{link}", "").rstrip()
@@ -218,7 +279,7 @@ def send_guest_reminder(
 
 
 def send_guest_qr(guest: Guest) -> dict:
-    """إرسال صورة QR (PNG) مباشرة بعد تأكيد الحضور."""
+    """إرسال قالب rsvp_qr ثم صورة QR بعد تأكيد الحضور."""
     from apps.guests.qr_utils import build_guest_qr_png, ensure_guest_qr
 
     phone = guest.phone or ""
@@ -232,24 +293,52 @@ def send_guest_qr(guest: Guest) -> dict:
     png_bytes = build_guest_qr_png(guest.public_token)
     image_url = _qr_public_url(guest)
     caption = BOT_QR_CAPTION
+    names = _template_names()
+    template_sent = False
+    qr_result: dict = {"sent": False}
 
-    if _use_meta_templates() and image_url:
-        return send_whatsapp_image(
+    if _use_meta_templates():
+        qr_result = send_whatsapp_template(
             phone,
-            image_url=image_url,
-            caption=caption,
+            names["qr"],
+            guest_qr_template_params(guest),
+            language=names["language"],
             fallback_url=fallback_url,
         )
+        template_sent = bool(qr_result.get("sent"))
+    elif _use_twilio_templates() and names["twilio_qr"]:
+        qr_result = send_twilio_content_template(
+            phone,
+            names["twilio_qr"],
+            _twilio_template_variables(guest_qr_template_params(guest)),
+            fallback_url=fallback_url,
+        )
+        template_sent = bool(qr_result.get("sent"))
 
     if _provider_mode() == "bot":
+        qr_text = (
+            f"مرحبا {guest.full_name or 'ضيف'}\n"
+            f"تم تأكيد حضورك في: {guest.event.title or 'مناسبة'}\n\n"
+            "هذا هو كود الدخول الخاص بك\n\n"
+            "نراك في الموعد"
+        )
+        send_via_bot(phone, qr_text)
         return send_via_bot_image(phone, png_bytes, caption=caption)
 
-    if has_active_whatsapp_credential() and image_url:
-        return send_whatsapp_image(
+    if image_url and (_use_meta_templates() or has_active_whatsapp_credential()):
+        img_result = send_whatsapp_image(
             phone,
             image_url=image_url,
             caption=caption,
             fallback_url=fallback_url,
         )
+        if img_result.get("sent"):
+            return img_result
+        if template_sent:
+            return qr_result  # type: ignore[name-defined]
+        return img_result
 
-    return {"sent": False, "detail": "لم يُكوَّن مزوّد إرسال للصورة"}
+    if template_sent:
+        return qr_result  # type: ignore[name-defined]
+
+    return {"sent": False, "detail": "لم يُكوَّن مزوّد إرسال للقالب أو الصورة"}

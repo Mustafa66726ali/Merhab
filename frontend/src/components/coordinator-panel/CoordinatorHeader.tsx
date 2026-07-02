@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store";
+import HeaderComms from "@/components/HeaderComms";
 import PlatformBrand from "@/components/platform-panel/PlatformBrand";
 
 interface CoordinatorHeaderProps {
@@ -10,6 +11,7 @@ interface CoordinatorHeaderProps {
   sidebarOpen: boolean;
   accountHref: string;
   defaultRoleLabel: string;
+  panelPrefix?: "coordinator" | "entry-manager";
 }
 
 export default function CoordinatorHeader({
@@ -17,6 +19,7 @@ export default function CoordinatorHeader({
   sidebarOpen,
   accountHref,
   defaultRoleLabel,
+  panelPrefix = "coordinator",
 }: CoordinatorHeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
@@ -69,6 +72,11 @@ export default function CoordinatorHeader({
         >
           <span className="material-symbols-outlined text-xl sm:text-2xl">account_circle</span>
         </Link>
+
+        <HeaderComms
+          messagesHref={`/${panelPrefix}/messages`}
+          notificationsHref={`/${panelPrefix}/notifications`}
+        />
 
         <button
           type="button"

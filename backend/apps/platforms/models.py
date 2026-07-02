@@ -157,6 +157,22 @@ class DirectMessage(models.Model):
 
 
 class UserNotification(models.Model):
+    class Kind(models.TextChoices):
+        SYSTEM = "system", "نظام"
+        EVENT_CREATED = "event_created", "فعالية جديدة"
+        EVENT_STARTED = "event_started", "بدء الفعالية"
+        EVENT_ENDED = "event_ended", "انتهاء الفعالية"
+        PREPARATION_COMPLETE = "preparation_complete", "اكتمال التجهيزات"
+        RSVP_STARTED = "rsvp_started", "بدء التأكيدات"
+        RSVP_CONFIRMED = "rsvp_confirmed", "تأكيد حضور"
+        RSVP_DECLINED = "rsvp_declined", "اعتذار"
+        CHECKIN_STARTED = "checkin_started", "بدء الحضور"
+        GUEST_CHECKED_IN = "guest_checked_in", "حضور ضيف"
+        SEATING_STARTED = "seating_started", "بدء الإجلاس"
+        SEATING_FULL = "seating_full", "اكتمال الإجلاس"
+        TEAM_ASSIGNED = "team_assigned", "تعيين فريق"
+        DIRECT_MESSAGE = "direct_message", "رسالة مباشرة"
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -179,8 +195,24 @@ class UserNotification(models.Model):
         related_name="notifications",
         verbose_name="المنصة",
     )
+    event = models.ForeignKey(
+        "events.Event",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="user_notifications",
+        verbose_name="الفعالية",
+    )
+    kind = models.CharField(
+        max_length=40,
+        choices=Kind.choices,
+        default=Kind.SYSTEM,
+        verbose_name="النوع",
+    )
     title = models.CharField(max_length=255, verbose_name="العنوان")
     body = models.TextField(verbose_name="المحتوى")
+    action_path = models.CharField(max_length=500, blank=True, verbose_name="رابط الإجراء")
+    icon = models.CharField(max_length=64, blank=True, verbose_name="أيقونة")
     is_read = models.BooleanField(default=False, verbose_name="مقروء")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
 

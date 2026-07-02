@@ -6,6 +6,7 @@ from apps.events.models import Event
 class StaffMember(models.Model):
     class Role(models.TextChoices):
         COORDINATOR = "coordinator", "منسق"
+        ENTRY_MANAGER = "entry_manager", "مدير دخول"
         USHER = "usher", "مرشد"
         SECURITY = "security", "أمن"
         CATERING = "catering", "تموين"

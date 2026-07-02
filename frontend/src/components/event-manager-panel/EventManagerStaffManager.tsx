@@ -38,11 +38,14 @@ function apiError(e: unknown, fallback: string): string {
 
 export default function EventManagerStaffManager() {
   const [staff, setStaff] = useState<EventManagerStaffRow[]>([]);
+  const [platformEvents, setPlatformEvents] = useState<{ id: number; title: string }[]>([]);
   const [stats, setStats] = useState({ total: 0, coordinators: 0, entry_managers: 0 });
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<EventManagerStaffRow | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [assigningEventId, setAssigningEventId] = useState<number | null>(null);
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [removingId, setRemovingId] = useState<number | null>(null);
@@ -54,9 +57,11 @@ export default function EventManagerStaffManager() {
       .then((r) => {
         setStaff(r.data.staff);
         setStats(r.data.stats);
+        setPlatformEvents(r.data.platform_events ?? []);
       })
       .catch(() => {
         setStaff([]);
+        setPlatformEvents([]);
         setStats({ total: 0, coordinators: 0, entry_managers: 0 });
       })
       .finally(() => setLoading(false));
@@ -71,6 +76,11 @@ export default function EventManagerStaffManager() {
     const t = setTimeout(() => setToast(null), 2800);
     return () => clearTimeout(t);
   }, [toast]);
+
+  const updateStaffRow = (updated: EventManagerStaffRow) => {
+    setStaff((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    setAssignTarget((prev) => (prev?.id === updated.id ? updated : prev));
+  };
 
   const openModal = () => {
     setForm(EMPTY_FORM);
@@ -106,12 +116,38 @@ export default function EventManagerStaffManager() {
       };
       await platformsAPI.myStaffTeamAdd(payload);
       setModalOpen(false);
-      setToast({ type: "ok", msg: "تم إنشاء الحساب بنجاح" });
+      setToast({ type: "ok", msg: "تم إنشاء الحساب — عيّنه الآن على فعالية ليصل لصلاحياته" });
       load();
     } catch (err) {
       setFormError(apiError(err, "تعذّر إنشاء الحساب"));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const assignEvent = async (userId: number, eventId: number) => {
+    setAssigningEventId(eventId);
+    try {
+      const res = await platformsAPI.myStaffTeamAssignEvent(userId, eventId);
+      updateStaffRow(res.data);
+      setToast({ type: "ok", msg: "تم التعيين على الفعالية" });
+    } catch (err) {
+      setToast({ type: "err", msg: apiError(err, "تعذّر التعيين") });
+    } finally {
+      setAssigningEventId(null);
+    }
+  };
+
+  const unassignEvent = async (userId: number, eventId: number) => {
+    setAssigningEventId(eventId);
+    try {
+      const res = await platformsAPI.myStaffTeamUnassignEvent(userId, eventId);
+      updateStaffRow(res.data);
+      setToast({ type: "ok", msg: "تم إلغاء التعيين" });
+    } catch (err) {
+      setToast({ type: "err", msg: apiError(err, "تعذّر إلغاء التعيين") });
+    } finally {
+      setAssigningEventId(null);
     }
   };
 
@@ -138,6 +174,11 @@ export default function EventManagerStaffManager() {
     [stats]
   );
 
+  const unassignedEventsFor = (row: EventManagerStaffRow) => {
+    const assignedIds = new Set((row.assigned_events ?? []).map((e) => e.id));
+    return platformEvents.filter((e) => !assignedIds.has(e.id));
+  };
+
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-6 sm:space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -146,8 +187,8 @@ export default function EventManagerStaffManager() {
             المنسقون ومدراء الدخول
           </h1>
           <p className="text-sm text-on-surface-variant mt-2 max-w-2xl leading-relaxed">
-            أنشئ حسابات المنسقين (رجال/نساء) لإجلاس الضيوف ومسح حضورهم، ومدراء الدخول لمسح
-            دعوات الضيوف عند البوابة.
+            أنشئ حسابات المنسقين ومدراء الدخول، ثم عيّن كل عضو على فعاليات محددة — لا يصل
+            لصلاحيات الإجلاس أو مسح الحضور إلا بعد التعيين على تلك الفعالية.
           </p>
         </div>
         <button
@@ -185,7 +226,7 @@ export default function EventManagerStaffManager() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-right border-collapse min-w-[640px]">
+            <table className="w-full text-right border-collapse min-w-[860px]">
               <thead>
                 <tr className="bg-surface-container-highest/30">
                   <th className="px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/10">
@@ -196,6 +237,9 @@ export default function EventManagerStaffManager() {
                   </th>
                   <th className="px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/10">
                     الدور
+                  </th>
+                  <th className="px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/10">
+                    الفعاليات المعيّنة
                   </th>
                   <th className="px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-bold text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/10">
                     إجراء
@@ -230,19 +274,45 @@ export default function EventManagerStaffManager() {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4">
-                      <button
-                        type="button"
-                        onClick={() => remove(row)}
-                        disabled={removingId === row.id}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 text-xs font-bold hover:bg-red-500/20 transition disabled:opacity-50"
-                      >
-                        {removingId === row.id ? (
-                          <span className="animate-spin w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full" />
-                        ) : (
-                          <span className="material-symbols-outlined text-[16px]">delete</span>
-                        )}
-                        إزالة
-                      </button>
+                      {(row.assigned_events ?? []).length === 0 ? (
+                        <span className="text-xs text-amber-400 font-bold">لم يُعيَّن بعد</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5 max-w-[240px]">
+                          {(row.assigned_events ?? []).map((ev) => (
+                            <span
+                              key={ev.id}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-surface-container-highest text-[10px] font-bold text-on-surface"
+                            >
+                              <span className="truncate max-w-[120px]">{ev.title}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAssignTarget(row)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">event</span>
+                          تعيين
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => remove(row)}
+                          disabled={removingId === row.id}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 text-xs font-bold hover:bg-red-500/20 transition disabled:opacity-50"
+                        >
+                          {removingId === row.id ? (
+                            <span className="animate-spin w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full" />
+                          ) : (
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          )}
+                          إزالة
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -392,8 +462,9 @@ export default function EventManagerStaffManager() {
                   info
                 </span>
                 <span>
-                  يُمنح هذا الحساب صلاحية مسح رمز QR تلقائياً
-                  {form.role_key === "coordinator" ? " بالإضافة إلى إجلاس الضيوف على المقاعد." : "."}
+                  بعد إنشاء الحساب، عيّنه على فعالية من زر «تعيين» ليصل لصلاحيات
+                  {form.role_key === "coordinator" ? " الإجلاس و" : " "}
+                  مسح الحضور.
                 </span>
               </div>
 
@@ -410,6 +481,95 @@ export default function EventManagerStaffManager() {
                 إنشاء الحساب
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {assignTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
+          onClick={() => !assigningEventId && setAssignTarget(null)}
+        >
+          <div
+            className="w-full sm:max-w-lg bg-surface-container rounded-t-3xl sm:rounded-3xl border border-outline-variant/15 shadow-2xl max-h-[92vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10 sticky top-0 bg-surface-container">
+              <div>
+                <h2 className="font-bold text-on-surface">تعيين على فعاليات</h2>
+                <p className="text-xs text-on-surface-variant mt-0.5">{assignTarget.name}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => !assigningEventId && setAssignTarget(null)}
+                className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-lg"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div>
+                <p className="text-xs font-bold text-on-surface-variant mb-2 uppercase tracking-widest">
+                  معيّن حالياً
+                </p>
+                {(assignTarget.assigned_events ?? []).length === 0 ? (
+                  <p className="text-sm text-on-surface-variant">لا توجد فعاليات معيّنة</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {(assignTarget.assigned_events ?? []).map((ev) => (
+                      <li
+                        key={ev.id}
+                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant/10"
+                      >
+                        <span className="text-sm font-bold text-on-surface truncate">{ev.title}</span>
+                        <button
+                          type="button"
+                          onClick={() => unassignEvent(assignTarget.id, ev.id)}
+                          disabled={assigningEventId === ev.id}
+                          className="shrink-0 text-xs font-bold text-red-400 hover:text-red-300 disabled:opacity-50"
+                        >
+                          إلغاء
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-on-surface-variant mb-2 uppercase tracking-widest">
+                  إضافة فعالية
+                </p>
+                {unassignedEventsFor(assignTarget).length === 0 ? (
+                  <p className="text-sm text-on-surface-variant">جميع الفعاليات معيّنة لهذا العضو</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {unassignedEventsFor(assignTarget).map((ev) => (
+                      <li
+                        key={ev.id}
+                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant/10"
+                      >
+                        <span className="text-sm font-bold text-on-surface truncate">{ev.title}</span>
+                        <button
+                          type="button"
+                          onClick={() => assignEvent(assignTarget.id, ev.id)}
+                          disabled={assigningEventId === ev.id}
+                          className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold disabled:opacity-50"
+                        >
+                          {assigningEventId === ev.id ? (
+                            <span className="animate-spin w-3.5 h-3.5 border-2 border-on-primary border-t-transparent rounded-full" />
+                          ) : (
+                            <span className="material-symbols-outlined text-[14px]">add</span>
+                          )}
+                          تعيين
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

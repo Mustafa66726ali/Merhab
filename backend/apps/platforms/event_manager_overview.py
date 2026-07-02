@@ -8,6 +8,11 @@ from django.utils import timezone
 from apps.events.cover_media import event_cover_url
 from apps.events.models import Event, Schedule
 from apps.guests.models import Guest
+from apps.guests.status_utils import (
+    CONFIRMED_ATTENDANCE_STATUSES,
+    PHYSICAL_PRESENCE_STATUSES,
+    rate_percent,
+)
 from apps.platforms.analytics import _pct_change, monthly_rsvp_chart
 from apps.platforms.member_profile import (
     _empty_guest_stats,
@@ -32,18 +37,21 @@ def _compute_managed_kpis(event_ids: list[int]) -> dict:
     if event_ids:
         agg = Guest.objects.filter(event_id__in=event_ids).aggregate(
             guests_count=Count("id"),
-            attended=Count("id", filter=Q(status=Guest.Status.ATTENDED)),
+            attended=Count(
+                "id",
+                filter=Q(status__in=PHYSICAL_PRESENCE_STATUSES),
+            ),
             confirmed=Count(
                 "id",
-                filter=Q(status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]),
+                filter=Q(status__in=CONFIRMED_ATTENDANCE_STATUSES),
             ),
         )
         guests_count = agg["guests_count"] or 0
         if guests_count:
-            attended = agg["attended"] or 0
             confirmed = agg["confirmed"] or 0
-            attendance_rate = round(attended / guests_count * 100, 1)
-            confirmation_rate = round(confirmed / guests_count * 100, 1)
+            attended = agg["attended"] or 0
+            attendance_rate = rate_percent(attended, guests_count)
+            confirmation_rate = rate_percent(confirmed, guests_count)
     return {
         "activities_count": len(event_ids),
         "guests_count": guests_count,

@@ -1,11 +1,16 @@
 "use client";
 
+import type { TooltipSide } from "@/lib/seatingTooltipPlacement";
+import { guestTooltipClass } from "@/lib/seatingTooltipPlacement";
+
 interface SeatingChairProps {
   initials?: string;
   occupied?: boolean;
   isVip?: boolean;
   guestName?: string;
   size?: "sm" | "md";
+  /** جانب عرض اسم الضيف عند التمرير */
+  tooltipSide?: TooltipSide;
 }
 
 export default function SeatingChair({
@@ -14,6 +19,7 @@ export default function SeatingChair({
   isVip = false,
   guestName = "",
   size = "md",
+  tooltipSide = "top",
 }: SeatingChairProps) {
   const dim = size === "sm" ? "w-8 h-8 text-[9px]" : "w-10 h-10 text-[10px]";
   const shapeClass = occupied && isVip ? "rounded-[10px]" : "rounded-full";
@@ -52,7 +58,7 @@ export default function SeatingChair({
     >
       {occupied ? initials : null}
       {guestName && (
-        <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded-lg bg-surface-container-highest border border-outline-variant/20 text-[10px] text-on-surface whitespace-nowrap opacity-0 group-hover/chair:opacity-100 transition-opacity z-30 shadow-xl">
+        <div className={guestTooltipClass(tooltipSide)} title={guestName}>
           {guestName}
         </div>
       )}

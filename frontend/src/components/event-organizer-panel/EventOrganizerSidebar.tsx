@@ -21,8 +21,10 @@ const navItems: NavItem[] = [
   { href: "/event-organizer/seating", label: "توزيع المقاعد", icon: "event_seat" },
   { href: "/event-organizer/guests", label: "الضيوف", icon: "group" },
   { href: "/event-organizer/invitations", label: "الدعوات", icon: "mail", perm: "perm_send_messages" },
+  { href: "/event-organizer/broadcast", label: "البث المباشر", icon: "podcasts" },
   { href: "/event-organizer/check-in", label: "تسجيل الحضور", icon: "qr_code_scanner", perm: "perm_scan_qr" },
   { href: "/event-organizer/messages", label: "الرسائل", icon: "forum", perm: "perm_send_messages" },
+  { href: "/event-organizer/gratitudes", label: "كلمات الشكر", icon: "celebration", perm: "perm_send_messages" },
   { href: "/event-organizer/account", label: "الحساب", icon: "account_circle" },
 ];
 
@@ -75,7 +77,10 @@ export default function EventOrganizerSidebar({
           {visibleItems.map((item) => {
             const active =
               pathname === item.href ||
-              (item.href !== "/event-organizer/dashboard" && pathname.startsWith(item.href));
+              (item.href !== "/event-organizer/dashboard" && pathname.startsWith(item.href)) ||
+              (item.href === "/event-organizer/broadcast" &&
+                pathname.includes("/event-organizer/events/") &&
+                pathname.endsWith("/broadcast"));
             return (
               <Link
                 key={item.href}
@@ -130,3 +135,4 @@ export default function EventOrganizerSidebar({
     </>
   );
 }
+

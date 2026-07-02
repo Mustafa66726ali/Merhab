@@ -20,6 +20,7 @@ import {
   isGeneralLocation,
   locationLabel,
 } from "@/components/platform-panel/schedule/scheduleUtils";
+import { exportScheduleToPdf } from "@/lib/exportEventPdf";
 import { useEvent } from "@/hooks/useEvent";
 import { schedulesAPI, type EventScheduleItem } from "@/lib/api";
 
@@ -43,6 +44,7 @@ export default function EventScheduleView({
   const [locationFilter, setLocationFilter] = useState("");
   const [actionError, setActionError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [addForm, setAddForm] = useState<ScheduleFormState>(emptyScheduleForm());
@@ -156,6 +158,16 @@ export default function EventScheduleView({
     }
   };
 
+  const handleExportPdf = () => {
+    if (!event || schedules.length === 0) return;
+    setExportingPdf(true);
+    try {
+      exportScheduleToPdf(event, schedules, coverage);
+    } finally {
+      setTimeout(() => setExportingPdf(false), 600);
+    }
+  };
+
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     setActionError("");
@@ -208,17 +220,22 @@ export default function EventScheduleView({
               نظّم تسلسل الأحداث: كل نشاط له وقت بداية ونهاية، وموقع عام لجميع القاعات أو موقع مخصص مثل «القاعة 4».
             </p>
           </div>
-          {canManage && (
-            <div className="flex flex-wrap gap-2 sm:gap-3 shrink-0">
-              <button
-                type="button"
-                disabled
-                className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl border border-outline-variant/20 bg-surface-container-high text-on-surface-variant text-sm font-bold opacity-60 cursor-not-allowed inline-flex items-center gap-2"
-                title="قريباً"
-              >
-                <span className="material-symbols-outlined text-lg">file_download</span>
-                تصدير PDF
-              </button>
+          <div className="flex flex-wrap gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={exportingPdf || schedules.length === 0}
+              className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl border border-outline-variant/20 bg-surface-container-high text-on-surface text-sm font-bold hover:border-primary-container/40 hover:text-primary transition-all inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={schedules.length === 0 ? "أضف أنشطة لتصدير الجدول" : "تصدير الجدول الزمني PDF"}
+            >
+              {exportingPdf ? (
+                <span className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+              ) : (
+                <span className="material-symbols-outlined text-lg">picture_as_pdf</span>
+              )}
+              تصدير PDF
+            </button>
+            {canManage && (
               <button
                 type="button"
                 onClick={() => {
@@ -231,8 +248,8 @@ export default function EventScheduleView({
               >
                 إضافة نشاط
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </section>
 

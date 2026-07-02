@@ -4,6 +4,64 @@ from apps.platforms.models import Platform, PlatformMember
 from apps.staff.models import StaffMember
 
 
+def staff_role_for_member(pm: PlatformMember) -> str | None:
+    if pm.member_role == PlatformMember.MemberRole.COORDINATOR:
+        return StaffMember.Role.COORDINATOR
+    if pm.member_role == PlatformMember.MemberRole.ENTRY_MANAGER:
+        return StaffMember.Role.ENTRY_MANAGER
+    return None
+
+
+def assign_staff_to_event(platform: Platform, user: User, event_id: int) -> StaffMember:
+    """تعيين منسق/مدير دخول على فعالية محددة."""
+    pm = PlatformMember.objects.filter(platform=platform, user=user).first()
+    if not pm:
+        raise ValueError("المستخدم ليس عضواً في منصتك")
+    staff_role = staff_role_for_member(pm)
+    if not staff_role:
+        raise ValueError("يمكن تعيين المنسقين ومدراء الدخول فقط")
+
+    event = Event.objects.filter(pk=event_id, platform_id=platform.id).first()
+    if not event:
+        raise ValueError("الفعالية غير موجودة على منصتك")
+
+    sm, _ = StaffMember.objects.update_or_create(
+        event=event,
+        user=user,
+        defaults={"role": staff_role, "is_active": True},
+    )
+    return sm
+
+
+def unassign_staff_from_event(platform: Platform, user: User, event_id: int) -> None:
+    event = Event.objects.filter(pk=event_id, platform_id=platform.id).first()
+    if not event:
+        raise ValueError("الفعالية غير موجودة على منصتك")
+    StaffMember.objects.filter(event=event, user=user).delete()
+
+
+def assigned_events_for_users(platform_id: int, user_ids: list[int]) -> dict[int, list[dict]]:
+    """{user_id: [{id, title}, ...]}"""
+    if not user_ids:
+        return {}
+    rows: dict[int, list[dict]] = {uid: [] for uid in user_ids}
+    qs = (
+        StaffMember.objects.filter(
+            event__platform_id=platform_id,
+            user_id__in=user_ids,
+            is_active=True,
+            role__in=(StaffMember.Role.COORDINATOR, StaffMember.Role.ENTRY_MANAGER),
+        )
+        .select_related("event")
+        .order_by("event__date", "event__title")
+    )
+    for sm in qs:
+        rows.setdefault(sm.user_id, []).append(
+            {"id": sm.event_id, "title": sm.event.title}
+        )
+    return rows
+
+
 def get_active_platform_for_admin(user: User) -> Platform | None:
     if user.role != User.Role.PLATFORM_ADMIN:
         return None

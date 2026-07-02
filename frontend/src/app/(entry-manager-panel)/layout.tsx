@@ -114,6 +114,7 @@ export default function EntryManagerPanelLayout({
           sidebarOpen={sidebarOpen}
           accountHref="/entry-manager/account"
           defaultRoleLabel="مدير الدخول"
+          panelPrefix="entry-manager"
         />
         <main className="flex-1 min-w-0 overflow-x-hidden px-4 sm:px-6 lg:px-8 pb-8">
           {children}

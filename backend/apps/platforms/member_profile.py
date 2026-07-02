@@ -8,6 +8,12 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.events.models import Event
 from apps.guests.models import Guest, GuestQrScanLog
+from apps.guests.status_utils import (
+    CONFIRMED_ATTENDANCE_STATUSES,
+    PHYSICAL_PRESENCE_STATUSES,
+    RESPONDED_STATUSES,
+    rate_percent,
+)
 from apps.messages_app.models import Message
 from apps.platforms.models import PlatformMember
 from apps.staff.models import StaffMember
@@ -192,33 +198,42 @@ def _guest_stats_for_event(event_id: int) -> dict:
     agg = Guest.objects.filter(event_id=event_id).aggregate(
         total=Count("id"),
         invited=Count("id", filter=Q(status=Guest.Status.INVITED)),
-        confirmed=Count("id", filter=Q(status=Guest.Status.CONFIRMED)),
-        attended=Count("id", filter=Q(status=Guest.Status.ATTENDED)),
+        confirmed=Count(
+            "id", filter=Q(status__in=CONFIRMED_ATTENDANCE_STATUSES)
+        ),
+        attended=Count(
+            "id", filter=Q(status__in=PHYSICAL_PRESENCE_STATUSES)
+        ),
+        seated=Count("id", filter=Q(status=Guest.Status.SEATED)),
         declined=Count("id", filter=Q(status=Guest.Status.DECLINED)),
         cancelled=Count("id", filter=Q(status=Guest.Status.CANCELLED)),
     )
     total = agg["total"] or 0
     confirmed = agg["confirmed"] or 0
     attended = agg["attended"] or 0
+    seated = agg["seated"] or 0
     declined = agg["declined"] or 0
     invited = agg["invited"] or 0
 
-    responded = confirmed + attended + declined
-    confirmation_rate = round((confirmed + attended) / total * 100, 1) if total else 0.0
-    absence_count = max(confirmed - attended, 0)
-    absence_rate = round(absence_count / confirmed * 100, 1) if confirmed else 0.0
-    attendance_rate = round(attended / total * 100, 1) if total else 0.0
+    responded = Guest.objects.filter(
+        event_id=event_id, status__in=RESPONDED_STATUSES
+    ).count()
+    confirmation_rate = rate_percent(confirmed, total)
+    rsvp_only = max(confirmed - attended, 0)
+    absence_rate = rate_percent(rsvp_only, confirmed) if confirmed else 0.0
+    attendance_rate = rate_percent(attended, total)
 
     return {
         "guests_total": total,
         "invited": invited,
         "confirmed": confirmed,
         "attended": attended,
+        "seated": seated,
         "declined": declined,
         "cancelled": agg["cancelled"] or 0,
         "responded": responded,
         "confirmation_rate": confirmation_rate,
-        "absence_count": absence_count,
+        "absence_count": rsvp_only,
         "absence_rate": absence_rate,
         "attendance_rate": attendance_rate,
     }
@@ -230,6 +245,7 @@ def _empty_guest_stats() -> dict:
         "invited": 0,
         "confirmed": 0,
         "attended": 0,
+        "seated": 0,
         "declined": 0,
         "cancelled": 0,
         "responded": 0,
@@ -244,24 +260,23 @@ def _stats_from_aggregate_row(row: dict) -> dict:
     total = row.get("total") or 0
     confirmed = row.get("confirmed") or 0
     attended = row.get("attended") or 0
+    seated = row.get("seated") or 0
     declined = row.get("declined") or 0
-    responded = confirmed + attended + declined
-    confirmation_rate = round((confirmed + attended) / total * 100, 1) if total else 0.0
-    absence_count = max(confirmed - attended, 0)
-    absence_rate = round(absence_count / confirmed * 100, 1) if confirmed else 0.0
-    attendance_rate = round(attended / total * 100, 1) if total else 0.0
+    responded = row.get("responded") or 0
+    rsvp_only = max(confirmed - attended, 0)
     return {
         "guests_total": total,
         "invited": row.get("invited") or 0,
         "confirmed": confirmed,
         "attended": attended,
+        "seated": seated,
         "declined": declined,
         "cancelled": row.get("cancelled") or 0,
         "responded": responded,
-        "confirmation_rate": confirmation_rate,
-        "absence_count": absence_count,
-        "absence_rate": absence_rate,
-        "attendance_rate": attendance_rate,
+        "confirmation_rate": rate_percent(confirmed, total),
+        "absence_count": rsvp_only,
+        "absence_rate": rate_percent(rsvp_only, confirmed) if confirmed else 0.0,
+        "attendance_rate": rate_percent(attended, total),
     }
 
 
@@ -275,10 +290,12 @@ def _guest_stats_bulk(event_ids: list[int]) -> dict[int, dict]:
         .annotate(
             total=Count("id"),
             invited=Count("id", filter=Q(status=Guest.Status.INVITED)),
-            confirmed=Count("id", filter=Q(status=Guest.Status.CONFIRMED)),
-            attended=Count("id", filter=Q(status=Guest.Status.ATTENDED)),
+            confirmed=Count("id", filter=Q(status__in=CONFIRMED_ATTENDANCE_STATUSES)),
+            attended=Count("id", filter=Q(status__in=PHYSICAL_PRESENCE_STATUSES)),
+            seated=Count("id", filter=Q(status=Guest.Status.SEATED)),
             declined=Count("id", filter=Q(status=Guest.Status.DECLINED)),
             cancelled=Count("id", filter=Q(status=Guest.Status.CANCELLED)),
+            responded=Count("id", filter=Q(status__in=RESPONDED_STATUSES)),
         )
     )
     return {row["event_id"]: _stats_from_aggregate_row(row) for row in rows}

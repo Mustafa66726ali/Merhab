@@ -72,7 +72,9 @@ def get_event_manager_context(user: User) -> tuple[Platform, PlatformMember] | N
 
 
 def membership_payload(pm: PlatformMember) -> dict:
-    return {
+    from apps.platforms.platform_permissions import staff_assigned_event_ids
+
+    payload = {
         "id": pm.id,
         "member_role": pm.member_role,
         "role_label": member_role_label(pm.member_role, pm.coordinator_label),
@@ -81,3 +83,6 @@ def membership_payload(pm: PlatformMember) -> dict:
         "perm_send_messages": pm.perm_send_messages,
         "coordinator_label": pm.coordinator_label or "",
     }
+    if pm.user.role == User.Role.STAFF:
+        payload["assigned_event_ids"] = staff_assigned_event_ids(pm.user)
+    return payload

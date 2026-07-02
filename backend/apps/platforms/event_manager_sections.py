@@ -6,6 +6,7 @@ from django.db.models import Count, Q
 
 from apps.events.models import Event, Group, Section
 from apps.guests.models import Guest
+from apps.guests.status_utils import CONFIRMED_ATTENDANCE_STATUSES, PHYSICAL_PRESENCE_STATUSES, rate_percent
 from apps.platforms.member_profile import managed_events_queryset
 from apps.platforms.platform_events import STATUS_OPTIONS
 
@@ -16,7 +17,7 @@ SECTION_STATUS_OPTIONS = [
     {"value": "empty", "label": "بدون مدعوين"},
 ]
 
-CONFIRMED_STATUSES = {Guest.Status.CONFIRMED, Guest.Status.ATTENDED}
+CONFIRMED_STATUSES = set(CONFIRMED_ATTENDANCE_STATUSES)
 
 
 def _section_status_key(guests_total: int, guests_confirmed: int, guests_pending: int) -> str:
@@ -63,7 +64,9 @@ def build_event_manager_sections_dashboard(user_id: int, platform_id: int) -> di
                 "id",
                 filter=Q(status__in=CONFIRMED_STATUSES),
             ),
-            guests_attended=Count("id", filter=Q(status=Guest.Status.ATTENDED)),
+            guests_attended=Count(
+                "id", filter=Q(status__in=PHYSICAL_PRESENCE_STATUSES)
+            ),
             guests_pending=Count("id", filter=Q(status=Guest.Status.INVITED)),
         ):
             stats_map[row["section_id"]] = row
@@ -91,12 +94,8 @@ def build_event_manager_sections_dashboard(user_id: int, platform_id: int) -> di
         guests_confirmed = stats.get("guests_confirmed") or 0
         guests_attended = stats.get("guests_attended") or 0
         guests_pending = stats.get("guests_pending") or 0
-        confirmation_rate = (
-            round(guests_confirmed / guests_total * 100, 1) if guests_total else 0.0
-        )
-        attendance_rate = (
-            round(guests_attended / guests_total * 100, 1) if guests_total else 0.0
-        )
+        confirmation_rate = rate_percent(guests_confirmed, guests_total)
+        attendance_rate = rate_percent(guests_attended, guests_total)
         status_key = _section_status_key(guests_total, guests_confirmed, guests_pending)
 
         sections_payload.append(

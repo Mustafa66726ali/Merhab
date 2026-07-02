@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from rest_framework import serializers
 
 from apps.guests.models import Guest
+from apps.guests.status_utils import CONFIRMED_ATTENDANCE_STATUSES, PHYSICAL_PRESENCE_STATUSES
 from apps.platforms.member_profile import _guest_stats_for_event
 from apps.platforms.platform_events import (
     _completion_meta,
@@ -160,7 +161,7 @@ class EventListSerializer(serializers.ModelSerializer):
     def get_confirmed_count(self, obj):
         if hasattr(obj, "confirmed_count"):
             return obj.confirmed_count
-        return obj.guests.filter(status__in=["confirmed", "attended"]).count()
+        return obj.guests.filter(status__in=CONFIRMED_ATTENDANCE_STATUSES).count()
 
     def get_platform_name(self, obj):
         return obj.platform.name if obj.platform else "—"
@@ -190,7 +191,13 @@ class EventDetailSerializer(serializers.ModelSerializer):
     phase = serializers.SerializerMethodField()
     phase_label = serializers.SerializerMethodField()
     recent_activity = serializers.SerializerMethodField()
+    guest_greetings = serializers.SerializerMethodField()
     cover_image = serializers.SerializerMethodField()
+    started_at = serializers.DateTimeField(read_only=True)
+    ended_at = serializers.DateTimeField(read_only=True)
+    can_start = serializers.SerializerMethodField()
+    can_end = serializers.SerializerMethodField()
+    live_elapsed_seconds = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
@@ -201,7 +208,9 @@ class EventDetailSerializer(serializers.ModelSerializer):
             "created_by_name", "owner_name", "event_manager", "event_organizer",
             "managers", "sections", "schedules", "groups", "stats",
             "completion_percent", "phase", "phase_label", "recent_activity",
+            "guest_greetings",
             "invitation_title", "invitation_message",
+            "started_at", "ended_at", "can_start", "can_end", "live_elapsed_seconds",
             "created_at", "updated_at",
         ]
         read_only_fields = ["created_by", "created_at", "updated_at"]
@@ -230,6 +239,24 @@ class EventDetailSerializer(serializers.ModelSerializer):
             **stats,
             "no_response": no_response,
         }
+
+    def get_can_start(self, obj):
+        from apps.events.event_lifecycle import can_start_event
+
+        return can_start_event(obj)
+
+    def get_can_end(self, obj):
+        from apps.events.event_lifecycle import can_end_event
+
+        return can_end_event(obj)
+
+    def get_live_elapsed_seconds(self, obj):
+        if not obj.started_at:
+            return 0
+        from django.utils import timezone
+
+        end = obj.ended_at if obj.status == Event.Status.COMPLETED and obj.ended_at else timezone.now()
+        return max(int((end - obj.started_at).total_seconds()), 0)
 
     def get_completion_percent(self, obj):
         return _completion_meta(obj)["completion_percent"]
@@ -266,7 +293,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
             guests_confirmed = sum(
                 1
                 for g in section_guests
-                if g.status in (Guest.Status.CONFIRMED, Guest.Status.ATTENDED)
+                if g.status in CONFIRMED_ATTENDANCE_STATUSES
             )
 
             group_stats: dict[int, dict] = {}
@@ -276,7 +303,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
                 if guest.group_id not in group_stats:
                     group_stats[guest.group_id] = {"count": 0, "confirmed": 0}
                 group_stats[guest.group_id]["count"] += 1
-                if guest.status in (Guest.Status.CONFIRMED, Guest.Status.ATTENDED):
+                if guest.status in CONFIRMED_ATTENDANCE_STATUSES:
                     group_stats[guest.group_id]["confirmed"] += 1
 
             groups_data = []
@@ -357,6 +384,28 @@ class EventDetailSerializer(serializers.ModelSerializer):
                 }
             )
         return items
+
+    def get_guest_greetings(self, obj):
+        from apps.messages_app.models import Message
+
+        greetings = (
+            Message.objects.filter(
+                event_id=obj.id,
+                direction=Message.Direction.INCOMING,
+                kind=Message.Kind.GREETING,
+            )
+            .select_related("guest")
+            .order_by("-created_at")
+        )
+        return [
+            {
+                "id": msg.id,
+                "guest_name": (msg.guest.full_name if msg.guest else "—"),
+                "content": msg.content,
+                "created_at": msg.created_at.isoformat(),
+            }
+            for msg in greetings
+        ]
 
 
 class EventCreateSerializer(serializers.ModelSerializer):

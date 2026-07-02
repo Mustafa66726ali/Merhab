@@ -36,7 +36,7 @@ export function eventStatusHeroClass(status: string) {
 export function eventStatusIcon(status: string) {
   switch (status) {
     case "active":
-      return "auto_awesome";
+      return "play_circle";
     case "completed":
       return "check_circle";
     case "cancelled":

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import socket
 import subprocess
 import sys
 import threading
@@ -17,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 BACKEND = ROOT / "backend"
 FRONTEND = ROOT / "frontend"
-LANDING_URL = "http://localhost:3000/landing"
+LANDING_PATH = "/landing"
 # الفاصل الزمني (ثوانٍ) لفحص التذكيرات التلقائية المستحقّة قبل الحفل
 REMINDER_INTERVAL_SEC = int(os.environ.get("REMINDER_INTERVAL_SEC", "300"))
 
@@ -25,6 +26,54 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
+def get_lan_ip() -> str:
+    """عنوان IP المحلي على الشبكة (لروابط الدعوة من الهاتف)."""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(("8.8.8.8", 80))
+        ip = sock.getsockname()[0]
+        sock.close()
+        return ip
+    except OSError:
+        return "127.0.0.1"
+
+
+def configure_network_env(env: dict[str, str], *, use_https: bool) -> str:
+    """يضبط FRONTEND_URL وALLOWED_HOSTS تلقائياً ليعمل رابط الدعوة من أجهزة أخرى."""
+    lan_ip = get_lan_ip()
+    port = os.environ.get("FRONTEND_PORT", "3000")
+    scheme = "https" if use_https else "http"
+    frontend_url = f"{scheme}://{lan_ip}:{port}"
+    env["FRONTEND_URL"] = frontend_url
+
+    hosts = {
+        h.strip()
+        for h in env.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+        if h.strip()
+    }
+    hosts.update({"localhost", "127.0.0.1", lan_ip})
+    env["ALLOWED_HOSTS"] = ",".join(sorted(hosts))
+
+    cors = {
+        o.strip()
+        for o in env.get(
+            "CORS_ALLOWED_ORIGINS",
+            "http://localhost:3000",
+        ).split(",")
+        if o.strip()
+    }
+    cors.update(
+        {
+            f"http://localhost:{port}",
+            f"http://{lan_ip}:{port}",
+            f"https://localhost:{port}",
+            f"https://{lan_ip}:{port}",
+        }
+    )
+    env["CORS_ALLOWED_ORIGINS"] = ",".join(sorted(cors))
+    return frontend_url
 
 
 def npm_cmd() -> str:
@@ -131,13 +180,18 @@ def reminder_scheduler(py: str) -> None:
         time.sleep(REMINDER_INTERVAL_SEC)
 
 
-def print_login_info() -> None:
+def print_login_info(frontend_url: str, local_url: str) -> None:
     print("\n" + "=" * 52)
     print("  مرحّاب - بيانات دخول مدير النظام")
     print("=" * 52)
     print("  البريد:       admin@merhab.sa")
     print("  كلمة المرور:  Merhab@2024")
-    print(f"  الرابط:       {LANDING_URL}")
+    print(f"  الرابط:       {local_url}{LANDING_PATH}")
+    print(f"  من جهاز آخر:  {frontend_url}{LANDING_PATH}")
+    print(f"  روابط الدعوة: {frontend_url}/i/<token>")
+    if frontend_url.startswith("https://"):
+        print("  ملاحظة:       على الجوال/الجهاز الخارجي اقبل تحذير الشهادة")
+        print("                (Advanced → Proceed) ثم اسمح للكاميرا.")
     print("=" * 52 + "\n")
 
 
@@ -149,12 +203,17 @@ def main() -> int:
 
     backend_env = os.environ.copy()
     backend_env.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    use_https = os.environ.get("MERHAB_HTTPS", "1") != "0"
+    frontend_url = configure_network_env(backend_env, use_https=use_https)
+    local_scheme = "https" if use_https else "http"
+    local_url = f"{local_scheme}://localhost:3000"
     frontend_env = os.environ.copy()
     # نفس الأصل: المتصفح ينادي /api/v1 على منفذ الواجهة، وخادم الواجهة يُمرّرها
     # داخليًا إلى الباك-إند (rewrites). هكذا يعمل من أي جهاز دون فتح المنفذ 8000.
     frontend_env["NEXT_PUBLIC_API_URL"] = "/api/v1"
 
     print("\n[مرحّاب] تشغيل Backend على http://127.0.0.1:8000")
+    print(f"[مرحّاب] روابط الدعوة للأجهزة الخارجية: {frontend_url}")
     backend_proc = subprocess.Popen(
         [py, "manage.py", "runserver", "8000"],
         cwd=str(BACKEND),
@@ -170,22 +229,25 @@ def main() -> int:
         "(يتطلّب مزوّداً رسمياً نشطاً)"
     )
 
-    print("[مرحّاب] تشغيل Frontend على http://localhost:3000")
+    print(f"[مرحّاب] تشغيل Frontend على {local_url} (متاح على الشبكة)")
+    frontend_dev_args = [npm_cmd(), "run", "dev", "--", "-H", "0.0.0.0", "-p", "3000"]
+    if use_https:
+        frontend_dev_args.append("--experimental-https")
     frontend_proc = subprocess.Popen(
-        [npm_cmd(), "run", "dev", "--", "-p", "3000"],
+        frontend_dev_args,
         cwd=str(FRONTEND),
         env=frontend_env,
         shell=os.name == "nt",
     )
 
-    print_login_info()
+    print_login_info(frontend_url, local_url)
     backend_ready = wait_for("http://127.0.0.1:8000/api/docs/", 90)
-    frontend_ready = wait_for(LANDING_URL, 120)
+    frontend_ready = wait_for(f"{local_url}{LANDING_PATH}", 120)
     if backend_ready:
         verify_login_api(py)
     if backend_ready and frontend_ready:
-        webbrowser.open(LANDING_URL)
-        print(f"[مرحّاب] تم فتح المتصفح: {LANDING_URL}")
+        webbrowser.open(f"{local_url}{LANDING_PATH}")
+        print(f"[مرحّاب] تم فتح المتصفح: {local_url}{LANDING_PATH}")
 
     print("\n[مرحّاب] المشروع يعمل. اضغط Ctrl+C للإيقاف.\n")
     try:

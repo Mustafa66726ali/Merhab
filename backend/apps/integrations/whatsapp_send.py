@@ -217,6 +217,52 @@ def send_whatsapp_template(
     }
 
 
+def send_twilio_content_template(
+    phone: str,
+    content_sid: str,
+    variables: dict[str, str],
+    fallback_url: str = "",
+) -> dict:
+    """إرسال قالب واتساب عبر Twilio Content API (ContentSid)."""
+    digits = normalize_phone_digits(phone)
+    cred = _active_twilio_credential()
+    if not cred or not content_sid:
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": "لا يوجد اعتماد Twilio أو ContentSid",
+        }
+
+    from_number = cred.phone_number_id.strip()
+    if not from_number.startswith("whatsapp:"):
+        from_number = f"whatsapp:+{normalize_phone_digits(from_number)}"
+    to_number = f"whatsapp:+{digits}"
+    api_url = (
+        f"https://api.twilio.com/2010-04-01/Accounts/{cred.api_key}/Messages.json"
+    )
+    form = {
+        "From": from_number,
+        "To": to_number,
+        "ContentSid": content_sid,
+        "ContentVariables": json.dumps(variables, ensure_ascii=False),
+    }
+    status_code, body = _http_post_form(
+        api_url, form, (cred.api_key, cred.api_secret)
+    )
+    if status_code in (200, 201):
+        return {
+            "sent": True,
+            "whatsapp_url": fallback_url,
+            "detail": f"تم الإرسال عبر Twilio Content: {content_sid}",
+            "template": content_sid,
+        }
+    return {
+        "sent": False,
+        "whatsapp_url": fallback_url,
+        "detail": body[:300] or "فشل إرسال قالب Twilio",
+    }
+
+
 def send_whatsapp_image(
     phone: str,
     image_url: str,

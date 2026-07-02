@@ -7,6 +7,7 @@ import {
   type TableShape,
 } from "@/lib/seatingLayout";
 import SeatingChair from "@/components/platform-panel/seating/SeatingChair";
+import { guestTooltipSideWithCanvas } from "@/lib/seatingTooltipPlacement";
 import { tablesAPI, type EventSeatingPlan, type EventSeatingTable } from "@/lib/api";
 
 const MAX_CAPACITY = 30;
@@ -528,7 +529,7 @@ function CanvasTable({
         cursor: dragging ? "grabbing" : "grab",
       }}
     >
-      <div ref={wrapperRef} className="relative" style={{ width: w + pad, height: h + pad }}>
+      <div ref={wrapperRef} className="relative overflow-visible" style={{ width: w + pad, height: h + pad }}>
         {/* الكراسي */}
         {Array.from({ length: table.capacity }, (_, i) => i + 1).map((seatNumber) => {
           const seat = seatByNumber.get(seatNumber);
@@ -563,6 +564,7 @@ function CanvasTable({
                 occupied={seat?.occupied}
                 isVip={seat?.is_vip}
                 guestName={seat?.guest_name}
+                tooltipSide={guestTooltipSideWithCanvas(p.x, p.y, x, y)}
               />
             </div>
           );

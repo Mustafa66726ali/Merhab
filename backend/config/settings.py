@@ -172,6 +172,7 @@ WHATSAPP_TEMPLATE_INVITATION = config(
 WHATSAPP_TEMPLATE_REMINDER = config(
     "WHATSAPP_TEMPLATE_REMINDER", default="event_reminder"
 )
+WHATSAPP_TEMPLATE_QR = config("WHATSAPP_TEMPLATE_QR", default="rsvp_qr")
 WHATSAPP_TEMPLATE_LANGUAGE = config("WHATSAPP_TEMPLATE_LANGUAGE", default="ar")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -5,6 +5,7 @@ from rest_framework.exceptions import PermissionDenied
 from apps.accounts.models import User
 from apps.events.models import Event
 from apps.platforms.models import Platform, PlatformMember
+from apps.staff.models import StaffMember
 
 PERM_SCAN_QR = "perm_scan_qr"
 PERM_EDIT_GUESTS = "perm_edit_guests"
@@ -57,6 +58,36 @@ def is_platform_entry_manager(user: User) -> bool:
     ).exists()
 
 
+def staff_assigned_event_ids(user: User) -> list[int]:
+    """معرّفات الفعاليات التي عُيِّن فيها المستخدم كطاقم تشغيلي."""
+    return list(
+        StaffMember.objects.filter(user=user, is_active=True).values_list(
+            "event_id", flat=True
+        )
+    )
+
+
+def user_assigned_to_event(user: User, event: Event) -> bool:
+    """هل المستخدم (طاقم) معيّن نشطاً على هذه الفعالية؟"""
+    if user.role != User.Role.STAFF:
+        return True
+    return StaffMember.objects.filter(
+        event_id=event.id, user=user, is_active=True
+    ).exists()
+
+
+def require_staff_event_assignment(
+    user: User,
+    event: Event,
+    message: str = "غير مصرح — لم تُعيَّن لهذه الفعالية بعد",
+) -> None:
+    if user.role != User.Role.STAFF:
+        return
+    if user_assigned_to_event(user, event):
+        return
+    raise PermissionDenied(message)
+
+
 def get_platform_permissions(user: User) -> dict[str, bool]:
     if user.role == User.Role.SYSTEM_MANAGER:
         return _full_permissions()
@@ -102,6 +133,13 @@ def user_can_access_event(user: User, event: Event) -> bool:
     platform = event.platform
     if platform.owner_id == user.id:
         return True
+
+    if user.role == User.Role.STAFF:
+        if not PlatformMember.objects.filter(platform_id=platform.id, user=user).exists():
+            return False
+        return StaffMember.objects.filter(
+            event_id=event.id, user=user, is_active=True
+        ).exists()
 
     if PlatformMember.objects.filter(platform_id=platform.id, user=user).exists():
         return True

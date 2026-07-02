@@ -12,6 +12,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.accounts.models import User
+from apps.events.models import Event
 
 from .event_manager_events import build_event_manager_events_dashboard
 from .event_manager_sections import build_event_manager_sections_dashboard
@@ -20,6 +21,7 @@ from .event_manager_team import (
     build_event_manager_staff_list,
     build_event_manager_team_list,
     get_event_manager_staff_row,
+    get_event_manager_staff_row_with_events,
 )
 from .member_context import (
     get_event_manager_context,
@@ -55,9 +57,11 @@ from apps.reports.platform_analytics import build_platform_reports_dashboard
 from .comms_serializers import DirectMessageSerializer, UserNotificationSerializer
 from .team_actions import (
     apply_platform_member_profile,
+    assign_staff_to_event,
     get_active_platform_for_admin,
     get_platform_member,
     remove_team_member,
+    unassign_staff_from_event,
 )
 from .platform_permissions import get_platform_permissions
 from .team_serializers import (
@@ -351,6 +355,11 @@ class PlatformViewSet(viewsets.ModelViewSet):
             "assignable_roles": self.EM_STAFF_ROLE_OPTIONS,
             "permission_options": PERMISSION_OPTIONS,
             **build_event_manager_staff_list(platform.id),
+            "platform_events": list(
+                Event.objects.filter(platform_id=platform.id)
+                .order_by("-date", "title")
+                .values("id", "title")
+            ),
         })
 
     @action(detail=False, methods=["post"], url_path="my-staff-team/add")
@@ -393,7 +402,7 @@ class PlatformViewSet(viewsets.ModelViewSet):
             perm_send_messages=data.get("perm_send_messages", False),
         )
 
-        row = get_event_manager_staff_row(platform.id, user.id)
+        row = get_event_manager_staff_row_with_events(platform.id, user.id)
         return Response(row, status=status.HTTP_201_CREATED)
 
     @action(
@@ -418,6 +427,66 @@ class PlatformViewSet(viewsets.ModelViewSet):
         user = get_object_or_404(User, pk=user_id)
         remove_team_member(platform, user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path=r"my-staff-team/(?P<user_id>[0-9]+)/assign-event",
+    )
+    def my_staff_team_assign_event(self, request, user_id=None):
+        """تعيين منسق/مدير دخول على فعالية محددة."""
+        platform = self._event_manager_platform(request)
+        if not platform:
+            return Response(
+                {"detail": "لا توجد منصة نشطة مرتبطة بحسابك"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        row = get_event_manager_staff_row(platform.id, int(user_id))
+        if not row:
+            return Response(
+                {"detail": "العضو غير موجود ضمن طاقمك"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        event_id = request.data.get("event_id")
+        if not event_id:
+            return Response(
+                {"event_id": "معرّف الفعالية مطلوب"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user = get_object_or_404(User, pk=user_id)
+        try:
+            assign_staff_to_event(platform, user, int(event_id))
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        updated = get_event_manager_staff_row_with_events(platform.id, user.id)
+        return Response(updated)
+
+    @action(
+        detail=False,
+        methods=["delete"],
+        url_path=r"my-staff-team/(?P<user_id>[0-9]+)/events/(?P<event_id>[0-9]+)",
+    )
+    def my_staff_team_unassign_event(self, request, user_id=None, event_id=None):
+        """إلغاء تعيين منسق/مدير دخول من فعالية."""
+        platform = self._event_manager_platform(request)
+        if not platform:
+            return Response(
+                {"detail": "لا توجد منصة نشطة مرتبطة بحسابك"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        row = get_event_manager_staff_row(platform.id, int(user_id))
+        if not row:
+            return Response(
+                {"detail": "العضو غير موجود ضمن طاقمك"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        user = get_object_or_404(User, pk=user_id)
+        try:
+            unassign_staff_from_event(platform, user, int(event_id))
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        updated = get_event_manager_staff_row_with_events(platform.id, user.id)
+        return Response(updated)
 
     @action(detail=False, methods=["get"], url_path="my-reports")
     def my_reports(self, request):
@@ -935,13 +1004,17 @@ class PlatformViewSet(viewsets.ModelViewSet):
         body = (request.data.get("body") or "").strip()
         if not body:
             return Response({"detail": "محتوى الإشعار مطلوب"}, status=status.HTTP_400_BAD_REQUEST)
-        notif = UserNotification.objects.create(
-            user=platform.owner,
-            sender=request.user,
-            platform=platform,
-            title=title,
-            body=body,
+        from apps.platforms.notification_service import notify_system_broadcast
+
+        notif = notify_system_broadcast(
+            platform.owner,
+            title,
+            body,
+            platform,
+            request.user,
         )
+        if not notif:
+            return Response({"detail": "تعذّر إرسال الإشعار"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(UserNotificationSerializer(notif).data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["get"])

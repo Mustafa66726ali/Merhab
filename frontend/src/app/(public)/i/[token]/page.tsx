@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { publicInvitationAPI, type PublicInvitation, type PublicInvitationCoordinator } from "@/lib/api";
+import InvitationLiveMedia from "@/components/invitation/InvitationLiveMedia";
+import { eventMapsUrl, formatEventLocation } from "@/lib/eventLocation";
 
 /**
  * صفحة الدعوة العامة — يفتحها الضيف عبر رابط فريد.
@@ -68,7 +70,9 @@ export default function PublicInvitationPage() {
     );
   }
 
-  const { event, guest, schedules, group_members, coordinator, qr_url } = data;
+  const { event, guest, schedules, group_members, coordinator, qr_url, live_media } = data;
+  const locationLabel = formatEventLocation(event);
+  const mapsUrl = eventMapsUrl(event);
   const status = guest.status;
   const seated = status === "seated";
   const attended = status === "attended";
@@ -127,18 +131,14 @@ export default function PublicInvitationPage() {
               </div>
               <div className="min-w-0">
                 <h3 className="arabic-display text-sm text-on-surface-variant">الموقع</h3>
-                <p className="arabic-display text-xl font-bold text-on-surface truncate">
-                  {event.venue || "سيُعلن لاحقاً"}
+                <p className="arabic-display text-xl font-bold text-on-surface break-words">
+                  {locationLabel || "سيُعلن لاحقاً"}
                 </p>
               </div>
             </div>
-            {(event.venue || (event.latitude && event.longitude)) && (
+            {mapsUrl && (
               <a
-                href={
-                  event.latitude && event.longitude
-                    ? `https://www.google.com/maps?q=${event.latitude},${event.longitude}`
-                    : `https://www.google.com/maps/search/${encodeURIComponent(event.venue)}`
-                }
+                href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-4 bg-surface-container-highest rounded-xl text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors"
@@ -149,6 +149,10 @@ export default function PublicInvitationPage() {
             )}
           </div>
         </section>
+
+        {live_media?.enabled && (
+          <InvitationLiveMedia token={token} initial={live_media} />
+        )}
 
         {/* Section / Group */}
         {(guest.section_name || guest.group_name) && (

@@ -1,20 +1,30 @@
 from django.db import models
 from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponse
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.accounts.models import User
 from apps.guests.models import Guest
+from apps.guests.status_utils import CONFIRMED_ATTENDANCE_STATUSES, PHYSICAL_PRESENCE_STATUSES
 from apps.platforms.platform_permissions import (
     get_platform_for_user,
     require_event_access,
+    staff_assigned_event_ids,
 )
 
-from .analytics import events_overview
+from apps.events.event_lifecycle import end_event, start_event
+from .live_media import (
+    LiveMediaMode,
+    STREAM_MODES,
+    build_live_media_payload,
+    ensure_broadcast_token,
+    youtube_embed_url,
+)
+from .live_broadcast_send import send_broadcast_link_to_present_guests
 from .event_seating_overview import build_seating_overview
 from .event_groups_overview import build_groups_guests_csv, build_groups_overview
 from .models import Event, Section, Schedule, Group
@@ -28,11 +38,24 @@ from .serializers import (
 )
 
 
+LIVE_MEDIA_ROLES = (
+    User.Role.EVENT_MANAGER,
+    User.Role.EVENT_ORGANIZER,
+    User.Role.PLATFORM_ADMIN,
+    User.Role.SYSTEM_MANAGER,
+)
+
+
 class EventViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     filterset_fields = ["status", "platform"]
     search_fields = ["title", "venue", "description", "platform__name"]
     ordering_fields = ["date", "title", "created_at"]
+
+    def _require_live_media_access(self, request, event: Event) -> None:
+        require_event_access(request.user, event)
+        if request.user.role not in LIVE_MEDIA_ROLES:
+            raise PermissionDenied("غير مصرح — إدارة البث لمنظم/مدير الفعالية فقط")
 
     def get_queryset(self):
         user = self.request.user
@@ -44,12 +67,12 @@ class EventViewSet(viewsets.ModelViewSet):
                 guests_count=Count("guests", distinct=True),
                 attended_count=Count(
                     "guests",
-                    filter=Q(guests__status=Guest.Status.ATTENDED),
+                    filter=Q(guests__status__in=PHYSICAL_PRESENCE_STATUSES),
                     distinct=True,
                 ),
                 confirmed_count=Count(
                     "guests",
-                    filter=Q(guests__status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]),
+                    filter=Q(guests__status__in=CONFIRMED_ATTENDANCE_STATUSES),
                     distinct=True,
                 ),
             )
@@ -66,12 +89,12 @@ class EventViewSet(viewsets.ModelViewSet):
                 guests_count=Count("guests", distinct=True),
                 attended_count=Count(
                     "guests",
-                    filter=Q(guests__status=Guest.Status.ATTENDED),
+                    filter=Q(guests__status__in=PHYSICAL_PRESENCE_STATUSES),
                     distinct=True,
                 ),
                 confirmed_count=Count(
                     "guests",
-                    filter=Q(guests__status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]),
+                    filter=Q(guests__status__in=CONFIRMED_ATTENDANCE_STATUSES),
                     distinct=True,
                 ),
             )
@@ -83,10 +106,9 @@ class EventViewSet(viewsets.ModelViewSet):
                 else:
                     qs = qs.none()
             elif user.role == User.Role.STAFF:
-                # المنسق ومدير الدخول يعملان على مستوى كامل فعاليات منصتهم
-                platform = get_platform_for_user(user)
-                if platform:
-                    qs = qs.filter(platform_id=platform.id)
+                event_ids = staff_assigned_event_ids(user)
+                if event_ids:
+                    qs = qs.filter(id__in=event_ids)
                 else:
                     qs = qs.none()
             else:
@@ -127,7 +149,10 @@ class EventViewSet(viewsets.ModelViewSet):
                 extra["platform"] = platform
         if not serializer.validated_data.get("status"):
             extra["status"] = Event.Status.DRAFT
-        serializer.save(**extra)
+        event = serializer.save(**extra)
+        from apps.platforms.notification_service import notify_event_created
+
+        notify_event_created(event, actor=user)
 
     @action(detail=False, methods=["get"], url_path="overview")
     def overview(self, request):
@@ -155,6 +180,171 @@ class EventViewSet(viewsets.ModelViewSet):
             f'attachment; filename="event-{event.id}-groups-guests.csv"'
         )
         return response
+
+    @action(detail=True, methods=["post"], url_path="start")
+    def start(self, request, pk=None):
+        """بدء تشغيل الفعالية — تصبح «تعمل الآن»."""
+        event = self.get_object()
+        require_event_access(request.user, event)
+        if request.user.role not in (
+            User.Role.EVENT_MANAGER,
+            User.Role.EVENT_ORGANIZER,
+            User.Role.PLATFORM_ADMIN,
+            User.Role.SYSTEM_MANAGER,
+        ):
+            raise PermissionDenied("غير مصرح — بدء الفعالية لمدير الفعالية فقط")
+        start_event(event)
+        event.refresh_from_db()
+        from apps.platforms.notification_service import notify_event_started
+
+        notify_event_started(event, actor=request.user)
+        return Response(EventDetailSerializer(event, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"], url_path="end")
+    def end(self, request, pk=None):
+        """إنهاء الفعالية — تصبح «منتهية»."""
+        event = self.get_object()
+        require_event_access(request.user, event)
+        if request.user.role not in (
+            User.Role.EVENT_MANAGER,
+            User.Role.EVENT_ORGANIZER,
+            User.Role.PLATFORM_ADMIN,
+            User.Role.SYSTEM_MANAGER,
+        ):
+            raise PermissionDenied("غير مصرح — إنهاء الفعالية لمدير الفعالية فقط")
+        end_event(event)
+        event.refresh_from_db()
+        from apps.platforms.notification_service import notify_event_ended
+
+        notify_event_ended(event, actor=request.user)
+        return Response(EventDetailSerializer(event, context={"request": request}).data)
+
+    @action(detail=True, methods=["get", "patch"], url_path="live-media")
+    def live_media(self, request, pk=None):
+        """عرض/تحديث إعدادات البث الصوتي أو المرئي للضيوف."""
+        event = self.get_object()
+        self._require_live_media_access(request, event)
+
+        if request.method == "GET":
+            if event.live_media_enabled:
+                ensure_broadcast_token(event)
+                event.refresh_from_db()
+            return Response(build_live_media_payload(event, request, include_broadcast_url=True))
+
+        enabled = request.data.get("enabled")
+        mode = request.data.get("mode")
+        youtube_url = request.data.get("youtube_url")
+        audio_file = request.FILES.get("audio_file")
+
+        update_fields: list[str] = []
+
+        if enabled is not None:
+            event.live_media_enabled = str(enabled).lower() in ("1", "true", "yes", "on")
+            update_fields.append("live_media_enabled")
+
+        if mode is not None:
+            mode = str(mode).strip()
+            valid = {choice.value for choice in LiveMediaMode}
+            if mode not in valid:
+                raise ValidationError({"mode": "نوع البث غير صالح"})
+            event.live_media_mode = mode
+            update_fields.append("live_media_mode")
+            if mode not in STREAM_MODES:
+                event.live_stream_active = False
+                update_fields.append("live_stream_active")
+
+        if youtube_url is not None:
+            event.live_youtube_url = str(youtube_url).strip()[:500]
+            update_fields.append("live_youtube_url")
+            if event.live_youtube_url and not youtube_embed_url(event.live_youtube_url):
+                raise ValidationError({"youtube_url": "رابط يوتيوب غير صالح"})
+
+        if audio_file:
+            event.live_audio_file = audio_file
+            update_fields.append("live_audio_file")
+
+        if not update_fields:
+            return Response(
+                {"detail": "لا توجد حقول للتحديث"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        event.save(update_fields=list(set(update_fields)))
+        ensure_broadcast_token(event)
+        event.refresh_from_db()
+        return Response(build_live_media_payload(event, request, include_broadcast_url=True))
+
+    @action(detail=True, methods=["post"], url_path="live-media/stream-start")
+    def live_media_stream_start(self, request, pk=None):
+        """بدء البث المباشر من الميكروفون أو الكاميرا."""
+        event = self.get_object()
+        self._require_live_media_access(request, event)
+
+        if event.live_media_mode not in STREAM_MODES:
+            return Response(
+                {"detail": "فعّل وضع الميكروفون أو الكاميرا أولاً"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not event.live_media_enabled:
+            return Response(
+                {"detail": "فعّل البث للضيوف أولاً"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        event.live_stream_active = True
+        event.save(update_fields=["live_stream_active"])
+        return Response(build_live_media_payload(event, request))
+
+    @action(detail=True, methods=["post"], url_path="live-media/stream-chunk")
+    def live_media_stream_chunk(self, request, pk=None):
+        """استقبال مقطع بث (كل ~3 ثوانٍ) من المتصفح."""
+        event = self.get_object()
+        self._require_live_media_access(request, event)
+
+        if not event.live_stream_active:
+            return Response(
+                {"detail": "البث غير نشط — ابدأ البث أولاً"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if event.live_media_mode not in STREAM_MODES:
+            return Response(
+                {"detail": "وضع البث الحالي لا يدعم المقاطع المباشرة"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        chunk = request.FILES.get("chunk")
+        if not chunk:
+            return Response(
+                {"detail": "المقطع مطلوب"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if event.live_stream_file:
+            event.live_stream_file.delete(save=False)
+        event.live_stream_file.save(f"event-{event.id}-live.webm", chunk, save=False)
+        event.live_stream_rev = (event.live_stream_rev or 0) + 1
+        event.save(update_fields=["live_stream_file", "live_stream_rev"])
+        return Response(build_live_media_payload(event, request))
+
+    @action(detail=True, methods=["post"], url_path="live-media/stream-stop")
+    def live_media_stream_stop(self, request, pk=None):
+        """إيقاف البث المباشر."""
+        event = self.get_object()
+        self._require_live_media_access(request, event)
+
+        event.live_stream_active = False
+        event.save(update_fields=["live_stream_active"])
+        return Response(build_live_media_payload(event, request))
+
+    @action(detail=True, methods=["post"], url_path="live-media/send-link")
+    def live_media_send_link(self, request, pk=None):
+        """إرسال رابط البث العام لجميع الضيوف الحاضرين أو الجالسين."""
+        event = self.get_object()
+        self._require_live_media_access(request, event)
+        result = send_broadcast_link_to_present_guests(event, request.user)
+        if not result.get("ok"):
+            return Response({"detail": result.get("detail")}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result)
 
 
 class SectionViewSet(viewsets.ModelViewSet):
@@ -191,11 +381,17 @@ class SectionViewSet(viewsets.ModelViewSet):
         event = serializer.validated_data["event"]
         self._require_section_manager(event)
         serializer.save()
+        from apps.platforms.notification_service import maybe_notify_preparation_complete
+
+        maybe_notify_preparation_complete(event)
 
     def perform_update(self, serializer):
         event = serializer.instance.event
         self._require_section_manager(event)
         serializer.save()
+        from apps.platforms.notification_service import maybe_notify_preparation_complete
+
+        maybe_notify_preparation_complete(event)
 
     def perform_destroy(self, instance):
         self._require_section_manager(instance.event)
@@ -235,11 +431,17 @@ class ScheduleViewSet(viewsets.ModelViewSet):
         event = serializer.validated_data["event"]
         self._require_schedule_manager(event)
         serializer.save()
+        from apps.platforms.notification_service import maybe_notify_preparation_complete
+
+        maybe_notify_preparation_complete(event)
 
     def perform_update(self, serializer):
         event = serializer.instance.event
         self._require_schedule_manager(event)
         serializer.save()
+        from apps.platforms.notification_service import maybe_notify_preparation_complete
+
+        maybe_notify_preparation_complete(event)
 
     def perform_destroy(self, instance):
         self._require_schedule_manager(instance.event)
@@ -279,10 +481,17 @@ class GroupViewSet(viewsets.ModelViewSet):
         event = serializer.validated_data["event"]
         self._require_group_manager(event)
         serializer.save()
+        from apps.platforms.notification_service import maybe_notify_preparation_complete
+
+        maybe_notify_preparation_complete(event)
 
     def perform_update(self, serializer):
-        self._require_group_manager(serializer.instance.event)
+        event = serializer.instance.event
+        self._require_group_manager(event)
         serializer.save()
+        from apps.platforms.notification_service import maybe_notify_preparation_complete
+
+        maybe_notify_preparation_complete(event)
 
     def perform_destroy(self, instance):
         self._require_group_manager(instance.event)

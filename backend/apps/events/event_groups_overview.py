@@ -4,6 +4,12 @@ from __future__ import annotations
 
 from apps.events.models import Event
 from apps.guests.models import Guest
+from apps.guests.status_utils import (
+    CONFIRMED_ATTENDANCE_STATUSES,
+    PHYSICAL_PRESENCE_STATUSES,
+    RESPONDED_STATUSES,
+    rate_percent,
+)
 
 
 def _group_section_label(event: Event, group_id: int, guests_by_group: dict) -> tuple[int | None, str, str]:
@@ -30,17 +36,18 @@ def build_groups_overview(event: Event) -> dict:
         if guest.group_id:
             guests_by_group.setdefault(guest.group_id, []).append(guest)
 
-    confirmed_statuses = {Guest.Status.CONFIRMED, Guest.Status.ATTENDED}
+    confirmed_statuses = set(CONFIRMED_ATTENDANCE_STATUSES)
+    present_statuses = set(PHYSICAL_PRESENCE_STATUSES)
 
     groups_payload = []
     for group in event.groups.all():
         group_guests = guests_by_group.get(group.id, [])
         guests_total = len(group_guests)
         guests_confirmed = sum(1 for g in group_guests if g.status in confirmed_statuses)
-        guests_attended = sum(1 for g in group_guests if g.status == Guest.Status.ATTENDED)
+        guests_attended = sum(1 for g in group_guests if g.status in present_statuses)
         guests_declined = sum(1 for g in group_guests if g.status == Guest.Status.DECLINED)
         guests_pending = sum(1 for g in group_guests if g.status == Guest.Status.INVITED)
-        rate = round(guests_confirmed / guests_total * 100, 1) if guests_total else 0.0
+        rate = rate_percent(guests_confirmed, guests_total)
 
         section_id, section_name, section_color = _group_section_label(
             event, group.id, guests_by_group
@@ -73,7 +80,7 @@ def build_groups_overview(event: Event) -> dict:
         "confirmed_total": sum(1 for g in guests if g.status in confirmed_statuses),
         "pending_total": sum(1 for g in guests if g.status == Guest.Status.INVITED),
         "declined_total": sum(1 for g in guests if g.status == Guest.Status.DECLINED),
-        "attended_total": sum(1 for g in guests if g.status == Guest.Status.ATTENDED),
+        "attended_total": sum(1 for g in guests if g.status in present_statuses),
     }
 
     sections_payload = [

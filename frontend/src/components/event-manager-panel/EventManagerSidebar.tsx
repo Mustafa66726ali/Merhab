@@ -12,6 +12,7 @@ const navItems = [
   { href: "/event-manager/schedule", label: "الجدول الزمني", icon: "schedule" },
   { href: "/event-manager/seating", label: "توزيع المقاعد", icon: "event_seat" },
   { href: "/event-manager/invitations", label: "الدعوات", icon: "mail" },
+  { href: "/event-manager/broadcast", label: "البث المباشر", icon: "podcasts" },
   { href: "/event-manager/messages", label: "الرسائل", icon: "forum" },
   { href: "/event-manager/team", label: "فريق العمل", icon: "groups" },
   { href: "/event-manager/staff", label: "المنسقون ومدراء الدخول", icon: "badge" },
@@ -58,7 +59,10 @@ export default function EventManagerSidebar({ isOpen, onClose }: EventManagerSid
           {navItems.map((item) => {
             const active =
               pathname === item.href ||
-              (item.href !== "/event-manager/dashboard" && pathname.startsWith(item.href));
+              (item.href !== "/event-manager/dashboard" && pathname.startsWith(item.href)) ||
+              (item.href === "/event-manager/broadcast" &&
+                pathname.includes("/event-manager/events/") &&
+                pathname.endsWith("/broadcast"));
             return (
               <Link
                 key={item.href}

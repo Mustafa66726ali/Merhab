@@ -69,7 +69,7 @@ export default function EventOrganizerHeader({
 
         <HeaderComms
           messagesHref="/event-organizer/messages"
-          notificationsHref="/event-organizer/messages"
+          notificationsHref="/event-organizer/notifications"
         />
 
         <button

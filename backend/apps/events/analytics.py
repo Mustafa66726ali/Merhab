@@ -4,6 +4,11 @@ from django.utils import timezone
 from apps.events.cover_media import event_cover_url
 from apps.events.models import Event
 from apps.guests.models import Guest
+from apps.guests.status_utils import (
+    CONFIRMED_ATTENDANCE_STATUSES,
+    PHYSICAL_PRESENCE_STATUSES,
+    rate_percent,
+)
 
 AR_WEEKDAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"]
 AR_MONTHS = [
@@ -17,12 +22,12 @@ def _event_queryset(platform_id: int | None = None):
         guests_count=Count("guests", distinct=True),
         attended_count=Count(
             "guests",
-            filter=Q(guests__status=Guest.Status.ATTENDED),
+            filter=Q(guests__status__in=PHYSICAL_PRESENCE_STATUSES),
             distinct=True,
         ),
         confirmed_count=Count(
             "guests",
-            filter=Q(guests__status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]),
+            filter=Q(guests__status__in=CONFIRMED_ATTENDANCE_STATUSES),
             distinct=True,
         ),
     )
@@ -66,10 +71,10 @@ def compute_event_stats(platform_id: int | None = None) -> dict:
     total_guests = guest_qs.count()
     if total_guests:
         confirmed = guest_qs.filter(
-            status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]
+            status__in=CONFIRMED_ATTENDANCE_STATUSES
         ).count()
-        confirmation_rate = round(confirmed / total_guests * 100, 1)
-        non_confirmation_rate = round(100 - confirmation_rate, 1)
+        confirmation_rate = rate_percent(confirmed, total_guests)
+        non_confirmation_rate = round(min(100.0, 100 - confirmation_rate), 1)
     else:
         confirmation_rate = 0.0
         non_confirmation_rate = 0.0

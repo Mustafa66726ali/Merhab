@@ -10,6 +10,7 @@ urlpatterns = [
     path("api/v1/events/", include("apps.events.urls")),
     path("api/v1/guests/", include("apps.guests.urls")),
     path("api/v1/public/", include("apps.guests.public_urls")),
+    path("api/v1/public/", include("apps.events.public_urls")),
     path("api/v1/tables/", include("apps.tables.urls")),
     path("api/v1/invitations/", include("apps.invitations.urls")),
     path("api/v1/messages/", include("apps.messages_app.urls")),

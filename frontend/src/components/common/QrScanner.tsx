@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CAMERA_INSECURE_MSG, isCameraContextSecure } from "@/lib/camera";
 
 interface QrScannerProps {
   open: boolean;
@@ -32,7 +33,15 @@ export default function QrScanner({
   const [camError, setCamError] = useState("");
 
   useEffect(() => {
+    if (open) setCamError("");
+  }, [open]);
+
+  useEffect(() => {
     if (!open) return;
+    if (!isCameraContextSecure()) {
+      setCamError(CAMERA_INSECURE_MSG);
+      return;
+    }
     let cancelled = false;
 
     (async () => {
@@ -62,7 +71,11 @@ export default function QrScanner({
         );
       } catch {
         if (!cancelled) {
-          setCamError("تعذّر فتح الكاميرا — تأكد من منح الإذن واستخدام اتصال آمن");
+          setCamError(
+            isCameraContextSecure()
+              ? "تعذّر فتح الكاميرا — تأكد من منح الإذن للمتصفّح"
+              : CAMERA_INSECURE_MSG
+          );
         }
       }
     })();

@@ -57,3 +57,6 @@ Thumbs.db
 
 # ===== Local tooling (portable git/gh) =====
 /merhab-tools/
+
+# ===== Local dev certificates =====
+frontend/certificates/

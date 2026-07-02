@@ -12,6 +12,7 @@ import EventQuickActions from "@/components/platform-panel/EventQuickActions";
 import EventSectionGroupsPanel from "@/components/platform-panel/EventSectionGroupsPanel";
 import EventSchedulePreview from "@/components/platform-panel/schedule/EventSchedulePreview";
 import { eventsAPI, type EventDetail } from "@/lib/api";
+import { exportEventReportToPdf } from "@/lib/exportEventPdf";
 import { useAuthStore } from "@/lib/store";
 
 const EventLocationMap = dynamic(
@@ -25,6 +26,17 @@ const EventLocationMap = dynamic(
     ),
   }
 );
+
+function formatDuration(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
+  return `${m}:${String(sec).padStart(2, "0")}`;
+}
 
 function formatEventDate(date: string, time: string) {
   if (!date) return "—";
@@ -157,6 +169,9 @@ export default function PlatformEventDetailView({
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lifecycleBusy, setLifecycleBusy] = useState(false);
+  const [exportingReport, setExportingReport] = useState(false);
+  const [liveTick, setLiveTick] = useState(0);
 
   const load = useCallback(async () => {
     try {
@@ -174,6 +189,63 @@ export default function PlatformEventDetailView({
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (event?.status !== "active" || !event.started_at) return;
+    const t = setInterval(() => setLiveTick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [event?.status, event?.started_at]);
+
+  const liveElapsedSeconds = useMemo(() => {
+    if (!event?.started_at) return 0;
+    const startMs = new Date(event.started_at).getTime();
+    if (event.status === "active") {
+      return Math.max(Math.floor((Date.now() - startMs) / 1000), 0);
+    }
+    if (event.ended_at) {
+      return Math.max(
+        Math.floor((new Date(event.ended_at).getTime() - startMs) / 1000),
+        0
+      );
+    }
+    return event.live_elapsed_seconds ?? 0;
+  }, [event, liveTick]);
+
+  const handleStart = async () => {
+    if (!event || !window.confirm("بدء تشغيل المناسبة الآن؟")) return;
+    setLifecycleBusy(true);
+    try {
+      const res = await eventsAPI.start(eventId);
+      setEvent(res.data);
+    } catch {
+      setError("تعذّر بدء المناسبة.");
+    } finally {
+      setLifecycleBusy(false);
+    }
+  };
+
+  const handleExportReport = () => {
+    if (!event) return;
+    setExportingReport(true);
+    try {
+      exportEventReportToPdf(event);
+    } finally {
+      setTimeout(() => setExportingReport(false), 600);
+    }
+  };
+
+  const handleEnd = async () => {
+    if (!event || !window.confirm("إنهاء المناسبة الآن؟ لن يُسمح بإدخال أو إجلاس ضيوف جدد.")) return;
+    setLifecycleBusy(true);
+    try {
+      const res = await eventsAPI.end(eventId);
+      setEvent(res.data);
+    } catch {
+      setError("تعذّر إنهاء المناسبة.");
+    } finally {
+      setLifecycleBusy(false);
+    }
+  };
 
   const stats = event?.stats;
 
@@ -212,16 +284,35 @@ export default function PlatformEventDetailView({
   }
 
   const loc = locationText(event);
-  const confirmedDisplay = (stats?.confirmed ?? 0) + (stats?.attended ?? 0);
+  const confirmedDisplay = stats?.confirmed ?? 0;
+  const attendanceHint =
+    stats && stats.guests_total > 0
+      ? `${stats.attendance_rate}% حضور · ${stats.seated ?? 0} جلس`
+      : undefined;
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8">
-      <nav className="flex items-center gap-2 text-sm text-on-surface-variant">
-        <Link href={eventsBasePath} className="hover:text-primary transition-colors">
-          المناسبات
-        </Link>
-        <span className="material-symbols-outlined text-base text-outline">chevron_left</span>
-        <span className="text-on-surface font-medium truncate">{event.title}</span>
+      <nav className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm text-on-surface-variant min-w-0">
+          <Link href={eventsBasePath} className="hover:text-primary transition-colors shrink-0">
+            المناسبات
+          </Link>
+          <span className="material-symbols-outlined text-base text-outline shrink-0">chevron_left</span>
+          <span className="text-on-surface font-medium truncate">{event.title}</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleExportReport}
+          disabled={exportingReport}
+          className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-primary-container/30 bg-primary-container/10 text-primary text-sm font-bold hover:bg-primary-container/20 transition disabled:opacity-60 shrink-0"
+        >
+          {exportingReport ? (
+            <span className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+          ) : (
+            <span className="material-symbols-outlined text-lg">picture_as_pdf</span>
+          )}
+          تصدير تقرير الفعالية
+        </button>
       </nav>
 
       <EventQuickActions eventId={eventId} eventsBasePath={eventsBasePath} />
@@ -263,9 +354,58 @@ export default function PlatformEventDetailView({
               <span className="material-symbols-outlined text-primary text-lg shrink-0">location_on</span>
               <span className="truncate max-w-[280px] sm:max-w-md">{loc}</span>
             </span>
+            {(event.status === "active" || event.started_at) && (
+              <span className="flex items-center gap-2 text-emerald-300 font-bold tabular-nums">
+                <span className="material-symbols-outlined text-lg">timer</span>
+                {event.status === "active" ? "تعمل منذ" : "مدة التشغيل"}{" "}
+                {formatDuration(liveElapsedSeconds)}
+              </span>
+            )}
           </div>
+
+          {isEventManager && (event.can_start || event.can_end) && (
+            <div className="flex flex-wrap gap-3 mt-5">
+              {event.can_start && (
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  disabled={lifecycleBusy}
+                  className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl bg-emerald-500 text-white font-bold text-sm hover:brightness-110 transition disabled:opacity-60"
+                >
+                  {lifecycleBusy ? (
+                    <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <span className="material-symbols-outlined text-lg">play_arrow</span>
+                  )}
+                  بدء المناسبة
+                </button>
+              )}
+              {event.can_end && (
+                <button
+                  type="button"
+                  onClick={handleEnd}
+                  disabled={lifecycleBusy}
+                  className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl bg-red-500/90 text-white font-bold text-sm hover:brightness-110 transition disabled:opacity-60"
+                >
+                  {lifecycleBusy ? (
+                    <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <span className="material-symbols-outlined text-lg">stop_circle</span>
+                  )}
+                  إنهاء المناسبة
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </section>
+
+      {event.status !== "active" && isEventManager && (
+        <div className="rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          المناسبة غير قيد التشغيل — إضافة الضيوف والإجلاس وتسجيل الحضور متاحة فقط بعد
+          الضغط على «بدء المناسبة».
+        </div>
+      )}
 
       {/* Bento grid */}
       <div className="grid grid-cols-12 gap-4 sm:gap-6">
@@ -285,11 +425,7 @@ export default function PlatformEventDetailView({
             icon="how_to_reg"
             label="الحضور المؤكد"
             value={confirmedDisplay}
-            hint={
-              stats && stats.guests_total > 0
-                ? `${stats.attendance_rate}% حضور فعلي`
-                : undefined
-            }
+            hint={attendanceHint}
             accent="tertiary"
           />
           <MetricCard

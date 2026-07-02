@@ -892,6 +892,31 @@ export default function IntegrationsView() {
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-on-surface-variant mb-2">
+                          قالب QR (rsvp_qr)
+                        </label>
+                        <input
+                          value={
+                            String(
+                              (form.config as Record<string, string>)
+                                ?.template_qr ?? "rsvp_qr"
+                            )
+                          }
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              config: {
+                                ...(f.config ?? {}),
+                                template_qr: e.target.value,
+                              },
+                            }))
+                          }
+                          className="input-field w-full font-mono text-sm"
+                          dir="ltr"
+                          placeholder="rsvp_qr"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-on-surface-variant mb-2">
                           لغة القالب
                         </label>
                         <input
@@ -917,9 +942,59 @@ export default function IntegrationsView() {
                       </div>
                     </div>
                     <p className="text-[11px] text-on-surface-variant">
-                      رسالة QR تُرسل كصورة PNG مباشرة بعد تأكيد الحضور (بدون
-                      قالب نصي).
+                      قالب QR يُرسل أولاً (rsvp_qr) ثم صورة PNG لرمز الدخول. المتغيرات:
+                      {" "}
+                      <span className="font-mono">{"{{1}}"}</span> اسم الضيف،
+                      {" "}
+                      <span className="font-mono">{"{{2}}"}</span> اسم المناسبة.
+                      قوالب الدعوة والتذكير تستخدم خمسة متغيرات: الاسم، المناسبة،
+                      التاريخ، الموقع، رابط التفاصيل.
                     </p>
+                  </div>
+                )}
+
+                {form.provider === "whatsapp_twilio" && (
+                  <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 space-y-3">
+                    <h4 className="text-sm font-bold text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sky-400 text-lg">
+                        chat
+                      </span>
+                      قوالب Twilio Content (ContentSid)
+                    </h4>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      أنشئ قوالب واتساب في Twilio Console وانسخ Content SID لكل قالب
+                      (يبدأ بـ HX). المتغيرات بنفس ترتيب Meta: 1–5 للدعوة والتذكير،
+                      1–2 لـ QR.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {(
+                        [
+                          ["content_invitation", "دعوة (event_invitation)", "HX..."],
+                          ["content_reminder", "تذكير (event_reminder)", "HX..."],
+                          ["content_qr", "QR (rsvp_qr)", "HX..."],
+                        ] as const
+                      ).map(([key, label, ph]) => (
+                        <div key={key}>
+                          <label className="block text-xs font-medium text-on-surface-variant mb-2">
+                            {label}
+                          </label>
+                          <input
+                            value={String(
+                              (form.config as Record<string, string>)?.[key] ?? ""
+                            )}
+                            onChange={(e) =>
+                              setForm((f) => ({
+                                ...f,
+                                config: { ...(f.config ?? {}), [key]: e.target.value },
+                              }))
+                            }
+                            className="input-field w-full font-mono text-sm"
+                            dir="ltr"
+                            placeholder={ph}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 

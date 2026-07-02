@@ -2,6 +2,7 @@
 
 import type { EventSeatingTable } from "@/lib/api";
 import { computeSeatPositions, tableDimensions, type TableShape } from "@/lib/seatingLayout";
+import { guestTooltipSideFromSeatOffset } from "@/lib/seatingTooltipPlacement";
 import SeatingChair from "./SeatingChair";
 
 interface SeatingTableVisualProps {
@@ -37,7 +38,7 @@ export default function SeatingTableVisual({ table }: SeatingTableVisualProps) {
   return (
     <div className="flex flex-col items-center gap-4 shrink-0">
       <div
-        className="relative group/table"
+        className="relative group/table overflow-visible"
         style={{ width: w + 80, height: h + 80 }}
         title={`${table.name}${meta ? ` — ${meta}` : ""}`}
       >
@@ -56,6 +57,7 @@ export default function SeatingTableVisual({ table }: SeatingTableVisualProps) {
                 occupied={seat?.occupied}
                 isVip={seat?.is_vip}
                 guestName={seat?.guest_name}
+                tooltipSide={guestTooltipSideFromSeatOffset(pos.x, pos.y)}
               />
             </div>
           );

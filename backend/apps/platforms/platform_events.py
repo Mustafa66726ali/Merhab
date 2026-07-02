@@ -7,7 +7,11 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.events.models import Event
-from apps.guests.models import Guest
+from apps.guests.status_utils import (
+    CONFIRMED_ATTENDANCE_STATUSES,
+    PHYSICAL_PRESENCE_STATUSES,
+    RESPONDED_STATUSES,
+)
 from apps.invitations.models import Invitation
 from apps.events.cover_media import event_cover_url
 from apps.platforms.member_profile import _guest_stats_bulk, _empty_guest_stats
@@ -31,8 +35,8 @@ PHASE_OPTIONS = [
 
 STATUS_OPTIONS = [
     {"value": "draft", "label": "مسودة"},
-    {"value": "active", "label": "نشط"},
-    {"value": "completed", "label": "مكتمل"},
+    {"value": "active", "label": "تعمل الآن"},
+    {"value": "completed", "label": "منتهية"},
     {"value": "cancelled", "label": "ملغي"},
     {"value": "archived", "label": "مؤرشف"},
 ]
@@ -112,12 +116,12 @@ def _event_queryset(platform_id: int):
             guests_count=Count("guests", distinct=True),
             attended_count=Count(
                 "guests",
-                filter=Q(guests__status=Guest.Status.ATTENDED),
+                filter=Q(guests__status__in=PHYSICAL_PRESENCE_STATUSES),
                 distinct=True,
             ),
             confirmed_count=Count(
                 "guests",
-                filter=Q(guests__status__in=[Guest.Status.CONFIRMED, Guest.Status.ATTENDED]),
+                filter=Q(guests__status__in=CONFIRMED_ATTENDANCE_STATUSES),
                 distinct=True,
             ),
             sections_count=Count("sections", distinct=True),
@@ -137,13 +141,7 @@ def _event_queryset(platform_id: int):
             ),
             responded_count=Count(
                 "guests",
-                filter=Q(
-                    guests__status__in=[
-                        Guest.Status.CONFIRMED,
-                        Guest.Status.ATTENDED,
-                        Guest.Status.DECLINED,
-                    ]
-                ),
+                filter=Q(guests__status__in=RESPONDED_STATUSES),
                 distinct=True,
             ),
         )
@@ -185,17 +183,16 @@ def _is_invites_complete(event: Event) -> bool:
 
 
 def _is_attendance_confirmation_started(event: Event) -> bool:
-    """بدء تأكيد الحضور — ضيف أكّد أو حضر أو اعتذر."""
+    """بدء تأكيد الحضور — ضيف أكّد أو حضر أو جلس أو اعتذر."""
     count = getattr(event, "responded_count", None)
     if count is not None and not callable(count):
         return count > 0
-    return event.guests.filter(
-        status__in=[
-            Guest.Status.CONFIRMED,
-            Guest.Status.ATTENDED,
-            Guest.Status.DECLINED,
-        ]
-    ).exists()
+    return event.guests.filter(status__in=RESPONDED_STATUSES).exists()
+
+
+def _has_guest_rsvp_response(event: Event) -> bool:
+    """أول رد من ضيف (تأكيد / حضور / جلس / اعتذار) — تُعتبر التحضيرات مكتملة."""
+    return _is_attendance_confirmation_started(event)
 
 
 def _phase_states(event: Event) -> list[tuple[str, str, bool]]:
@@ -209,12 +206,22 @@ def _phase_states(event: Event) -> list[tuple[str, str, bool]]:
 
 
 def _completion_meta(event: Event) -> dict:
-    """كل مرحلة = 20% — خمس مراحل بمجموع 100%."""
+    """كل مرحلة = 20% — خمس مراحل بمجموع 100%.
+
+    عند أول رد من ضيف (مؤكد / حضر / جلس / معتذر) تُعتبر التحضيرات مكتملة بالكامل.
+    """
+    if event.status == Event.Status.COMPLETED or _has_guest_rsvp_response(event):
+        return {
+            "completion_percent": 100,
+            "phase": "completed",
+            "phase_label": "مكتمل",
+        }
+
     phases = _phase_states(event)
     done_count = sum(1 for _, _, done in phases if done)
     percent = min(done_count * PHASE_WEIGHT, 100)
 
-    if event.status == Event.Status.COMPLETED or done_count >= len(phases):
+    if done_count >= len(phases):
         phase, phase_label = "completed", "مكتمل"
     else:
         current = next(((k, lbl) for k, lbl, done in phases if not done), phases[-1][:2])

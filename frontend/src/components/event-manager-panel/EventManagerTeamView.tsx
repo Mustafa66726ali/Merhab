@@ -9,7 +9,7 @@ export default function EventManagerTeamView() {
   const [stats, setStats] = useState({ total: 0, organizers: 0, coordinators: 0 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"" | "event_organizer" | "coordinator">("");
+  const [roleFilter, setRoleFilter] = useState<"" | "event_organizer" | "coordinator" | "entry_manager">("");
   const [eventFilter, setEventFilter] = useState("");
 
   useEffect(() => {
@@ -104,13 +104,16 @@ export default function EventManagerTeamView() {
           <select
             value={roleFilter}
             onChange={(e) =>
-              setRoleFilter(e.target.value as "" | "event_organizer" | "coordinator")
+              setRoleFilter(
+                e.target.value as "" | "event_organizer" | "coordinator" | "entry_manager"
+              )
             }
             className="w-full h-12 px-4 bg-surface-container-low border border-outline-variant/10 rounded-2xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/40 appearance-none"
           >
             <option value="">كل الأدوار</option>
             <option value="event_organizer">منظم فعالية</option>
             <option value="coordinator">منسق</option>
+            <option value="entry_manager">مدير دخول</option>
           </select>
         </div>
         <div className="md:col-span-4">
@@ -193,7 +196,9 @@ export default function EventManagerTeamView() {
                         className={`inline-flex px-3 py-1 rounded-full text-[11px] font-bold ${
                           member.role_key === "coordinator"
                             ? "bg-tertiary/15 text-tertiary border border-tertiary/25"
-                            : "bg-primary-container/15 text-primary border border-primary/25"
+                            : member.role_key === "entry_manager"
+                              ? "bg-amber-500/15 text-amber-300 border border-amber-500/25"
+                              : "bg-primary-container/15 text-primary border border-primary/25"
                         }`}
                       >
                         {member.role_label}

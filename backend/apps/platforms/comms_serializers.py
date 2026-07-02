@@ -91,6 +91,8 @@ class DirectMessageWriteSerializer(serializers.Serializer):
 class UserNotificationSerializer(serializers.ModelSerializer):
     sender_name = serializers.SerializerMethodField()
     platform_name = serializers.CharField(source="platform.name", read_only=True, default="")
+    kind_label = serializers.CharField(source="get_kind_display", read_only=True)
+    event_title = serializers.CharField(source="event.title", read_only=True, default="")
 
     class Meta:
         model = UserNotification
@@ -101,6 +103,12 @@ class UserNotificationSerializer(serializers.ModelSerializer):
             "sender_name",
             "platform",
             "platform_name",
+            "event",
+            "event_title",
+            "kind",
+            "kind_label",
+            "icon",
+            "action_path",
             "title",
             "body",
             "is_read",
