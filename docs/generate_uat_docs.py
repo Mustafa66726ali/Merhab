@@ -17,8 +17,66 @@ PDF_PATH = DOCS / "اختبار-الأدوار-والصلاحيات.pdf"
 PRIMARY = "5B2EFF"
 HEADER_BG = "EDE9FF"
 ALT_ROW = "F8F7FC"
+ACCENT = "7C5CFF"
 CHECKBOX = "☐"
-CHECKBOX_FONT_PT = 17  # ~70% أكبر من 10pt
+BODY_FONT_PT = 10
+APPENDIX_FONT_PT = 15  # +50% عن النص العادي
+COVER_TITLE_PT = 28
+COVER_SUBTITLE_PT = 16
+COVER_META_PT = 13
+CHECKBOX_FONT_PT = 17
+CHECKBOX_ENV_FONT_PT = 26  # +150% عن مربع الصفوف العادية
+REPORT_DEFECT_COUNT = 10
+TABLE_HDR_CHECK = ""  # لا مربع تصحيح قصاد عناوين الجدول
+
+
+def issue_date_str() -> str:
+    return date.today().strftime("%d-%m-%Y")
+
+
+def clean_uat_text(text: str) -> str:
+    """إزالة المسارات والصلاحيات التقنية — الإبقاء على اسم الميزة فقط."""
+    text = re.sub(r"\*\*", "", text)
+    text = re.sub(r"\s*\(يتطلب\s*`?perm_\w+`?\)", "", text, flags=re.I)
+    text = re.sub(r"\s*\(إن مُنح\s*`?perm_\w+`?\)", "", text, flags=re.I)
+    text = re.sub(r"\s*—?\s*إن مُنح(?:ت)?\s*`?perm_\w+`?", "", text, flags=re.I)
+    text = re.sub(r"مع\s*`?perm_\w+`?", "عند منح الصلاحية", text, flags=re.I)
+    text = re.sub(r"بدون\s*`?perm_\w+`?", "بدون الصلاحية", text, flags=re.I)
+    text = re.sub(r"`?perm_\w+`?", "", text, flags=re.I)
+    text = re.sub(r"`/[^`]*`", "", text)
+    text = re.sub(r"\(\s*أو\s+", "(", text)
+    text = re.sub(r"\(\s*\)", "", text)
+    text = re.sub(r"\s+من\s+`/login`", "", text)
+    text = re.sub(r"\s*→\s*[^→]*`/[^`]+`", " → مرفوض", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    text = re.sub(r"\s+([،.؛:])", r"\1", text)
+    return text.strip(" —-")
+
+
+def report_template_lines() -> list[str]:
+    lines = [
+        "الدور: _______________",
+        "المختبِر: _______________",
+        "التاريخ: _______________",
+        "البيئة: □ تطوير  □ إنتاج",
+        "",
+        "عدد النقاط المنفّذة: ___ / ___",
+        "عدد النقاط الناجحة:  ___ / ___",
+        "عدد العيوب المكتشفة: ___",
+        "",
+        f"أهم {REPORT_DEFECT_COUNT} عيوب:",
+    ]
+    lines.extend(f"{i}. " for i in range(1, REPORT_DEFECT_COUNT + 1))
+    lines.extend(
+        [
+            "",
+            "النتيجة النهائية: □ ناجح  □ ناجح بتحفظات  □ فاشل",
+            "",
+            "ملاحظات:",
+            "",
+        ]
+    )
+    return lines
 
 
 def _parse_test_items(tests_block: str) -> list[dict]:
@@ -38,17 +96,17 @@ def _parse_test_items(tests_block: str) -> list[dict]:
         line = raw.strip()
         if line.startswith("### "):
             flush()
-            current_cat = line[4:].strip()
+            current_cat = clean_uat_text(line[4:].strip())
         elif line.startswith("- [ ]"):
-            item = re.sub(r"\*\*", "", line[5:].strip())
+            item = clean_uat_text(line[5:].strip())
             items.append(item)
         elif line.startswith("  - [ ]"):
-            item = re.sub(r"\*\*", "", line[7:].strip())
+            item = clean_uat_text(line[7:].strip())
             items.append(f"↳ {item}")
         elif m := table_row_new.match(line):
-            items.append(re.sub(r"\*\*", "", m.group(1).strip()))
+            items.append(clean_uat_text(m.group(1).strip()))
         elif m := table_row_old.match(line):
-            items.append(re.sub(r"\*\*", "", m.group(2).strip()))
+            items.append(clean_uat_text(m.group(2).strip()))
         elif line.startswith("|---"):
             continue
         elif line.startswith("| # |"):
@@ -102,7 +160,7 @@ def parse_markdown_roles(text: str) -> list[dict]:
 def table_md(rows: list[str], start: int = 1) -> tuple[str, int]:
     lines = [
         "",
-        f"| {CHECKBOX} | الميزة / نقطة الاختبار | # |",
+        f"|  | الميزة / نقطة الاختبار | # |",
         "|:---:|:---|---:|",
     ]
     n = start
@@ -167,50 +225,37 @@ def build_markdown(roles: list[dict]) -> str:
         parts.append("---")
         parts.append("")
 
+    e2e_steps = [
+        ("إنشاء منصة", "مدير النظام", "منصة + حساب مدير منصة"),
+        ("إنشاء فعالية + أقسام + جدول", "مدير المنصة / مدير الفعالية", "فعالية جاهزة"),
+        ("إضافة ضيوف وإرسال دعوات", "مدير الفعالية", "روابط دعوة تصل للضيوف"),
+        ("تأكيد حضور ضيف", "الضيف", "QR يظهر"),
+        ("إضافة منسّق + مدير دخول", "مدير الفعالية", "حسابات جاهزة"),
+        ("بدء الفعالية", "مدير الفعالية", "«تعمل الآن»"),
+        ("مسح QR عند البوابة", "مدير الدخول", "«حضر»"),
+        ("مسح QR عند الطاولة", "المنسّق", "«جلس»"),
+        ("تشغيل بث وإرسال الرابط", "منظم الفعالية", "مشاهدة البث من الدعوة"),
+        ("إنهاء الفعالية", "مدير الفعالية", "«منتهية»"),
+    ]
+    parts.extend(["# ملحق: سيناريو End-to-End", ""])
+    parts.append("|  | الخطوة | الدور | النتيجة المتوقعة | # |")
+    parts.append("|:---:|--------|-------|------------------|---:|")
+    for i, (step, role_name, result) in enumerate(e2e_steps, 1):
+        parts.append(f"| {CHECKBOX} | {step} | {role_name} | {result} | {i} |")
     parts.extend(
         [
-            "# ملحق: سيناريو End-to-End",
-            "",
-            f"| {CHECKBOX} | الخطوة | الدور | النتيجة المتوقعة | # |",
-            "|:---:|--------|-------|------------------|---:|",
-            f"| {CHECKBOX} | إنشاء منصة | مدير النظام | منصة + حساب مدير منصة | 1 |",
-            f"| {CHECKBOX} | إنشاء فعالية + أقسام + جدول | مدير المنصة / مدير الفعالية | فعالية جاهزة | 2 |",
-            f"| {CHECKBOX} | إضافة ضيوف وإرسال دعوات | مدير الفعالية | روابط `/i/...` | 3 |",
-            f"| {CHECKBOX} | تأكيد حضور ضيف | الضيف | QR يظهر | 4 |",
-            f"| {CHECKBOX} | إضافة منسّق + مدير دخول | مدير الفعالية | حسابات جاهزة | 5 |",
-            f"| {CHECKBOX} | بدء الفعالية | مدير الفعالية | «تعمل الآن» | 6 |",
-            f"| {CHECKBOX} | مسح QR عند البوابة | مدير الدخول | «حضر» | 7 |",
-            f"| {CHECKBOX} | مسح QR عند الطاولة | المنسّق | «جلس» | 8 |",
-            f"| {CHECKBOX} | تشغيل بث وإرسال الرابط | منظم الفعالية | مشاهدة من `/live/...` | 9 |",
-            f"| {CHECKBOX} | إنهاء الفعالية | مدير الفعالية | «منتهية» | 10 |",
             "",
             "---",
             "",
             "# ملحق: نموذج تقرير الاختبار (يُملأ بعد كل دور)",
             "",
             "```",
-            "الدور: _______________",
-            "المختبِر: _______________",
-            "التاريخ: _______________",
-            "البيئة: □ تطوير  □ إنتاج",
-            "",
-            "عدد النقاط المنفّذة: ___ / ___",
-            "عدد النقاط الناجحة:  ___ / ___",
-            "عدد العيوب المكتشفة: ___",
-            "",
-            "أهم 3 عيوب:",
-            "1. ",
-            "2. ",
-            "3. ",
-            "",
-            "النتيجة النهائية: □ ناجح  □ ناجح بتحفظات  □ فاشل",
-            "",
-            "ملاحظات:",
+            *report_template_lines(),
             "```",
             "",
             "---",
             "",
-            f"*آخر تحديث: {date.today().isoformat()} — نظام مرحّاب*",
+            f"*آخر تحديث: {issue_date_str()} — نظام مرحّاب*",
         ]
     )
     return "\n".join(parts)
@@ -254,16 +299,38 @@ def build_docx(roles: list[dict]) -> None:
         shd.set(qn("w:fill"), fill)
         tc_pr.append(shd)
 
-    title = doc.add_heading("دليل اختبار الأدوار والصلاحيات", level=0)
-    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    set_rtl(title)
-    sub = doc.add_paragraph("نظام مرحّاب — UAT")
-    sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    set_rtl(sub)
-    doc.add_paragraph(f"تاريخ الإصدار: {date.today().isoformat()}")
-    doc.add_paragraph(
-        "طريقة الاستخدام: نفّذ كل صف في الجدول وضع علامة ✓ في عمود «تم» عند النجاح."
+    def style_run(paragraph, *, size: int, bold: bool = False, color: str | None = None):
+        if not paragraph.runs:
+            paragraph.add_run(paragraph.text)
+        for run in paragraph.runs:
+            run.font.size = Pt(size)
+            run.bold = bold
+            if color:
+                run.font.color.rgb = RGBColor.from_string(color)
+
+    # غلاف عصري
+    cover = doc.add_table(rows=4, cols=1)
+    cover.style = "Table Grid"
+    cover_rows = [
+        ("دليل اختبار الأدوار والصلاحيات", COVER_TITLE_PT, True, PRIMARY),
+        ("نظام مرحّاب", COVER_SUBTITLE_PT, True, ACCENT),
+        (f"تاريخ الإصدار: {issue_date_str()}", COVER_META_PT, False, "333355"),
+        ("اختبار قبول المستخدم — UAT", COVER_META_PT, False, "555577"),
+    ]
+    for row_obj, (text, sz, bold, clr) in zip(cover.rows, cover_rows):
+        cell = row_obj.cells[0]
+        cell.text = text
+        shade_cell(cell, HEADER_BG)
+        for par in cell.paragraphs:
+            par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            style_run(par, size=sz, bold=bold, color=clr)
+            set_rtl(par)
+    doc.add_paragraph("")
+    usage = doc.add_paragraph(
+        "طريقة الاستخدام: نفّذ كل صف في الجدول وضع علامة ✓ في عمود المربعات عند النجاح "
+        "(المربعات قصاد الميزات فقط — وليس قصاد العناوين)."
     )
+    set_rtl(usage)
 
     for role in roles:
         doc.add_page_break()
@@ -281,15 +348,15 @@ def build_docx(roles: list[dict]) -> None:
             table = doc.add_table(rows=1, cols=3)
             table.style = "Table Grid"
             hdr = table.rows[0].cells
-            hdr[0].text = CHECKBOX
+            hdr[0].text = TABLE_HDR_CHECK
             hdr[1].text = "الميزة / نقطة الاختبار"
             hdr[2].text = "#"
             for i, c in enumerate(hdr):
                 shade_cell(c, HEADER_BG)
                 for par in c.paragraphs:
                     par.runs[0].bold = True
-                    if i == 0:
-                        par.runs[0].font.size = Pt(CHECKBOX_FONT_PT)
+                    if i != 0:
+                        par.runs[0].font.size = Pt(BODY_FONT_PT)
                     set_rtl(par)
             for i, item in enumerate(sec["items"]):
                 row = table.add_row().cells
@@ -319,28 +386,15 @@ def build_docx(roles: list[dict]) -> None:
 
     doc.add_page_break()
     doc.add_heading("ملحق: نموذج تقرير الاختبار", level=1)
-    template = [
-        "الدور: _______________",
-        "المختبِر: _______________",
-        "التاريخ: _______________",
-        "البيئة: □ تطوير  □ إنتاج",
-        "",
-        "عدد النقاط المنفّذة: ___ / ___",
-        "عدد النقاط الناجحة:  ___ / ___",
-        "عدد العيوب المكتشفة: ___",
-        "",
-        "أهم 3 عيوب:",
-        "1. ",
-        "2. ",
-        "3. ",
-        "",
-        "النتيجة النهائية: □ ناجح  □ ناجح بتحفظات  □ فاشل",
-        "",
-        "ملاحظات:",
-    ]
-    for line in template:
+    for line in report_template_lines():
         p = doc.add_paragraph(line)
         set_rtl(p)
+        if "البيئة:" in line or "□" in line:
+            style_run(p, size=CHECKBOX_ENV_FONT_PT)
+        elif line.startswith(f"أهم {REPORT_DEFECT_COUNT}"):
+            style_run(p, size=APPENDIX_FONT_PT, bold=True)
+        else:
+            style_run(p, size=APPENDIX_FONT_PT)
 
     doc.save(DOCX_PATH)
 
