@@ -2,6 +2,7 @@ from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from apps.accounts.models import User
@@ -18,10 +19,18 @@ from apps.platforms.platform_permissions import (
 
 from .models import Guest, GuestQrScanLog
 from .serializers import GuestSerializer, GuestImportSerializer
+from .stats import aggregate_guest_stats
+
+
+class GuestPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 1000
 
 
 class GuestViewSet(viewsets.ModelViewSet):
     serializer_class = GuestSerializer
+    pagination_class = GuestPagination
     filterset_fields = ["event", "status", "section", "group"]
     search_fields = ["full_name", "email", "phone"]
     ordering_fields = ["full_name", "status", "created_at"]
@@ -50,6 +59,12 @@ class GuestViewSet(viewsets.ModelViewSet):
                 Q(event__created_by=user) | Q(event__managers=user)
             ).distinct()
         return qs
+
+    @action(detail=False, methods=["get"])
+    def stats(self, request):
+        """إحصائيات الضيوف من قاعدة البيانات (مع نفس فلاتر القائمة)."""
+        qs = self.filter_queryset(self.get_queryset())
+        return Response(aggregate_guest_stats(qs))
 
     def _event_from_request_data(self) -> int | None:
         event_id = self.request.data.get("event")

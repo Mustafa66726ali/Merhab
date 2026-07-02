@@ -93,38 +93,6 @@ export default function PlatformGuestsListView({
   const eventQuery = useEvent(isEventScope ? eventId! : 0);
   const event = eventQuery.data ?? null;
 
-  const guestsQuery = useQuery({
-    queryKey: ["guests", isEventScope ? { event: eventId } : "all"],
-    queryFn: async () => {
-      const params: Record<string, unknown> = { page_size: 1000 };
-      if (isEventScope) params.event = eventId;
-      const res = await guestsAPI.list(params);
-      return extractApiList<EventGuestRow>(res.data);
-    },
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const eventsListQuery = useQuery({
-    queryKey: ["events", "list", "guests-filter"],
-    queryFn: async () => {
-      const res = await eventsAPI.list({ page_size: 500 });
-      return extractApiList<EventListItem>(res.data);
-    },
-    enabled: !isEventScope,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const guests = guestsQuery.data ?? [];
-  const platformEvents = eventsListQuery.data ?? [];
-  const loading =
-    guestsQuery.isLoading || (isEventScope && eventQuery.isLoading);
-  const error =
-    guestsQuery.isError
-      ? isEventScope
-        ? "تعذّر تحميل ضيوف المناسبة."
-        : "تعذّر تحميل قائمة الضيوف."
-      : "";
-
   const [search, setSearch] = useState("");
   const [sectionFilter, setSectionFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -145,6 +113,80 @@ export default function PlatformGuestsListView({
     sectionId: "",
     groupId: "",
   });
+
+  const guestsQuery = useQuery({
+    queryKey: [
+      "guests",
+      isEventScope ? { event: eventId } : "all",
+      eventFilter,
+      sectionFilter,
+      statusFilter,
+      search.trim(),
+    ],
+    queryFn: async () => {
+      const params: Record<string, unknown> = { page_size: 1000 };
+      if (isEventScope) params.event = eventId;
+      else if (eventFilter) params.event = eventFilter;
+      if (sectionFilter) params.section = sectionFilter;
+      if (statusFilter) params.status = statusFilter;
+      const q = search.trim();
+      if (q) params.search = q;
+      const res = await guestsAPI.list(params);
+      return extractApiList<EventGuestRow>(res.data);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const statsParams = useMemo(() => {
+    const params: Record<string, unknown> = {};
+    if (isEventScope) params.event = eventId;
+    else if (eventFilter) params.event = eventFilter;
+    if (sectionFilter) params.section = sectionFilter;
+    if (statusFilter) params.status = statusFilter;
+    const q = search.trim();
+    if (q) params.search = q;
+    return params;
+  }, [isEventScope, eventId, eventFilter, sectionFilter, statusFilter, search]);
+
+  const statsQuery = useQuery({
+    queryKey: ["guests", "stats", statsParams],
+    queryFn: async () => {
+      const res = await guestsAPI.stats(statsParams);
+      return res.data;
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const eventsListQuery = useQuery({
+    queryKey: ["events", "list", "guests-filter"],
+    queryFn: async () => {
+      const res = await eventsAPI.list({ page_size: 500 });
+      return extractApiList<EventListItem>(res.data);
+    },
+    enabled: !isEventScope,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const guests = guestsQuery.data ?? [];
+  const platformEvents = eventsListQuery.data ?? [];
+  const stats = statsQuery.data ?? {
+    total: 0,
+    confirmed: 0,
+    attended: 0,
+    declined: 0,
+    confirmation_rate: 0,
+    attendance_rate: 0,
+  };
+  const loading =
+    guestsQuery.isLoading ||
+    statsQuery.isLoading ||
+    (isEventScope && eventQuery.isLoading);
+  const error =
+    guestsQuery.isError
+      ? isEventScope
+        ? "تعذّر تحميل ضيوف المناسبة."
+        : "تعذّر تحميل قائمة الضيوف."
+      : "";
 
   const effectiveEventId = isEventScope
     ? eventId!
@@ -214,49 +256,7 @@ export default function PlatformGuestsListView({
       .map(([id, title]) => ({ id, title }));
   }, [platformEvents, guests, isEventScope]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return guests.filter((g) => {
-      if (eventFilter && String(g.event) !== eventFilter) return false;
-      if (statusFilter && g.status !== statusFilter) return false;
-      if (sectionFilter && String(g.section ?? "") !== sectionFilter) return false;
-      if (!q) return true;
-      const haystack = [
-        g.full_name,
-        g.email,
-        g.phone,
-        g.section_name,
-        g.group_name,
-        g.status_label,
-        g.event_title,
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [guests, search, sectionFilter, statusFilter, eventFilter, isEventScope]);
-
-  const stats = useMemo(() => {
-    const total = guests.length;
-    const confirmed = guests.filter(
-      (g) => g.status === "confirmed" || g.status === "attended"
-    ).length;
-    const attended = guests.filter((g) => g.status === "attended").length;
-    const declined = guests.filter((g) => g.status === "declined").length;
-    const vip = guests.filter(
-      (g) =>
-        (g.section_name || "").toLowerCase().includes("vip") ||
-        (g.section_name || "").includes("كبار")
-    ).length;
-    return {
-      total,
-      confirmed,
-      attended,
-      declined,
-      vip,
-      confirmRate: total ? Math.round((confirmed / total) * 100) : 0,
-    };
-  }, [guests]);
+  const filtered = guests;
 
   const refreshGuests = () => {
     queryClient.invalidateQueries({ queryKey: ["guests"] });
@@ -665,7 +665,7 @@ export default function PlatformGuestsListView({
         </div>
         <div className="px-4 sm:px-8 py-4 bg-surface-container-lowest/50 border-t border-outline-variant/10 flex items-center justify-between gap-4">
           <span className="text-xs text-on-surface-variant/70 font-medium">
-            عرض {filtered.length} من أصل {guests.length} ضيف
+            عرض {filtered.length} من أصل {stats.total} ضيف
           </span>
         </div>
       </div>
@@ -687,12 +687,14 @@ export default function PlatformGuestsListView({
             <h3 className="text-4xl font-black text-on-surface tracking-tighter tabular-nums">
               {stats.confirmed}
             </h3>
-            <span className="text-on-surface-variant/50 text-xs mb-1">{stats.confirmRate}%</span>
+            <span className="text-on-surface-variant/50 text-xs mb-1">
+              {stats.confirmation_rate}%
+            </span>
           </div>
           <div className="w-full h-1.5 bg-surface-container-highest rounded-full mt-4 overflow-hidden">
             <div
               className="h-full bg-emerald-400 rounded-full transition-all"
-              style={{ width: `${stats.confirmRate}%` }}
+              style={{ width: `${Math.min(100, stats.confirmation_rate)}%` }}
             />
           </div>
         </div>
@@ -703,6 +705,11 @@ export default function PlatformGuestsListView({
           <h3 className="text-4xl font-black text-emerald-400 tracking-tighter tabular-nums">
             {stats.attended}
           </h3>
+          {stats.total > 0 && (
+            <p className="text-xs text-on-surface-variant/60 mt-2">
+              {stats.attendance_rate}% من الإجمالي
+            </p>
+          )}
         </div>
         <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/5">
           <p className="text-on-surface-variant/60 text-xs font-bold uppercase tracking-widest mb-4">

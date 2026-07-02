@@ -89,11 +89,12 @@ def member_event_stats(user_id: int, platform_id: int) -> dict[str, int]:
     active = 0
     completed = 0
     if event_ids:
-        for event in Event.objects.filter(id__in=event_ids):
-            if event.status == Event.Status.COMPLETED:
-                completed += 1
-            if event.status in (Event.Status.ACTIVE, Event.Status.DRAFT):
-                active += 1
+        agg = Event.objects.filter(id__in=event_ids).aggregate(
+            active=Count("id", filter=Q(status=Event.Status.ACTIVE)),
+            completed=Count("id", filter=Q(status=Event.Status.COMPLETED)),
+        )
+        active = agg["active"] or 0
+        completed = agg["completed"] or 0
 
     return {"total": total, "active": active, "completed": completed}
 

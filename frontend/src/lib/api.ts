@@ -174,6 +174,8 @@ export const schedulesAPI = {
 
 export const guestsAPI = {
   list: (params?: Record<string, unknown>) => api.get("/guests/", { params }),
+  stats: (params?: Record<string, unknown>) =>
+    api.get<GuestListStats>("/guests/stats/", { params }),
   get: (id: number) => api.get<EventGuestDetail>(`/guests/${id}/`),
   create: (data: Record<string, unknown>) => api.post("/guests/", data),
   update: (id: number, data: Record<string, unknown>) => api.put("/guests/" + id + "/", data),
@@ -1427,6 +1429,19 @@ export interface EventGuestRow {
   group: number | null;
   group_name: string;
   created_at: string;
+}
+
+export interface GuestListStats {
+  total: number;
+  invited: number;
+  confirmed: number;
+  attended: number;
+  seated: number;
+  declined: number;
+  cancelled: number;
+  responded: number;
+  confirmation_rate: number;
+  attendance_rate: number;
 }
 
 export interface EventGuestDetail extends EventGuestRow {

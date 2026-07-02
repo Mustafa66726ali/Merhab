@@ -14,11 +14,14 @@ from apps.guests.status_utils import (
     rate_percent,
 )
 from apps.platforms.analytics import _pct_change, monthly_rsvp_chart
+from apps.platforms.event_manager_events import (
+    _managed_events_queryset as _managed_events_qs_for_dashboard,
+    _stats_for_queryset,
+)
 from apps.platforms.member_profile import (
     _empty_guest_stats,
     _guest_stats_bulk,
     managed_events_queryset,
-    member_event_stats,
 )
 from apps.platforms.platform_events import _completion_meta
 from apps.staff.models import StaffMember
@@ -201,8 +204,19 @@ def _team_preview_for_managed_events(user_id: int, platform_id: int, limit: int 
     return preview
 
 
+def _managed_event_stats(user_id: int, platform_id: int) -> dict[str, int]:
+    """إحصائيات المناسبات المُدارة فقط — نشطة = status active فقط."""
+    qs = _managed_events_qs_for_dashboard(user_id, platform_id)
+    row = _stats_for_queryset(qs)
+    return {
+        "total": row["total"],
+        "active": row["active_now"],
+        "completed": row["completed"],
+    }
+
+
 def build_event_manager_overview(user_id: int, platform_id: int) -> dict:
-    stats = member_event_stats(user_id, platform_id)
+    stats = _managed_event_stats(user_id, platform_id)
     event_ids = _managed_event_ids(user_id, platform_id)
     kpis = _compute_managed_kpis(event_ids)
     kpis["staff_count"] = (
