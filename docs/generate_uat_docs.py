@@ -185,15 +185,15 @@ def build_markdown(roles: list[dict]) -> str:
         "3. ضع ✓ في عمود التصحيح عند النجاح.",
         "4. راجع قسم «التقرير المتوقع».",
         "",
-        "| الدور | مسار الدخول |",
+        "| الدور | نقطة الدخول |",
         "|-------|-------------|",
-        "| مدير النظام | `/login` → `/dashboard` |",
-        "| مدير المنصة | `/login` → `/platform/dashboard` |",
-        "| مدير الفعالية | `/login` → `/event-manager/dashboard` |",
-        "| منظم الفعالية | `/login` → `/event-organizer/dashboard` |",
-        "| المنسّق | `/login` → `/coordinator/check-in` |",
-        "| مدير الدخول | `/login` → `/entry-manager/check-in` |",
-        "| الضيف | `/i/{token}` — بدون تسجيل دخول |",
+        "| مدير النظام | تسجيل الدخول → لوحة التحكم |",
+        "| مدير المنصة | تسجيل الدخول → لوحة المنصة |",
+        "| مدير الفعالية | تسجيل الدخول → لوحة مدير الفعالية |",
+        "| منظم الفعالية | تسجيل الدخول → لوحة المنظم |",
+        "| المنسّق | تسجيل الدخول → تسجيل الحضور |",
+        "| مدير الدخول | تسجيل الدخول → بوابة الدخول |",
+        "| الضيف | رابط الدعوة — بدون تسجيل دخول |",
         "",
         "---",
         "",
@@ -436,10 +436,30 @@ def build_pdf(roles: list[dict]) -> None:
         "TitleAr",
         parent=styles["Title"],
         fontName=font_name,
-        fontSize=18,
+        fontSize=COVER_TITLE_PT,
         alignment=TA_CENTER,
         textColor=colors.HexColor(f"#{PRIMARY}"),
-        spaceAfter=12,
+        spaceAfter=8,
+        leading=COVER_TITLE_PT + 4,
+    )
+    cover_sub_style = ParagraphStyle(
+        "CoverSubAr",
+        parent=styles["Normal"],
+        fontName=font_name,
+        fontSize=COVER_SUBTITLE_PT,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor(f"#{ACCENT}"),
+        spaceAfter=6,
+        leading=COVER_SUBTITLE_PT + 4,
+    )
+    cover_meta_style = ParagraphStyle(
+        "CoverMetaAr",
+        parent=styles["Normal"],
+        fontName=font_name,
+        fontSize=COVER_META_PT,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor("#333355"),
+        leading=COVER_META_PT + 3,
     )
     h1 = ParagraphStyle(
         "H1Ar",
@@ -465,9 +485,22 @@ def build_pdf(roles: list[dict]) -> None:
         "BodyAr",
         parent=styles["Normal"],
         fontName=font_name,
-        fontSize=10,
+        fontSize=BODY_FONT_PT,
         alignment=TA_RIGHT,
-        leading=14,
+        leading=BODY_FONT_PT + 4,
+    )
+    appendix_style = ParagraphStyle(
+        "AppendixAr",
+        parent=body,
+        fontSize=APPENDIX_FONT_PT,
+        leading=APPENDIX_FONT_PT + 5,
+    )
+    appendix_env_style = ParagraphStyle(
+        "AppendixEnvAr",
+        parent=appendix_style,
+        fontSize=CHECKBOX_ENV_FONT_PT,
+        leading=CHECKBOX_ENV_FONT_PT + 4,
+        alignment=TA_RIGHT,
     )
     cell_style = ParagraphStyle(
         "CellAr",
@@ -498,20 +531,21 @@ def build_pdf(roles: list[dict]) -> None:
     story = []
     cover_data = [
         [Paragraph(ar("دليل اختبار الأدوار والصلاحيات"), title_style)],
-        [Paragraph(ar("نظام مرحّاب"), body)],
-        [Paragraph(ar(f"تاريخ الإصدار: {date.today().isoformat()}"), body)],
-        [Paragraph(ar("UAT — اختبار قبول المستخدم"), body)],
+        [Paragraph(ar("نظام مرحّاب"), cover_sub_style)],
+        [Paragraph(ar(f"تاريخ الإصدار: {issue_date_str()}"), cover_meta_style)],
+        [Paragraph(ar("اختبار قبول المستخدم — UAT"), cover_meta_style)],
     ]
     cover = Table(cover_data, colWidths=[17 * cm])
     cover.setStyle(
         TableStyle(
             [
                 ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(f"#{HEADER_BG}")),
-                ("BOX", (0, 0), (-1, -1), 2, primary),
+                ("BOX", (0, 0), (-1, -1), 2.5, primary),
+                ("LINEBELOW", (0, 0), (-1, 0), 1, colors.HexColor(f"#{ACCENT}")),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 18),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 18),
+                ("TOPPADDING", (0, 0), (-1, -1), 22),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 22),
             ]
         )
     )
@@ -519,7 +553,10 @@ def build_pdf(roles: list[dict]) -> None:
     story.append(Spacer(1, 0.5 * cm))
     story.append(
         Paragraph(
-            ar("طريقة الاستخدام: نفّذ كل صف في الجدول وضع علامة ✓ في عمود «تم» عند النجاح."),
+            ar(
+                "طريقة الاستخدام: نفّذ كل صف في الجدول وضع علامة ✓ في عمود المربعات عند النجاح "
+                "(المربعات قصاد الميزات فقط — وليس قصاد العناوين)."
+            ),
             body,
         )
     )
@@ -537,7 +574,7 @@ def build_pdf(roles: list[dict]) -> None:
             story.append(Paragraph(ar(sec["category"]), h2))
             data = [
                 [
-                    Paragraph(CHECKBOX, checkbox_style),
+                    Paragraph("", cell_style),
                     Paragraph(ar("الميزة / نقطة الاختبار"), cell_style),
                     Paragraph(ar("#"), cell_style),
                 ]
@@ -585,26 +622,23 @@ def build_pdf(roles: list[dict]) -> None:
 
     story.append(PageBreak())
     story.append(Paragraph(ar("ملحق: نموذج تقرير الاختبار"), h1))
-    for line in [
-        "الدور: _______________",
-        "المختبِر: _______________",
-        "التاريخ: _______________",
-        "البيئة: □ تطوير  □ إنتاج",
-        "",
-        "عدد النقاط المنفّذة: ___ / ___",
-        "عدد النقاط الناجحة:  ___ / ___",
-        "عدد العيوب المكتشفة: ___",
-        "",
-        "أهم 3 عيوب:",
-        "1. ",
-        "2. ",
-        "3. ",
-        "",
-        "النتيجة النهائية: □ ناجح  □ ناجح بتحفظات  □ فاشل",
-        "",
-        "ملاحظات:",
-    ]:
-        story.append(Paragraph(ar(line) if line else " ", body))
+    for line in report_template_lines():
+        if not line:
+            story.append(Spacer(1, 0.12 * cm))
+            continue
+        if "البيئة:" in line or ("□" in line and "النتيجة" in line):
+            story.append(Paragraph(ar(line), appendix_env_style))
+        elif line.startswith(f"أهم {REPORT_DEFECT_COUNT}"):
+            bold = ParagraphStyle(
+                "AppendixBold",
+                parent=appendix_style,
+                fontName=font_name,
+                fontSize=APPENDIX_FONT_PT,
+                leading=APPENDIX_FONT_PT + 5,
+            )
+            story.append(Paragraph(ar(line), bold))
+        else:
+            story.append(Paragraph(ar(line), appendix_style))
 
     doc.build(story)
 
