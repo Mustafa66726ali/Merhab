@@ -3,7 +3,7 @@
 set -euo pipefail
 
 APP_DIR="${1:-/opt/merhab}"
-REPO_URL="${2:-https://github.com/YOUR_USER/Merhab.git}"
+REPO_URL="${2:-https://github.com/Mustafa66726ali/Merhab.git}"
 
 echo "==> تثبيت Docker و Docker Compose..."
 if ! command -v docker >/dev/null 2>&1; then
