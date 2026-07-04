@@ -117,6 +117,7 @@ services:
     restart: unless-stopped
     environment:
       BOT_TOKEN: ${WHATSAPP_BOT_TOKEN:-merhab-bot-dev}
+      BACKEND_URL: ${WHATSAPP_BOT_BACKEND_URL:-http://backend:8000}
       PORT: "8088"
     volumes:
       - wwebjs_auth:/app/.wwebjs_auth

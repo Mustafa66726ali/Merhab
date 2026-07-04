@@ -7,10 +7,18 @@ from apps.events.models import Event
 
 
 def require_event_live(event: Event, message: str | None = None) -> None:
-    """يُسمح بإدخال الضيوف والإجلاس والحضور فقط أثناء تشغيل الفعالية."""
+    """يُسمح بالعمليات الحية (حضور/إجلاس) فقط أثناء تشغيل الفعالية."""
     if event.status == Event.Status.ACTIVE:
         return
     default = "لا يمكن تنفيذ هذه العملية — الفعالية ليست قيد التشغيل حالياً"
+    raise ValidationError({"detail": message or default})
+
+
+def require_event_guest_editable(event: Event, message: str | None = None) -> None:
+    """إضافة وتعديل الضيوف مسموح في المسودة وأثناء التشغيل."""
+    if event.status in (Event.Status.DRAFT, Event.Status.ACTIVE):
+        return
+    default = "لا يمكن إضافة ضيوف — المناسبة منتهية أو مؤرشفة أو ملغاة"
     raise ValidationError({"detail": message or default})
 
 

@@ -174,6 +174,17 @@ WHATSAPP_TEMPLATE_REMINDER = config(
 )
 WHATSAPP_TEMPLATE_QR = config("WHATSAPP_TEMPLATE_QR", default="rsvp_qr")
 WHATSAPP_TEMPLATE_LANGUAGE = config("WHATSAPP_TEMPLATE_LANGUAGE", default="ar")
+# دعوة تفاعلية (أزرار خريطة + دعوة + نعم/لا) — الافتراضي مفعّل
+WHATSAPP_INVITATION_INTERACTIVE = config(
+    "WHATSAPP_INVITATION_INTERACTIVE", default=True, cast=bool
+)
+# إن True: استخدام قالب Meta القديم event_invitation بدل التفاعلي
+WHATSAPP_INVITATION_LEGACY_TEMPLATE = config(
+    "WHATSAPP_INVITATION_LEGACY_TEMPLATE", default=False, cast=bool
+)
+WHATSAPP_WEBHOOK_VERIFY_TOKEN = config(
+    "WHATSAPP_WEBHOOK_VERIFY_TOKEN", default="merhab-verify"
+)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

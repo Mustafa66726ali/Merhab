@@ -1,5 +1,7 @@
 export function guestStatusClass(status: string) {
   switch (status) {
+    case "pending":
+      return "bg-amber-500/10 text-amber-400 border-amber-500/25";
     case "confirmed":
       return "bg-emerald-500/10 text-emerald-400 border-emerald-500/25";
     case "attended":
@@ -19,6 +21,8 @@ export function guestStatusClass(status: string) {
 
 export function guestStatusDotClass(status: string) {
   switch (status) {
+    case "pending":
+      return "bg-amber-400";
     case "confirmed":
     case "attended":
       return "bg-emerald-400";
@@ -35,7 +39,8 @@ export function guestStatusDotClass(status: string) {
 
 export const GUEST_STATUS_OPTIONS = [
   { value: "", label: "جميع الحالات" },
-  { value: "invited", label: "قيد الانتظار" },
+  { value: "pending", label: "جديد" },
+  { value: "invited", label: "مدعو" },
   { value: "confirmed", label: "تم التأكيد" },
   { value: "attended", label: "حضر" },
   { value: "seated", label: "جلس في مقعده" },

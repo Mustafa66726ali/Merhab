@@ -25,6 +25,7 @@ from .inbound_messages import (
     resolve_event_coordinator,
 )
 from .models import Guest
+from .rsvp_actions import apply_guest_rsvp
 
 GOING_STATUSES = (
     Guest.Status.CONFIRMED,
@@ -134,7 +135,7 @@ def invitation_payload(request, guest: Guest) -> dict:
         "coordinator": _coordinator(event),
         "qr_url": qr_url,
         "can_respond": guest.status
-        in (Guest.Status.INVITED, Guest.Status.CONFIRMED, Guest.Status.DECLINED),
+        in (Guest.Status.PENDING, Guest.Status.INVITED, Guest.Status.CONFIRMED, Guest.Status.DECLINED),
     }
 
 
@@ -190,30 +191,7 @@ class PublicInvitationRespondView(APIView):
                 status=status.HTTP_409_CONFLICT,
             )
 
-        guest.responded_at = timezone.now()
-        if action == "confirm":
-            guest.status = Guest.Status.CONFIRMED
-            guest.save(update_fields=["status", "responded_at"])
-            from .qr_utils import ensure_guest_qr
-            from apps.integrations.whatsapp_messages import send_guest_qr
-
-            ensure_guest_qr(guest)
-            guest.refresh_from_db()
-            # إرسال صورة QR مباشرة عبر واتساب (بوت في التطوير / Meta في الإنتاج)
-            if guest.phone:
-                send_guest_qr(guest)
-        else:
-            guest.status = Guest.Status.DECLINED
-            guest.save(update_fields=["status", "responded_at"])
-
-        from apps.platforms.notification_service import notify_rsvp_response
-
-        notify_rsvp_response(
-            guest.event,
-            guest.full_name,
-            confirmed=action == "confirm",
-        )
-
+        apply_guest_rsvp(guest, confirm=(action == "confirm"))
         guest.refresh_from_db()
         return Response(invitation_payload(request, guest))
 

@@ -132,6 +132,12 @@ def send_whatsapp_text(phone: str, text: str) -> dict:
             "detail": "لم يُكوَّن WhatsApp API — استخدم رابط واتساب",
         }
 
+    return {
+        "sent": False,
+        "whatsapp_url": fallback_url,
+        "detail": "لم يُكوَّن WhatsApp API — استخدم رابط واتساب",
+    }
+
 
 def _send_cloud_api(cred, digits: str, text: str, fallback_url: str) -> dict:
     url = f"https://graph.facebook.com/v18.0/{cred.phone_number_id}/messages"

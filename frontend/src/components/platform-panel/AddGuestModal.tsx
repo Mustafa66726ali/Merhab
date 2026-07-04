@@ -1,6 +1,6 @@
 "use client";
 
-import type { EventDetail } from "@/lib/api";
+import type { EventDetail, GuestDirectoryEntry } from "@/lib/api";
 import PhoneNumberField, { formatPhoneDisplay } from "@/components/common/PhoneNumberField";
 
 interface SelectOption {
@@ -9,6 +9,8 @@ interface SelectOption {
 }
 
 export interface AddGuestFormState {
+  mode: "new" | "existing";
+  existingGuestId: string;
   full_name: string;
   email: string;
   phone: string;
@@ -28,6 +30,9 @@ interface AddGuestModalProps {
   sectionOptions: SelectOption[];
   groupOptions: SelectOption[];
   eventForSections: EventDetail | null | undefined;
+  directoryGuests: GuestDirectoryEntry[];
+  directoryLoading?: boolean;
+  onDirectorySearch?: (query: string) => void;
   onClose: () => void;
   onSubmit: () => void;
 }
@@ -71,6 +76,9 @@ export default function AddGuestModal({
   sectionOptions,
   groupOptions,
   eventForSections,
+  directoryGuests,
+  directoryLoading = false,
+  onDirectorySearch,
   onClose,
   onSubmit,
 }: AddGuestModalProps) {
@@ -89,6 +97,15 @@ export default function AddGuestModal({
     selectedEventTitle ||
     selectedSection ||
     selectedGroup;
+
+  const selectedExisting = directoryGuests.find(
+    (g) => String(g.id) === form.existingGuestId
+  );
+
+  const canSubmit =
+    form.mode === "existing"
+      ? Boolean(form.existingGuestId)
+      : Boolean(form.full_name.trim());
 
   return (
     <div
@@ -211,7 +228,99 @@ export default function AddGuestModal({
             )}
           </section>
 
+          {/* طريقة الإضافة */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-lg">swap_horiz</span>
+              <h3 className="text-sm font-bold text-on-surface">طريقة الإضافة</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => onFormChange({ mode: "new", existingGuestId: "" })}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-colors ${
+                  form.mode === "new"
+                    ? "bg-primary-container/20 border-primary-container/40 text-primary"
+                    : "bg-surface-container-high border-outline-variant/15 text-on-surface-variant"
+                }`}
+              >
+                ضيف جديد
+              </button>
+              <button
+                type="button"
+                onClick={() => onFormChange({ mode: "existing" })}
+                className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-colors ${
+                  form.mode === "existing"
+                    ? "bg-primary-container/20 border-primary-container/40 text-primary"
+                    : "bg-surface-container-high border-outline-variant/15 text-on-surface-variant"
+                }`}
+              >
+                من مناسبة سابقة
+              </button>
+            </div>
+            {form.mode === "existing" && (
+              <div className="space-y-2 rounded-2xl border border-outline-variant/10 bg-surface-container-high/30 p-4">
+                <FieldLabel>اختر ضيفاً مُسجّلاً سابقاً</FieldLabel>
+                <FieldShell icon="person_search">
+                  <input
+                    type="search"
+                    placeholder="ابحث بالاسم أو الجوال أو البريد..."
+                    className={inputClass}
+                    onChange={(e) => onDirectorySearch?.(e.target.value)}
+                  />
+                </FieldShell>
+                <div className="max-h-44 overflow-y-auto space-y-1.5 mt-2">
+                  {directoryLoading ? (
+                    <p className="text-xs text-on-surface-variant text-center py-4">جاري التحميل...</p>
+                  ) : directoryGuests.length === 0 ? (
+                    <p className="text-xs text-on-surface-variant text-center py-4">
+                      لا يوجد ضيوف في مناسبات أخرى بعد
+                    </p>
+                  ) : (
+                    directoryGuests.map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() =>
+                          onFormChange({
+                            existingGuestId: String(g.id),
+                            full_name: g.full_name,
+                            email: g.email,
+                            phone: g.phone,
+                          })
+                        }
+                        className={`w-full text-right rounded-xl border px-3 py-2.5 transition-colors ${
+                          form.existingGuestId === String(g.id)
+                            ? "border-primary-container/50 bg-primary-container/15"
+                            : "border-outline-variant/10 bg-surface-container-high hover:border-outline-variant/25"
+                        }`}
+                      >
+                        <p className="font-bold text-sm text-on-surface">{g.full_name}</p>
+                        <p className="text-[11px] text-on-surface-variant mt-0.5">
+                          {[g.phone ? formatPhoneDisplay(g.phone) : "", g.email]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}
+                        </p>
+                        <p className="text-[10px] text-outline mt-1">
+                          {g.event_count > 1
+                            ? `${g.event_count} مناسبات`
+                            : g.last_event_title}
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
+                {selectedExisting && (
+                  <p className="text-xs text-primary mt-2">
+                    سيُضاف {selectedExisting.full_name} كضيف جديد في هذه المناسبة (دعوة ورمز QR مستقلان).
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+
           {/* البيانات الشخصية */}
+          {form.mode === "new" && (
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-lg">badge</span>
@@ -255,6 +364,21 @@ export default function AddGuestModal({
               </div>
             </div>
           </section>
+          )}
+
+          {form.mode === "existing" && selectedExisting && (
+            <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-high/40 p-4">
+              <p className="text-[10px] font-bold text-outline uppercase tracking-wider mb-2">
+                بيانات الضيف المختار
+              </p>
+              <p className="font-bold text-on-surface">{selectedExisting.full_name}</p>
+              <p className="text-xs text-on-surface-variant mt-1">
+                {[selectedExisting.phone ? formatPhoneDisplay(selectedExisting.phone) : "", selectedExisting.email]
+                  .filter(Boolean)
+                  .join(" · ") || "—"}
+              </p>
+            </div>
+          )}
 
           {/* التوزيع */}
           {(sectionOptions.length > 0 || groupOptions.length > 0) && (
@@ -323,7 +447,7 @@ export default function AddGuestModal({
           <button
             type="button"
             onClick={onSubmit}
-            disabled={saving || !form.full_name.trim()}
+            disabled={saving || !canSubmit}
             className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-primary-container text-on-primary-container font-bold text-sm hover:brightness-110 transition-all disabled:opacity-50 shadow-lg shadow-primary-container/20"
           >
             {saving ? (

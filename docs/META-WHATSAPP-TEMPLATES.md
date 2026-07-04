@@ -88,6 +88,41 @@
 
 ---
 
+## 4) البث المباشر — `content_broadcast` + `content_broadcast_watch`
+
+يُرسَل للضيوف **الحاضرين أو الجالسين** عند الضغط على «إرسال رابط البث» من لوحة البث.
+
+### قالب 1 — نص البث (`content_broadcast`)
+
+**اللغة:** `ar`
+
+```
+مرحباً {{1}}
+
+بث مباشر — {{2}}
+```
+
+| المتغير | المحتوى |
+|---------|---------|
+| {{1}} | اسم الضيف |
+| {{2}} | اسم المناسبة |
+
+### قالب 2 — زر المشاهدة (`content_broadcast_watch`)
+
+**النوع:** Call to action (CTA)  
+**نص الزر:** `مشاهدة`  
+**رابط الزر:** `https://YOUR-DOMAIN.com/live/{{1}}`
+
+| المتغير | المحتوى |
+|---------|---------|
+| {{1}} | رمز البث (UUID) — وليس الرابط كاملاً |
+
+> استبدل `YOUR-DOMAIN.com` ب domain الإنتاج HTTPS (نفس `FRONTEND_URL`).
+
+**مثال:** إذا كان رابط البث `https://merhab.sa/live/a1b2c3d4-...` فـ `{{1}}` = `a1b2c3d4-...` فقط.
+
+---
+
 ## الربط في المشروع
 
 ### عبر Meta Cloud API
@@ -102,12 +137,22 @@
 
 ### عبر Twilio
 
-1. أنشئ **Content Templates** في Twilio Console مطابقة للنصوص أعلاه
-2. انسخ **Content SID** (يبدأ بـ `HX...`) لكل قالب
+1. أنشئ **Content Templates** في Twilio Console (انظر الجدول أدناه)
+2. انسخ **Content SID** (`HX...`) لكل قالب
 3. في تكامل **WhatsApp (Twilio)** → config:
-   - `content_invitation`
-   - `content_reminder`
-   - `content_qr`
+
+| مفتاح في مرحّاب | القالب في Twilio |
+|-----------------|------------------|
+| `content_invitation` | نص الدعوة ({{1}}–{{4}}) |
+| `content_map` | زر الخريطة CTA — URL: `https://www.google.com/maps?q={{1}}` |
+| `content_open_invite` | زر فتح — URL: `https://YOUR-DOMAIN.com/i/{{1}}` |
+| `content_rsvp` | Quick Reply نعم/لا — id: `merhab_rsvp_yes_{{1}}` / `merhab_rsvp_no_{{1}}` |
+| `content_broadcast` | نص البث ({{1}}–{{2}}) |
+| `content_broadcast_watch` | زر مشاهدة CTA — URL: `https://YOUR-DOMAIN.com/live/{{1}}` |
+| `content_reminder` | تذكير (اختياري) |
+| `content_qr` | نص قبل صورة QR |
+
+4. Webhook وارد: `https://yourdomain.com/api/v1/integrations/whatsapp/webhook/twilio/`
 
 ### في `.env` (افتراضيات)
 
@@ -117,6 +162,38 @@ WHATSAPP_TEMPLATE_INVITATION=event_invitation
 WHATSAPP_TEMPLATE_REMINDER=event_reminder
 WHATSAPP_TEMPLATE_QR=rsvp_qr
 WHATSAPP_TEMPLATE_LANGUAGE=ar
+```
+
+---
+
+## دعوة تفاعلية (الوضع الافتراضي في مرحّاب)
+
+عند `WHATSAPP_INVITATION_INTERACTIVE=True` (افتراضي) تُرسل الدعوة كالتالي:
+
+1. **نص الدعوة** — ترحيب + اسم المناسبة + التاريخ + المكان  
+2. **زر/رابط الخريطة** — يفتح Google Maps  
+3. **زر/رابط الدعوة** — يفتح صفحة `/i/{token}`  
+4. **هل ستحضر؟** — أزرار **نعم** / **لا**  
+   - **نعم** → تأكيد حضور + إرسال QR  
+   - **لا** → تسجيل اعتذار  
+
+### Webhooks (Twilio / Meta / البوت)
+
+| المزوّد | الرابط |
+|---------|--------|
+| Meta Cloud | `https://yourdomain.com/api/v1/integrations/whatsapp/webhook/meta/` |
+| Twilio | `https://yourdomain.com/api/v1/integrations/whatsapp/webhook/twilio/` |
+| البوت المحلي | يُبلّغ تلقائياً: `/api/v1/integrations/whatsapp/bot-inbound/` |
+
+في `.env`:
+```env
+WHATSAPP_INVITATION_INTERACTIVE=True
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=merhab-verify
+```
+
+للعودة للقالب النصي القديم `event_invitation`:
+```env
+WHATSAPP_INVITATION_LEGACY_TEMPLATE=True
 ```
 
 ---

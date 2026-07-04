@@ -1,9 +1,9 @@
 """رسائل واتساب المهيكلة للضيوف — ثلاثة أنواع:
 
-1. **دعوة** — قالب Meta: ``event_invitation``
-2. **تذكير** — قالب Meta: ``event_reminder``
-3. **بطاقة QR** — قالب Meta: ``rsvp_qr`` ثم صورة PNG
-
+1. **دعوة** — تفاعلية (خريطة + رابط + RSVP) أو قالب Meta/Twilio
+2. **تذكير مؤكّد** — رسالة نصية بسيطة + رابط QR (بدون قالب)
+3. **تذكير غير مؤكّد** — نفس الدعوة التفاعلية بعنوان «تذكير»
+4. **بطاقة QR** — قالب Meta/Twilio أو صورة عبر البوت
 في التطوير: البوت المحلي (نص + رابط منفصل / صورة base64).
 في الإنتاج: قوالب Meta المعتمدة عبر Cloud API أو Twilio ContentSid.
 """
@@ -76,6 +76,11 @@ def _use_twilio_templates() -> bool:
         cfg.get("content_invitation")
         or cfg.get("content_reminder")
         or cfg.get("content_qr")
+        or cfg.get("content_map")
+        or         cfg.get("content_open_invite")
+        or cfg.get("content_rsvp")
+        or cfg.get("content_broadcast")
+        or cfg.get("content_broadcast_watch")
     )
 
 
@@ -148,6 +153,9 @@ def _template_names() -> dict[str, str]:
         "twilio_invitation": tw_cfg.get("content_invitation", ""),
         "twilio_reminder": tw_cfg.get("content_reminder", ""),
         "twilio_qr": tw_cfg.get("content_qr", ""),
+        "twilio_map": tw_cfg.get("content_map", ""),
+        "twilio_open_invite": tw_cfg.get("content_open_invite", ""),
+        "twilio_rsvp": tw_cfg.get("content_rsvp", ""),
     }
 
 
@@ -163,26 +171,71 @@ def _qr_public_url(guest: Guest) -> str | None:
     return f"{settings.FRONTEND_URL.rstrip('/')}{path}"
 
 
+def _bot_url_configured() -> bool:
+    return bool((getattr(settings, "WHATSAPP_BOT_URL", "") or "").strip())
+
+
+def _build_reminder_body(
+    guest: Guest,
+    custom_body: str | None,
+    invite_url: str,
+) -> str:
+    if custom_body and "{link}" in custom_body:
+        return custom_body.replace("{link}", "").rstrip()
+    if custom_body:
+        return custom_body.rstrip()
+    return _format_bot_text(BOT_REMINDER_TEXT, guest, invite_url)
+
+
+def _bot_send_reminder(phone: str, text_body: str, invite_url: str) -> dict:
+    """البوت: رسالة واحدة (نص + رابط) — أكثر موثوقية من رسالتين منفصلتين."""
+    text = (text_body or "").strip()
+    if invite_url and invite_url not in text:
+        text = f"{text}\n\n{invite_url}"
+    if not text.strip():
+        return {"sent": False, "detail": "نص التذكير فارغ"}
+    out = send_via_bot(phone, text)
+    out["queued"] = True
+    return out
+
+
 def _bot_split_text_and_link(phone: str, text_body: str, invite_url: str) -> dict:
     """البوت: رسالة نصية ثم رابط منفصل قابل للنقر."""
     out_text = send_via_bot(phone, text_body)
+    if not out_text.get("sent"):
+        return {"sent": False, "detail": out_text.get("detail") or "", "queued": True}
     out_link = send_via_bot(phone, invite_url)
-    sent = bool(out_text.get("sent")) and bool(out_link.get("sent"))
+    if out_link.get("sent"):
+        detail = out_link.get("detail") or out_text.get("detail") or ""
+        return {"sent": True, "detail": detail, "queued": True}
+    # إذا فشل إرسال الرابط منفصلاً، جرّب دمج النص والرابط في رسالة واحدة
+    combined = _bot_send_reminder(phone, text_body, invite_url)
+    if combined.get("sent"):
+        return combined
     detail = out_link.get("detail") or out_text.get("detail") or ""
-    return {"sent": sent, "detail": detail, "queued": True}
+    return {"sent": False, "detail": detail, "queued": True}
 
 
 def send_guest_invitation(
     guest: Guest,
     custom_body: str | None = None,
 ) -> dict:
-    """إرسال دعوة الضيف (قالب ``event_invitation`` في الإنتاج)."""
+    """إرسال دعوة تفاعلية (خريطة + رابط + نعم/لا) أو قالب Meta عند التفعيل."""
     phone = guest.phone or ""
     invite_url = _invite_url(guest)
     fallback_url = build_whatsapp_url(phone, invite_url)
 
     if not normalize_phone_digits(phone):
         return {"sent": False, "whatsapp_url": fallback_url, "detail": "رقم غير متوفر"}
+
+    use_legacy = getattr(settings, "WHATSAPP_INVITATION_LEGACY_TEMPLATE", False)
+    use_interactive = getattr(settings, "WHATSAPP_INVITATION_INTERACTIVE", True)
+
+    # الدعوة التفاعلية لها نصها الخاص (خريطة + رابط + نعم/لا) — لا يُستبدَل بقالب المحرّر
+    if use_interactive and not use_legacy:
+        from .whatsapp_interactive import send_interactive_invitation
+
+        return send_interactive_invitation(guest)
 
     if _use_meta_templates():
         names = _template_names()
@@ -229,52 +282,47 @@ def send_guest_reminder(
     guest: Guest,
     custom_body: str | None = None,
 ) -> dict:
-    """إرسال تذكير الضيف (قالب ``event_reminder`` في الإنتاج)."""
+    """إرسال تذكير للضيف المؤكّد — رسالة نصية فقط (بدون قالب Meta/Twilio)."""
     phone = guest.phone or ""
     invite_url = _invite_url(guest)
     fallback_url = build_whatsapp_url(phone, invite_url)
+    provider = _provider_mode()
+    text_body = _build_reminder_body(guest, custom_body, invite_url)
 
     if not normalize_phone_digits(phone):
         return {"sent": False, "whatsapp_url": fallback_url, "detail": "رقم غير متوفر"}
 
-    if _use_meta_templates():
-        names = _template_names()
-        return send_whatsapp_template(
-            phone,
-            names["reminder"],
-            guest_template_params(guest, invite_url),
-            language=names["language"],
-            fallback_url=fallback_url,
-        )
+    last_error = ""
 
-    if _use_twilio_templates():
-        names = _template_names()
-        if names["twilio_reminder"]:
-            return send_twilio_content_template(
-                phone,
-                names["twilio_reminder"],
-                _twilio_template_variables(guest_template_params(guest, invite_url)),
-                fallback_url=fallback_url,
-            )
-
-    if _provider_mode() == "bot":
-        if custom_body and "{link}" in custom_body:
-            text_body = custom_body.replace("{link}", "").rstrip()
-        elif custom_body:
-            text_body = custom_body.rstrip()
-        else:
-            text_body = _format_bot_text(BOT_REMINDER_TEXT, guest, invite_url)
-        return _bot_split_text_and_link(phone, text_body, invite_url)
+    if provider == "bot":
+        return _bot_send_reminder(phone, text_body, invite_url)
 
     if has_active_whatsapp_credential():
-        text = custom_body or _format_bot_text(BOT_REMINDER_TEXT, guest, invite_url)
-        text = f"{text}\n\n{invite_url}"
-        return dispatch_whatsapp(phone, text)
+        text = text_body
+        if invite_url not in text:
+            text = f"{text}\n\n{invite_url}"
+        result = dispatch_whatsapp(phone, text)
+        if result.get("sent"):
+            return result
+        last_error = result.get("detail") or last_error
+        if _bot_url_configured():
+            bot_result = _bot_send_reminder(phone, text_body, invite_url)
+            if bot_result.get("sent"):
+                return bot_result
+            last_error = bot_result.get("detail") or last_error
+
+    if _bot_url_configured():
+        bot_result = _bot_send_reminder(phone, text_body, invite_url)
+        if bot_result.get("sent"):
+            return bot_result
+        last_error = bot_result.get("detail") or last_error
+
+    detail = last_error or "وضع يدوي — افتح رابط واتساب"
 
     return {
         "sent": False,
         "whatsapp_url": fallback_url,
-        "detail": "وضع يدوي — افتح رابط واتساب",
+        "detail": detail,
     }
 
 

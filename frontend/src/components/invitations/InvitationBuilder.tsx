@@ -45,11 +45,11 @@ const INVITE_DEFAULT: TemplateFields = {
 };
 
 const REMIND_UNCONFIRMED_DEFAULT: TemplateFields = {
-  greeting: "تذكير ودّي",
-  intro: "لم نستلم تأكيد حضورك بعد لمناسبة",
+  greeting: "مرحباً",
+  intro: "يسعدنا دعوتك لحضور",
   showDateTime: true,
   showVenue: true,
-  cta: "نرجو تأكيد حضورك أو الاعتذار عبر الرابط:",
+  cta: "يرجى تأكيد حضورك عبر الرابط التالي:",
 };
 
 const REMIND_CONFIRMED_DEFAULT: TemplateFields = {
@@ -57,7 +57,7 @@ const REMIND_CONFIRMED_DEFAULT: TemplateFields = {
   intro: "يسعدنا لقاؤك في",
   showDateTime: true,
   showVenue: true,
-  cta: "احتفظ ببطاقة دخولك (QR) عبر الرابط:",
+  cta: "احتفظ ببطاقة دخولك (QR) :",
 };
 
 /** يبني نص القالب (مع عناصر نائبة) من الحقول المرتّبة. */
@@ -1035,8 +1035,10 @@ export default function InvitationBuilder({ eventId }: Props) {
                   info
                 </span>
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  يُرسَل التذكير تلقائياً حسب حالة الضيف: من لم يؤكّد يصله تذكير
-                  بالتأكيد، ومن أكّد يصله تذكير بموعد المناسبة. المعتذرون يُتجاوزون.
+                  من لم يؤكّد يُعاد إرسال <strong>نفس الدعوة التفاعلية</strong> (خريطة +
+                  رابط + نعم/لا) بعنوان «تذكير». من أكّد يصله{" "}
+                  <strong>رسالة نصية</strong> بموعد المناسعة ورابط بطاقة QR — بدون قالب
+                  Meta. المعتذرون يُتجاوزون.
                 </p>
               </div>
 

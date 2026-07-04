@@ -5,7 +5,11 @@ from __future__ import annotations
 from apps.accounts.models import User
 from apps.guests.models import Guest
 from apps.guests.status_utils import PHYSICAL_PRESENCE_STATUSES
-from apps.integrations.whatsapp_send import dispatch_whatsapp
+from apps.integrations.whatsapp_broadcast import (
+    WATCH_LINK_BODY,
+    broadcast_body,
+    send_guest_broadcast_link,
+)
 from apps.messages_app.models import Message
 
 from .live_media import (
@@ -31,12 +35,7 @@ def _broadcast_ready(event) -> tuple[bool, str]:
 
 
 def _message_body(guest: Guest, broadcast_url: str) -> str:
-    event = guest.event
-    return (
-        f"مرحباً {guest.full_name}\n\n"
-        f"بث مباشر — {event.title}\n\n"
-        f"شاهد البث من الرابط:\n{broadcast_url}"
-    )
+    return f"{broadcast_body(guest)}\n\n{WATCH_LINK_BODY}\n{broadcast_url}"
 
 
 def send_broadcast_link_to_present_guests(event, sender: User) -> dict:
@@ -77,7 +76,7 @@ def send_broadcast_link_to_present_guests(event, sender: User) -> dict:
             continue
 
         body = _message_body(guest, broadcast_url)
-        outcome = dispatch_whatsapp(guest.phone, body)
+        outcome = send_guest_broadcast_link(guest, broadcast_url)
         sent = bool(outcome.get("sent"))
 
         Message.objects.create(

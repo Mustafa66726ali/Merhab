@@ -188,7 +188,18 @@ export const guestsAPI = {
     api.post<EventGuestDetail & { already_checked_in?: boolean }>("/guests/scan/", {
       token,
     }),
+  directory: (params?: { search?: string; exclude_event?: number }) =>
+    api.get<GuestDirectoryEntry[]>("/guests/directory/", { params }),
 };
+
+export interface GuestDirectoryEntry {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  event_count: number;
+  last_event_title: string;
+}
 
 export const tablesAPI = {
   list: (params?: Record<string, unknown>) =>
@@ -1433,6 +1444,7 @@ export interface EventGuestRow {
 
 export interface GuestListStats {
   total: number;
+  pending: number;
   invited: number;
   confirmed: number;
   attended: number;

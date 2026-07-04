@@ -7,6 +7,7 @@ from apps.events.models import Event, Section, Group
 
 class Guest(models.Model):
     class Status(models.TextChoices):
+        PENDING = "pending", "جديد"
         INVITED = "invited", "مدعو"
         CONFIRMED = "confirmed", "مؤكد الحضور"
         ATTENDED = "attended", "حضر"
@@ -31,7 +32,7 @@ class Guest(models.Model):
     status = models.CharField(
         max_length=15,
         choices=Status.choices,
-        default=Status.INVITED,
+        default=Status.PENDING,
         verbose_name="الحالة",
     )
     section = models.ForeignKey(
@@ -71,7 +72,18 @@ class Guest(models.Model):
         verbose_name = "ضيف"
         verbose_name_plural = "الضيوف"
         ordering = ["full_name"]
-        unique_together = ["event", "email"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["event", "email"],
+                condition=models.Q(email__gt=""),
+                name="unique_guest_email_per_event",
+            ),
+            models.UniqueConstraint(
+                fields=["event", "phone"],
+                condition=models.Q(phone__gt=""),
+                name="unique_guest_phone_per_event",
+            ),
+        ]
         indexes = [
             models.Index(fields=["event", "status"]),
             models.Index(fields=["event", "created_at"]),

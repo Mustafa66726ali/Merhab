@@ -14,12 +14,14 @@ from rest_framework.response import Response
 from apps.accounts.models import User
 from apps.events.models import Event
 from apps.guests.models import Guest
+from apps.guests.invitation_status import mark_guest_invitation_sent
 from apps.integrations.whatsapp_send import (
     build_whatsapp_url,
     has_active_whatsapp_credential,
     _active_cloud_credential,
 )
 from apps.integrations.whatsapp_messages import send_guest_invitation, send_guest_reminder
+from apps.integrations.whatsapp_interactive import send_interactive_invitation
 from apps.platforms.platform_permissions import (
     PERM_SEND_MESSAGES,
     get_platform_for_user,
@@ -38,22 +40,31 @@ DEFAULT_TEMPLATE = (
     "يرجى تأكيد حضورك عبر الرابط التالي:\n{link}"
 )
 
-# تذكير لمن لم يؤكّد الحضور بعد — يحثّه على التأكيد عبر الرابط
+# تذكير لمن لم يؤكّد — نفس الدعوة التفاعلية مع عنوان «تذكير» (يُرسَل عبر send_interactive_invitation)
 DEFAULT_REMINDER_UNCONFIRMED = (
-    "تذكير ودّي {name} 🌿\n"
-    "لم نستلم تأكيد حضورك بعد لمناسبة: {event}\n"
+    "تذكير\n\n"
+    "مرحباً {name}،\n"
+    "يسعدنا دعوتك لحضور: {event}\n"
     "📅 التاريخ: {date} - {time}\n"
     "📍 المكان: {venue}\n\n"
-    "نرجو تأكيد حضورك أو الاعتذار عبر الرابط:\n{link}"
+    "يرجى تأكيد حضورك عبر الرابط التالي:\n{link}"
 )
 
-# تذكير لمن أكّد الحضور — تذكير بموعد المناسبة وبطاقة الدخول
+# تذكير لمن أكّد الحضور — رسالة نصية بسيطة (بدون قالب Meta/Twilio)
 DEFAULT_REMINDER_CONFIRMED = (
-    "تذكير بموعد المناسبة {name} 🎉\n"
+    "تذكير بموعد المناسبة {name}،\n"
     "يسعدنا لقاؤك في: {event}\n"
     "📅 التاريخ: {date} - {time}\n"
     "📍 المكان: {venue}\n\n"
-    "احتفظ ببطاقة دخولك (QR) عبر الرابط:\n{link}"
+    "احتفظ ببطاقة دخولك (QR) :\n{link}"
+)
+
+REMINDER_UNCONFIRMED_HEADLINE = "تذكير"
+
+CONFIRMED_REMINDER_STATUSES = (
+    Guest.Status.CONFIRMED,
+    Guest.Status.ATTENDED,
+    Guest.Status.SEATED,
 )
 
 
@@ -120,6 +131,19 @@ def _render_message(
     return out
 
 
+def _dispatch_guest_reminder(guest: Guest, custom_body: str | None = None) -> dict:
+    """يُوجّه التذكير حسب حالة الضيف:
+    - مؤكّد الحضور → رسالة نصية بسيطة (بدون قالب Meta).
+    - غير مؤكّد → نفس الدعوة التفاعلية الأولى مع عنوان «تذكير».
+    """
+    if guest.status in CONFIRMED_REMINDER_STATUSES:
+        return send_guest_reminder(guest, custom_body=custom_body)
+    return send_interactive_invitation(
+        guest,
+        headline=REMINDER_UNCONFIRMED_HEADLINE,
+    )
+
+
 def process_event_reminders(
     event,
     guests,
@@ -138,11 +162,7 @@ def process_event_reminders(
     """
     tpl_unconfirmed = tpl_unconfirmed or DEFAULT_REMINDER_UNCONFIRMED
     tpl_confirmed = tpl_confirmed or DEFAULT_REMINDER_CONFIRMED
-    confirmed_states = (
-        Guest.Status.CONFIRMED,
-        Guest.Status.ATTENDED,
-        Guest.Status.SEATED,
-    )
+    confirmed_states = CONFIRMED_REMINDER_STATUSES
 
     results = []
     skipped = 0
@@ -161,10 +181,16 @@ def process_event_reminders(
         sent = False
         detail = ""
         if auto:
-            custom = _render_message(
-                template, guest, invite_url, include_link=False
-            )
-            outcome = send_guest_reminder(guest, custom_body=custom)
+            if is_confirmed:
+                custom = _render_message(
+                    template, guest, invite_url, include_link=False
+                )
+                outcome = send_guest_reminder(guest, custom_body=custom)
+            else:
+                outcome = send_interactive_invitation(
+                    guest,
+                    headline=REMINDER_UNCONFIRMED_HEADLINE,
+                )
             sent = bool(outcome.get("sent"))
             detail = outcome.get("detail", "")
         if sent:
@@ -320,10 +346,12 @@ class InvitationViewSet(viewsets.ModelViewSet):
         text_body = message.replace(invite_url, "").rstrip() if invite_url in message else message
         kind = (request.data.get("kind") or request.data.get("message_kind") or "invite").lower()
         if kind == "remind":
-            outcome = send_guest_reminder(guest, custom_body=text_body)
+            outcome = _dispatch_guest_reminder(guest, custom_body=text_body)
         else:
             outcome = send_guest_invitation(guest, custom_body=text_body)
         sent = bool(outcome.get("sent"))
+        if sent and kind != "remind":
+            mark_guest_invitation_sent(guest)
         Invitation.objects.create(
             event=event,
             guest=guest,
@@ -468,6 +496,8 @@ class InvitationViewSet(viewsets.ModelViewSet):
                 outcome = send_guest_invitation(guest, custom_body=custom)
                 sent = bool(outcome.get("sent"))
                 detail = outcome.get("detail", "")
+                if sent:
+                    mark_guest_invitation_sent(guest)
 
             Invitation.objects.create(
                 event=event,

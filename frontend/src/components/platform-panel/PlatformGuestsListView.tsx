@@ -18,6 +18,7 @@ import {
   guestsAPI,
   type EventGuestRow,
   type EventListItem,
+  type GuestDirectoryEntry,
 } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
 
@@ -52,6 +53,17 @@ function exportGuestsCsv(rows: EventGuestRow[], filename: string) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+function errMessage(e: unknown, fallback: string): string {
+  if (e && typeof e === "object" && "response" in e) {
+    const res = (e as { response?: { data?: { detail?: string; email?: string[] } } }).response;
+    const detail = res?.data?.detail;
+    if (typeof detail === "string" && detail.trim()) return detail;
+    const email = res?.data?.email;
+    if (Array.isArray(email) && email[0]) return email[0];
+  }
+  return fallback;
 }
 
 function parseGuestCsv(text: string) {
@@ -106,6 +118,8 @@ export default function PlatformGuestsListView({
   const [deleteTarget, setDeleteTarget] = useState<EventGuestRow | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [guestForm, setGuestForm] = useState<AddGuestFormState>({
+    mode: "new",
+    existingGuestId: "",
     full_name: "",
     email: "",
     phone: "",
@@ -113,6 +127,9 @@ export default function PlatformGuestsListView({
     sectionId: "",
     groupId: "",
   });
+  const [directoryGuests, setDirectoryGuests] = useState<GuestDirectoryEntry[]>([]);
+  const [directoryLoading, setDirectoryLoading] = useState(false);
+  const directorySearchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const guestsQuery = useQuery({
     queryKey: [
@@ -171,6 +188,8 @@ export default function PlatformGuestsListView({
   const platformEvents = eventsListQuery.data ?? [];
   const stats = statsQuery.data ?? {
     total: 0,
+    pending: 0,
+    invited: 0,
     confirmed: 0,
     attended: 0,
     declined: 0,
@@ -264,6 +283,8 @@ export default function PlatformGuestsListView({
 
   const openAddGuest = () => {
     setGuestForm({
+      mode: "new",
+      existingGuestId: "",
       full_name: "",
       email: "",
       phone: "",
@@ -273,6 +294,32 @@ export default function PlatformGuestsListView({
     });
     setActionError("");
     setAddModalOpen(true);
+    void loadGuestDirectory("");
+  };
+
+  const loadGuestDirectory = async (search: string) => {
+    const excludeEvent = isEventScope
+      ? eventId
+      : Number(guestForm.eventId || eventFilter) || undefined;
+    setDirectoryLoading(true);
+    try {
+      const res = await guestsAPI.directory({
+        search: search || undefined,
+        exclude_event: excludeEvent,
+      });
+      setDirectoryGuests(res.data);
+    } catch {
+      setDirectoryGuests([]);
+    } finally {
+      setDirectoryLoading(false);
+    }
+  };
+
+  const handleDirectorySearch = (query: string) => {
+    if (directorySearchRef.current) clearTimeout(directorySearchRef.current);
+    directorySearchRef.current = setTimeout(() => {
+      void loadGuestDirectory(query);
+    }, 300);
   };
 
   const handleAddGuest = async () => {
@@ -280,8 +327,12 @@ export default function PlatformGuestsListView({
     const targetEvent = isEventScope
       ? eventId!
       : Number(guestForm.eventId || eventFilter);
-    if (!full_name) {
+    if (guestForm.mode === "new" && !full_name) {
       setActionError("اسم الضيف مطلوب.");
+      return;
+    }
+    if (guestForm.mode === "existing" && !guestForm.existingGuestId) {
+      setActionError("اختر ضيفاً من القائمة.");
       return;
     }
     if (!targetEvent) {
@@ -298,12 +349,12 @@ export default function PlatformGuestsListView({
         phone: guestForm.phone.trim(),
         section: guestForm.sectionId ? Number(guestForm.sectionId) : null,
         group: guestForm.groupId ? Number(guestForm.groupId) : null,
-        status: "invited",
+        status: "pending",
       });
       setAddModalOpen(false);
       refreshGuests();
-    } catch {
-      setActionError("تعذّر إضافة الضيف.");
+    } catch (e) {
+      setActionError(errMessage(e, "تعذّر إضافة الضيف."));
     } finally {
       setSaving(false);
     }
@@ -352,7 +403,7 @@ export default function PlatformGuestsListView({
           full_name: r.full_name,
           email: r.email,
           phone: r.phone,
-          status: "invited",
+          status: "pending",
         }))
       );
       setImportModalOpen(false);
@@ -733,6 +784,9 @@ export default function PlatformGuestsListView({
           sectionOptions={modalSectionOptions}
           groupOptions={modalGroupOptions}
           eventForSections={modalEventForSections}
+          directoryGuests={directoryGuests}
+          directoryLoading={directoryLoading}
+          onDirectorySearch={handleDirectorySearch}
           onClose={() => !saving && setAddModalOpen(false)}
           onSubmit={handleAddGuest}
         />

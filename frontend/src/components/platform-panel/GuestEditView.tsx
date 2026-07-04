@@ -43,7 +43,7 @@ export default function GuestEditView({
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [status, setStatus] = useState("invited");
+  const [status, setStatus] = useState("pending");
   const [sectionId, setSectionId] = useState("");
   const [groupId, setGroupId] = useState("");
   const [notes, setNotes] = useState("");

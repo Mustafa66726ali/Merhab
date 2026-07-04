@@ -15,6 +15,7 @@ def aggregate_guest_stats(queryset: QuerySet) -> dict:
     agg = queryset.aggregate(
         total=Count("id"),
         invited=Count("id", filter=Q(status=Guest.Status.INVITED)),
+        pending=Count("id", filter=Q(status=Guest.Status.PENDING)),
         confirmed=Count("id", filter=Q(status__in=CONFIRMED_ATTENDANCE_STATUSES)),
         attended=Count("id", filter=Q(status__in=PHYSICAL_PRESENCE_STATUSES)),
         seated=Count("id", filter=Q(status=Guest.Status.SEATED)),
@@ -29,6 +30,7 @@ def aggregate_guest_stats(queryset: QuerySet) -> dict:
     return {
         "total": total,
         "invited": agg["invited"] or 0,
+        "pending": agg["pending"] or 0,
         "confirmed": confirmed,
         "attended": attended,
         "seated": agg["seated"] or 0,

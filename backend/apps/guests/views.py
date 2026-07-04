@@ -6,7 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from apps.accounts.models import User
-from apps.events.event_lifecycle import require_event_live
+from apps.events.event_lifecycle import require_event_guest_editable, require_event_live
 from apps.platforms.platform_permissions import (
     PERM_EDIT_GUESTS,
     PERM_SCAN_QR,
@@ -20,6 +20,22 @@ from apps.platforms.platform_permissions import (
 from .models import Guest, GuestQrScanLog
 from .serializers import GuestSerializer, GuestImportSerializer
 from .stats import aggregate_guest_stats
+
+
+def _normalize_phone(phone: str) -> str:
+    import re
+
+    return re.sub(r"\D", "", (phone or "").strip())
+
+
+def _guest_identity_key(guest: Guest) -> str:
+    phone = _normalize_phone(guest.phone)
+    if phone:
+        return f"phone:{phone}"
+    email = (guest.email or "").strip().lower()
+    if email:
+        return f"email:{email}"
+    return f"name:{(guest.full_name or '').strip().lower()}"
 
 
 class GuestPagination(PageNumberPagination):
@@ -77,12 +93,43 @@ class GuestViewSet(viewsets.ModelViewSet):
                 return int(first["event"])
         return None
 
+    @action(detail=False, methods=["get"], url_path="directory")
+    def directory(self, request):
+        """قائمة ضيوف مميّزين من مناسبات المنصة — للاختيار عند الإضافة لمناسبة أخرى."""
+        qs = self.filter_queryset(self.get_queryset()).select_related("event")
+        exclude_event = request.query_params.get("exclude_event")
+        if exclude_event:
+            qs = qs.exclude(event_id=exclude_event)
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            qs = qs.filter(
+                Q(full_name__icontains=search)
+                | Q(email__icontains=search)
+                | Q(phone__icontains=search)
+            )
+        seen: dict[str, dict] = {}
+        for guest in qs.order_by("-created_at"):
+            key = _guest_identity_key(guest)
+            if key in seen:
+                seen[key]["event_count"] += 1
+                continue
+            seen[key] = {
+                "id": guest.id,
+                "full_name": guest.full_name,
+                "email": guest.email or "",
+                "phone": guest.phone or "",
+                "event_count": 1,
+                "last_event_title": guest.event.title,
+            }
+        results = sorted(seen.values(), key=lambda row: row["full_name"])
+        return Response(results[:200])
+
     def perform_create(self, serializer):
         user = self.request.user
         require_platform_permission(user, PERM_EDIT_GUESTS, "غير مصرح — لا تملك صلاحية تعديل الضيوف")
         event = serializer.validated_data.get("event")
         require_event_access(user, event)
-        require_event_live(event)
+        require_event_guest_editable(event)
         guest = serializer.save()
         from apps.platforms.notification_service import maybe_notify_preparation_complete
 
@@ -115,13 +162,13 @@ class GuestViewSet(viewsets.ModelViewSet):
 
             event = Event.objects.select_related("platform").get(pk=guest_data.get("event"))
             require_event_access(request.user, event)
-            require_event_live(event)
-            guest, _ = Guest.objects.get_or_create(
-                event_id=guest_data.get("event"),
-                email=guest_data.get("email", ""),
-                defaults=guest_data,
-            )
-            created.append(GuestSerializer(guest).data)
+            require_event_guest_editable(event)
+            row = dict(guest_data)
+            row.pop("id", None)
+            guest_ser = GuestSerializer(data=row)
+            guest_ser.is_valid(raise_exception=True)
+            guest = guest_ser.save()
+            created.append(GuestSerializer(guest, context={"request": request}).data)
         return Response(created, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])

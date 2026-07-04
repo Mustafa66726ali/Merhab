@@ -8,6 +8,7 @@
  * واجهة HTTP بسيطة محميّة برمز Bearer:
  *   GET  /status        → جاهزية الاتصال وحجم الطابور والإحصاءات
  *   POST /send {to,message} → إضافة رسالة لطابور الإرسال البشري
+ *   POST /send-broadcast {to,body,watch_url} → نص البث + زر مشاهدة
  *   GET  /queue         → حجم الطابور الحالي
  */
 
@@ -16,7 +17,7 @@ const path = require("path");
 const express = require("express");
 const qrcode = require("qrcode-terminal");
 const QRImage = require("qrcode");
-const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
+const { Client, LocalAuth, MessageMedia, Poll } = require("whatsapp-web.js");
 
 const QR_PNG_PATH = path.join(__dirname, "qr.png");
 let lastQr = "";
@@ -47,6 +48,7 @@ const BROWSER_PATH = resolveBrowserPath();
 // ===== الإعدادات (قابلة للضبط عبر متغيّرات البيئة) =====
 const PORT = parseInt(process.env.PORT || "8088", 10);
 const BOT_TOKEN = process.env.BOT_TOKEN || "merhab-bot-dev";
+const BACKEND_URL = (process.env.BACKEND_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 // نافذة التأخير بين الرسائل (مللي ثانية) — تحاكي تنقّل الإنسان بين المحادثات
 const MIN_GAP_MS = parseInt(process.env.MIN_GAP_MS || "9000", 10);
@@ -73,6 +75,55 @@ let nextSendAt = 0; // طابع زمني تقريبي للإرسال التال�
 let sentSinceBreak = 0;
 let breakThreshold = randomInt(BREAK_EVERY_MIN, BREAK_EVERY_MAX);
 const stats = { sent: 0, failed: 0, queued: 0 };
+/** آخر دعوة مُرسلة لكل رقم — لربط رد نعم/لا بالضيف */
+const pendingRsvp = new Map();
+/** ربط محادثة / استطلاع → guest_token (واتساب يستخدم LID أحياناً بدل رقم الهاتف) */
+const chatGuestTokens = new Map();
+const pollGuestTokens = new Map();
+/** آخر الدعوات المُرسلة — احتياط عند فشل ربط LID */
+const recentInvitations = [];
+
+function rememberGuestRsvp(keys, guestToken) {
+  if (!guestToken) return;
+  for (const key of keys) {
+    if (!key) continue;
+    const raw = String(key).trim();
+    if (!raw) continue;
+    pendingRsvp.set(raw, guestToken);
+    const digits = onlyDigits(raw);
+    if (digits) pendingRsvp.set(digits, guestToken);
+  }
+}
+
+function pushRecentInvitation(phone, chatId, guestToken) {
+  if (!guestToken) return;
+  recentInvitations.unshift({
+    phone: onlyDigits(phone),
+    chatId: chatId || "",
+    guestToken,
+    at: Date.now(),
+  });
+  while (recentInvitations.length > 30) recentInvitations.pop();
+}
+
+function storePollGuestToken(sentMsg, chatId, guestToken) {
+  if (!guestToken || !sentMsg) return;
+  const keys = new Set();
+  const id = sentMsg?.id?.id || sentMsg?.id;
+  const remote =
+    sentMsg?.id?.remote ||
+    sentMsg?.id?._serialized?.split("_")[0] ||
+    chatId ||
+    "";
+  if (id) {
+    keys.add(String(id));
+    if (remote) keys.add(`${remote}:${id}`);
+    if (chatId) keys.add(`${chatId}:${id}`);
+  }
+  const serialized = sentMsg?.id?._serialized;
+  if (serialized) keys.add(serialized);
+  for (const k of keys) pollGuestTokens.set(k, guestToken);
+}
 let hourWindowStart = Date.now();
 let sentThisHour = 0;
 
@@ -139,6 +190,207 @@ client.on("ready", () => {
   processQueue();
 });
 
+async function notifyBackendRsvp(fromDigits, text, guestToken) {
+  const url = `${BACKEND_URL}/api/v1/integrations/whatsapp/bot-inbound/`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${BOT_TOKEN}`,
+      },
+      body: JSON.stringify({
+        from: fromDigits,
+        text,
+        guest_token: guestToken || pendingRsvp.get(fromDigits) || "",
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    console.log(
+      "[مرحّاب-بوت] RSVP backend:",
+      res.status,
+      data.detail || "",
+      guestToken ? `(token: ${String(guestToken).slice(0, 8)}…)` : "(no token)"
+    );
+    if (data.ok) {
+      for (const [k, v] of [...pendingRsvp.entries()]) {
+        if (v === guestToken) pendingRsvp.delete(k);
+      }
+    }
+    return data;
+  } catch (e) {
+    console.warn("[مرحّاب-بوت] تعذّر إبلاغ الباك-إند:", e.message);
+    return null;
+  }
+}
+
+/** يحوّل خيار الاستطلاع أو النص إلى نعم/لا أو null */
+function normalizeRsvpText(raw) {
+  const t = String(raw || "").trim().toLowerCase();
+  if (!t) return null;
+  if (t === "نعم" || t === "yes" || t === "اه" || t === "أيوه" || t === "ايوه" || t === "موافق") {
+    return "نعم";
+  }
+  if (t === "لا" || t === "no" || t === "لأ" || t === "اعتذار" || t === "معتذر") {
+    return "لا";
+  }
+  if (t.includes("نعم")) return "نعم";
+  if (t.includes("لا")) return "لا";
+  return null;
+}
+
+const recentRsvpKeys = new Map();
+
+function shouldSkipDuplicateRsvp(fromDigits, text) {
+  const key = `${fromDigits}:${text}`;
+  const now = Date.now();
+  const prev = recentRsvpKeys.get(key);
+  if (prev && now - prev < 12000) return true;
+  recentRsvpKeys.set(key, now);
+  return false;
+}
+
+function pollMessageKey(vote) {
+  const key = vote.parentMsgKey;
+  if (key && key.id) {
+    const remote = key.remote || key.participant || "";
+    return remote ? `${remote}:${key.id}` : String(key.id);
+  }
+  const msg = vote.parentMessage;
+  if (msg?.id?._serialized) return msg.id._serialized;
+  if (msg?.id?.id) {
+    const remote = msg.id.remote || msg.id.participant || "";
+    return remote ? `${remote}:${msg.id.id}` : String(msg.id.id);
+  }
+  return "";
+}
+
+function resolveGuestToken(vote, fromDigits) {
+  const pollKey = pollMessageKey(vote);
+  if (pollKey && pollGuestTokens.has(pollKey)) return pollGuestTokens.get(pollKey);
+  if (pollKey) {
+    const idPart = pollKey.includes(":") ? pollKey.split(":").pop() : pollKey;
+    if (idPart && pollGuestTokens.has(idPart)) return pollGuestTokens.get(idPart);
+    for (const [k, v] of pollGuestTokens.entries()) {
+      if (k === pollKey || k.endsWith(`:${idPart}`) || k.includes(idPart)) return v;
+    }
+  }
+  const voterRaw = vote.voter || "";
+  if (voterRaw && pendingRsvp.has(voterRaw)) return pendingRsvp.get(voterRaw);
+  if (fromDigits && pendingRsvp.has(fromDigits)) return pendingRsvp.get(fromDigits);
+  const chatId =
+    vote.parentMessage?.from ||
+    vote.parentMessage?.chatId ||
+    vote.parentMessage?.id?.remote ||
+    vote.parentMsgKey?.remote ||
+    "";
+  if (chatId && chatGuestTokens.has(chatId)) return chatGuestTokens.get(chatId);
+  if (chatId) {
+    const chatDigits = onlyDigits(chatId);
+    if (chatDigits && pendingRsvp.has(chatDigits)) return pendingRsvp.get(chatDigits);
+  }
+  const recent = recentInvitations.filter((x) => Date.now() - x.at < 86400000);
+  if (recent.length === 1) return recent[0].guestToken;
+  if (chatId) {
+    const match = recent.find((x) => x.chatId === chatId || x.phone === onlyDigits(chatId));
+    if (match) return match.guestToken;
+  }
+  if (pendingRsvp.size === 1) return [...pendingRsvp.values()][0];
+  return "";
+}
+
+async function resolveGuestTokenAsync(vote, fromDigits) {
+  let token = resolveGuestToken(vote, fromDigits);
+  if (token) return token;
+  const voterId = vote.voter || "";
+  if (!voterId) return "";
+  try {
+    const contact = await client.getContactById(voterId);
+    const phone = onlyDigits(contact?.number || contact?.id?.user || "");
+    if (phone && pendingRsvp.has(phone)) return pendingRsvp.get(phone);
+    const serialized = contact?.id?._serialized || contact?.id?._serialized;
+    if (serialized && chatGuestTokens.has(serialized)) return chatGuestTokens.get(serialized);
+  } catch (_) {
+    /* ignore */
+  }
+  try {
+    const parentFrom = vote.parentMessage?.from || vote.parentMsgKey?.remote || "";
+    if (parentFrom) {
+      const chat = await client.getChatById(parentFrom);
+      const phone = onlyDigits(chat?.id?.user || "");
+      if (phone && pendingRsvp.has(phone)) return pendingRsvp.get(phone);
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return "";
+}
+
+async function handleIncomingRsvp(fromDigits, rawText, guestToken) {
+  const text = normalizeRsvpText(rawText);
+  if (!text) return;
+  if (!guestToken) return;
+  if (shouldSkipDuplicateRsvp(fromDigits || guestToken, text)) return;
+  await notifyBackendRsvp(fromDigits, text, guestToken);
+}
+
+client.on("message", async (msg) => {
+  try {
+    if (msg.fromMe) return;
+    const from = onlyDigits(msg.from || msg.author || "");
+    const body = (msg.body || "").trim();
+    if (!from || !body) return;
+    const rsvpText = normalizeRsvpText(body);
+    if (!rsvpText) return;
+    let guestToken =
+      pendingRsvp.get(from) ||
+      pendingRsvp.get(msg.from || "") ||
+      pendingRsvp.get(msg.author || "");
+    if (!guestToken) {
+      try {
+        const contact = await client.getContactById(msg.from || msg.author || "");
+        guestToken = pendingRsvp.get(onlyDigits(contact?.number || contact?.id?.user || ""));
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    if (!guestToken && recentInvitations.length === 1) {
+      guestToken = recentInvitations[0].guestToken;
+    }
+    if (!guestToken) return;
+    await handleIncomingRsvp(from, body, guestToken);
+  } catch (e) {
+    console.warn("[مرحّاب-بوت] خطأ معالجة رسالة واردة:", e.message);
+  }
+});
+
+/** ردود استطلاع «هل ستحضر؟» — لا تصل كرسالة نصية عادية */
+client.on("vote_update", async (vote) => {
+  try {
+    const selected = vote.selectedOptions || [];
+    if (!selected.length) return;
+    const from = onlyDigits(vote.voter || "");
+    const optionName = selected[0].name || selected[0].localId || "";
+    let guestToken = resolveGuestToken(vote, from);
+    if (!guestToken) guestToken = await resolveGuestTokenAsync(vote, from);
+    console.log(
+      "[مرحّاب-بوت] vote_update من",
+      from,
+      "→",
+      optionName,
+      "token:",
+      guestToken ? guestToken.slice(0, 8) + "…" : "NO"
+    );
+    if (!guestToken) {
+      console.warn("[مرحّاب-بوت] تعذّر ربط الاستطلاع بضيف — أعد إرسال الدعوة أو اكتب: نعم");
+      return;
+    }
+    await handleIncomingRsvp(from, optionName, guestToken);
+  } catch (e) {
+    console.warn("[مرحّاب-بوت] خطأ vote_update:", e.message);
+  }
+});
+
 client.on("auth_failure", (msg) => {
   ready = false;
   waState = "disconnected";
@@ -172,6 +424,50 @@ async function humanSendImage(item) {
 async function humanSend(item) {
   if (item.type === "image") {
     return humanSendImage(item);
+  }
+  if (item.type === "cta_link") {
+    const numberId = await client.getNumberId(item.to);
+    if (!numberId) throw new Error("الرقم غير مسجّل في واتساب");
+    const chatId = numberId._serialized;
+    await sleep(randomInt(1200, 2800));
+    await client.sendMessage(chatId, item.body || "📩 اضغط لفتح تفاصيل الدعوة");
+    await sleep(randomInt(600, 1200));
+    await client.sendMessage(chatId, item.url, { linkPreview: true });
+    return;
+  }
+  if (item.type === "poll") {
+    const numberId = await client.getNumberId(item.to);
+    if (!numberId) throw new Error("الرقم غير مسجّل في واتساب");
+    const chatId = numberId._serialized;
+    await sleep(randomInt(1200, 2800));
+    const poll = new Poll(item.question, item.options, {
+      allowMultipleAnswers: false,
+    });
+    const sentMsg = await client.sendMessage(chatId, poll);
+    if (item.guest_token) {
+      rememberGuestRsvp([item.to, chatId], item.guest_token);
+      chatGuestTokens.set(chatId, item.guest_token);
+      storePollGuestToken(sentMsg, chatId, item.guest_token);
+      pushRecentInvitation(item.to, chatId, item.guest_token);
+      try {
+        const contact = await client.getContactById(chatId);
+        rememberGuestRsvp(
+          [contact?.id?._serialized, contact?.number, contact?.lid],
+          item.guest_token
+        );
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    // يساعد مكتبة واتساب على تتبّع أصوات الاستطلاع في المحادثات الخاصة
+    try {
+      if (client.interface && typeof client.interface.openChatWindow === "function") {
+        await client.interface.openChatWindow(chatId);
+      }
+    } catch (_) {
+      /* اختياري */
+    }
+    return;
   }
   // التحقق من تسجيل الرقم في واتساب
   const numberId = await client.getNumberId(item.to);
@@ -345,6 +641,105 @@ app.get("/qr", (req, res) => {
   }
   res.type("png");
   fs.createReadStream(QR_PNG_PATH).pipe(res);
+});
+
+app.post("/send-invitation", auth, (req, res) => {
+  const to = onlyDigits(req.body && req.body.to);
+  const body = (req.body && req.body.body) || "";
+  const inviteUrl = (req.body && req.body.invite_url) || "";
+  const mapUrl = (req.body && req.body.map_url) || "";
+  const mapButton = (req.body && req.body.map_button) || "عرض الخريطة";
+  const inviteBody = (req.body && req.body.invite_body) || "📩 اضغط لفتح تفاصيل الدعوة";
+  const inviteButton = (req.body && req.body.invite_button) || "فتح";
+  const pollQuestion = (req.body && req.body.poll_question) || "هل ستحضر؟";
+  const pollOptions = (req.body && req.body.poll_options) || ["نعم", "لا"];
+  const guestToken = (req.body && req.body.guest_token) || "";
+
+  if (!to || !body.trim()) {
+    return res.status(400).json({ error: "to و body مطلوبان" });
+  }
+
+  if (guestToken) {
+    rememberGuestRsvp([to], guestToken);
+    client
+      .getNumberId(to)
+      .then(async (numberId) => {
+        if (!numberId?._serialized) return;
+        const chatId = numberId._serialized;
+        chatGuestTokens.set(chatId, guestToken);
+        rememberGuestRsvp([chatId], guestToken);
+        pushRecentInvitation(to, chatId, guestToken);
+        try {
+          const contact = await client.getContactById(chatId);
+          rememberGuestRsvp(
+            [contact?.id?._serialized, contact?.number, contact?.lid],
+            guestToken
+          );
+        } catch (_) {
+          /* ignore */
+        }
+      })
+      .catch(() => {});
+  }
+
+  queue.push({ type: "text", to, message: body, queuedAt: Date.now() });
+  if (mapUrl) {
+    queue.push({
+      type: "text",
+      to,
+      message: `📍 ${mapButton}\n${mapUrl}`,
+      queuedAt: Date.now(),
+    });
+  }
+  if (inviteUrl) {
+    queue.push({
+      type: "cta_link",
+      to,
+      body: inviteBody,
+      buttonLabel: inviteButton,
+      url: inviteUrl,
+      queuedAt: Date.now(),
+    });
+  }
+  queue.push({
+    type: "poll",
+    to,
+    question: pollQuestion,
+    options: pollOptions,
+    guest_token: guestToken,
+    queuedAt: Date.now(),
+  });
+  stats.queued += 1 + (mapUrl ? 1 : 0) + (inviteUrl ? 1 : 0) + 1;
+  processQueue();
+  res.status(202).json({ queued: true, position: queue.length, interactive: true });
+});
+
+app.post("/send-broadcast", auth, (req, res) => {
+  const to = onlyDigits(req.body && req.body.to);
+  const body = (req.body && req.body.body) || "";
+  const watchUrl = (req.body && req.body.watch_url) || "";
+  const watchButton = (req.body && req.body.watch_button) || "مشاهدة";
+
+  if (!to || !body.trim()) {
+    return res.status(400).json({ error: "to و body مطلوبان" });
+  }
+
+  queue.push({ type: "text", to, message: body, queuedAt: Date.now() });
+  let extra = 0;
+  if (watchUrl) {
+    queue.push({
+      type: "cta_link",
+      to,
+      body: `▶️ ${watchButton}`,
+      buttonLabel: watchButton,
+      url: watchUrl,
+      queuedAt: Date.now(),
+    });
+    extra += 1;
+  }
+  stats.queued += 1 + extra;
+  processQueue();
+  res.status(202).json({ queued: true, position: queue.length, broadcast: true });
 });
 
 app.post("/send", auth, (req, res) => {

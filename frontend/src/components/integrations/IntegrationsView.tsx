@@ -948,7 +948,11 @@ export default function IntegrationsView() {
                       {" "}
                       <span className="font-mono">{"{{2}}"}</span> اسم المناسبة.
                       قوالب الدعوة والتذكير تستخدم خمسة متغيرات: الاسم، المناسبة،
-                      التاريخ، الموقع، رابط التفاصيل.
+                      التاريخ، الموقع، رابط التفاصيل. قالب البث:{" "}
+                      <span className="font-mono">{"{{1}}"}</span> الاسم،{" "}
+                      <span className="font-mono">{"{{2}}"}</span> المناسبة؛ زر
+                      المشاهدة:{" "}
+                      <span className="font-mono">{"{{1}}"}</span> = رمز البث.
                     </p>
                   </div>
                 )}
@@ -963,15 +967,24 @@ export default function IntegrationsView() {
                     </h4>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
                       أنشئ قوالب واتساب في Twilio Console وانسخ Content SID لكل قالب
-                      (يبدأ بـ HX). المتغيرات بنفس ترتيب Meta: 1–5 للدعوة والتذكير،
-                      1–2 لـ QR.
+                      (يبدأ بـ HX). الدعوة التفاعلية تُرسل بالتسلسل: نص → خريطة → فتح →
+                      نعم/لا. البث المباشر: نص → زر «مشاهدة». متغيرات الدعوة{" "}
+                      <span className="font-mono">{"{{1}}"}</span>–
+                      <span className="font-mono">{"{{4}}"}</span>،
+                      والخريطة/الفتح/RSVP/مشاهدة تستخدم{" "}
+                      <span className="font-mono">{"{{1}}"}</span> (إحداثيات أو token).
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(
                         [
-                          ["content_invitation", "دعوة (event_invitation)", "HX..."],
-                          ["content_reminder", "تذكير (event_reminder)", "HX..."],
-                          ["content_qr", "QR (rsvp_qr)", "HX..."],
+                          ["content_invitation", "1. نص الدعوة", "HX..."],
+                          ["content_map", "2. زر الخريطة (CTA)", "HX..."],
+                          ["content_open_invite", "3. زر فتح الدعوة (CTA)", "HX..."],
+                          ["content_rsvp", "4. هل ستحضر؟ (Quick Reply)", "HX..."],
+                          ["content_broadcast", "5. نص البث المباشر", "HX..."],
+                          ["content_broadcast_watch", "6. زر مشاهدة البث (CTA)", "HX..."],
+                          ["content_reminder", "تذكير (اختياري)", "HX..."],
+                          ["content_qr", "QR بعد التأكيد", "HX..."],
                         ] as const
                       ).map(([key, label, ph]) => (
                         <div key={key}>
@@ -995,6 +1008,14 @@ export default function IntegrationsView() {
                         </div>
                       ))}
                     </div>
+                    <p className="text-[11px] text-on-surface-variant border-t border-outline-variant/10 pt-3 leading-relaxed">
+                      <span className="font-bold text-on-surface">قوالب البث (5 و 6):</span>{" "}
+                      القالب 5 —{" "}
+                      <span className="font-mono">مرحباً {"{{1}}"}{"\n\n"}بث مباشر — {"{{2}}"}</span>
+                      . القالب 6 — زر CTA باسم «مشاهدة» والرابط{" "}
+                      <span className="font-mono">https://YOUR-DOMAIN.com/live/{"{{1}}"}</span>{" "}
+                      (ضع رمز البث فقط في {"{{1}}"}، وليس الرابط كاملاً).
+                    </p>
                   </div>
                 )}
 
