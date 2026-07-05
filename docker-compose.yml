@@ -35,7 +35,11 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      DB_NAME: ${DB_NAME:-merhab}
+      DB_USER: ${DB_USER:-merhab}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       DB_HOST: db
+      DB_PORT: ${DB_PORT:-5432}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
@@ -80,7 +84,11 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      DB_NAME: ${DB_NAME:-merhab}
+      DB_USER: ${DB_USER:-merhab}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       DB_HOST: db
+      DB_PORT: ${DB_PORT:-5432}
       REDIS_URL: redis://redis:6379/0
     entrypoint: []
     command: ["sh", "./reminder-scheduler.sh"]
@@ -95,7 +103,11 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      DB_NAME: ${DB_NAME:-merhab}
+      DB_USER: ${DB_USER:-merhab}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       DB_HOST: db
+      DB_PORT: ${DB_PORT:-5432}
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
