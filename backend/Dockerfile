@@ -16,8 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN sed -i 's/\r$//' docker-entrypoint.sh reminder-scheduler.sh && \
-    chmod +x docker-entrypoint.sh reminder-scheduler.sh
+RUN sed -i 's/\r$//' docker-entrypoint.sh reminder-scheduler.sh scripts/celery-healthcheck.sh scripts/scheduler-healthcheck.sh && \
+    chmod +x docker-entrypoint.sh reminder-scheduler.sh scripts/celery-healthcheck.sh scripts/scheduler-healthcheck.sh
 
 EXPOSE 8000
 
