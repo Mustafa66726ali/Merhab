@@ -43,7 +43,10 @@ export default function GuestDetailView({
 }: GuestDetailViewProps) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const canManage = user?.role === "event_manager" || user?.role === "platform_admin";
+  const canManage =
+    user?.role === "event_manager" ||
+    user?.role === "platform_admin" ||
+    user?.role === "event_organizer";
 
   const [guest, setGuest] = useState<EventGuestDetail | null>(null);
   const [loading, setLoading] = useState(true);

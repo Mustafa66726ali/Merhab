@@ -124,7 +124,7 @@ def _send_twilio_broadcast(phone: str, guest: Guest, watch_url: str) -> dict:
         steps_total += 1
         from .whatsapp_interactive import _send_twilio_text
 
-        if _send_twilio_text(phone, f"{WATCH_LINK_BODY}\n{watch_url}"):
+        if _send_twilio_text(phone, f"{WATCH_LINK_BODY}\n{watch_url}").get("sent"):
             steps_ok += 1
             details.append("watch-plain")
 

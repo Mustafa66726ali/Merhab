@@ -5,8 +5,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { highlightMatch } from "@/components/events/HighlightText";
 import { eventStatusClass } from "@/components/events/eventStatus";
 import {
+  eventsAPI,
+  guestsAPI,
   platformsAPI,
   sectionsAPI,
+  type EventDetail,
+  type EventGuestRow,
   type MemberSectionRow,
   type MemberSectionsDashboard,
 } from "@/lib/api";
@@ -65,6 +69,19 @@ interface SectionsListViewProps {
   eventsBasePath?: string;
 }
 
+function extractList<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data as T[];
+  if (
+    data &&
+    typeof data === "object" &&
+    "results" in data &&
+    Array.isArray((data as { results?: unknown[] }).results)
+  ) {
+    return (data as { results: T[] }).results;
+  }
+  return [];
+}
+
 export default function SectionsListView({
   eventsBasePath = "/event-manager/events",
 }: SectionsListViewProps) {
@@ -80,6 +97,16 @@ export default function SectionsListView({
   const [form, setForm] = useState<SectionFormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [distributionModalOpen, setDistributionModalOpen] = useState(false);
+  const [distributionEventId, setDistributionEventId] = useState("");
+  const [distributionEvent, setDistributionEvent] = useState<EventDetail | null>(null);
+  const [distributionGuests, setDistributionGuests] = useState<EventGuestRow[]>([]);
+  const [distributionLoading, setDistributionLoading] = useState(false);
+  const [distributionSaving, setDistributionSaving] = useState(false);
+  const [distributionSearch, setDistributionSearch] = useState("");
+  const [distributionAssignments, setDistributionAssignments] = useState<
+    Record<number, { sectionId: string; groupId: string }>
+  >({});
 
   const load = useCallback(async () => {
     try {
@@ -202,6 +229,134 @@ export default function SectionsListView({
     }
   };
 
+  const loadDistributionData = useCallback(async (eventId: number) => {
+    setDistributionLoading(true);
+    try {
+      const [eventRes, guestsRes] = await Promise.all([
+        eventsAPI.get(eventId),
+        guestsAPI.list({ event: eventId, page_size: 1000 }),
+      ]);
+      const guests = extractList<EventGuestRow>(guestsRes.data);
+      setDistributionEvent(eventRes.data);
+      setDistributionGuests(guests);
+      const initialAssignments: Record<number, { sectionId: string; groupId: string }> = {};
+      guests.forEach((guest) => {
+        initialAssignments[guest.id] = {
+          sectionId: guest.section ? String(guest.section) : "",
+          groupId: guest.group ? String(guest.group) : "",
+        };
+      });
+      setDistributionAssignments(initialAssignments);
+      setError("");
+    } catch {
+      setDistributionEvent(null);
+      setDistributionGuests([]);
+      setDistributionAssignments({});
+      setError("تعذّر تحميل الضيوف للتوزيع.");
+    } finally {
+      setDistributionLoading(false);
+    }
+  }, []);
+
+  const openDistributionModal = () => {
+    const preferredEventId = eventFilter || String(data?.events[0]?.id ?? "");
+    setDistributionEventId(preferredEventId);
+    setDistributionSearch("");
+    setDistributionEvent(null);
+    setDistributionGuests([]);
+    setDistributionAssignments({});
+    setDistributionModalOpen(true);
+    if (preferredEventId) {
+      void loadDistributionData(Number(preferredEventId));
+    }
+  };
+
+  const closeDistributionModal = () => {
+    if (distributionLoading || distributionSaving) return;
+    setDistributionModalOpen(false);
+  };
+
+  const handleDistributionEventChange = (nextEventId: string) => {
+    setDistributionEventId(nextEventId);
+    setDistributionSearch("");
+    if (!nextEventId) {
+      setDistributionEvent(null);
+      setDistributionGuests([]);
+      setDistributionAssignments({});
+      return;
+    }
+    void loadDistributionData(Number(nextEventId));
+  };
+
+  const updateGuestSection = (guestId: number, sectionId: string) => {
+    setDistributionAssignments((prev) => ({
+      ...prev,
+      [guestId]: { sectionId, groupId: "" },
+    }));
+  };
+
+  const updateGuestGroup = (guestId: number, groupId: string) => {
+    setDistributionAssignments((prev) => {
+      const current = prev[guestId] ?? { sectionId: "", groupId: "" };
+      return {
+        ...prev,
+        [guestId]: { ...current, groupId },
+      };
+    });
+  };
+
+  const filteredDistributionGuests = useMemo(() => {
+    const q = distributionSearch.trim().toLowerCase();
+    if (!q) return distributionGuests;
+    return distributionGuests.filter((guest) =>
+      [
+        guest.full_name,
+        guest.event_title,
+        guest.section_name || "",
+        guest.group_name || "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [distributionGuests, distributionSearch]);
+
+  const handleSaveDistribution = async () => {
+    if (!distributionEventId || !distributionEvent) {
+      setError("اختر المناسبة أولاً.");
+      return;
+    }
+    const changedGuests = distributionGuests.filter((guest) => {
+      const next = distributionAssignments[guest.id] ?? { sectionId: "", groupId: "" };
+      const currentSection = guest.section ? String(guest.section) : "";
+      const currentGroup = guest.group ? String(guest.group) : "";
+      return next.sectionId !== currentSection || next.groupId !== currentGroup;
+    });
+    if (changedGuests.length === 0) {
+      setError("لا توجد تغييرات جديدة للحفظ.");
+      return;
+    }
+
+    setDistributionSaving(true);
+    setError("");
+    try {
+      await Promise.all(
+        changedGuests.map((guest) => {
+          const next = distributionAssignments[guest.id] ?? { sectionId: "", groupId: "" };
+          return guestsAPI.patch(guest.id, {
+            section: next.sectionId ? Number(next.sectionId) : null,
+            group: next.groupId ? Number(next.groupId) : null,
+          });
+        })
+      );
+      await Promise.all([load(), loadDistributionData(Number(distributionEventId))]);
+    } catch {
+      setError("تعذّر حفظ توزيع الضيوف.");
+    } finally {
+      setDistributionSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-24">
@@ -233,6 +388,14 @@ export default function SectionsListView({
         >
           <span className="material-symbols-outlined text-lg">add_circle</span>
           إضافة قسم
+        </button>
+        <button
+          type="button"
+          onClick={openDistributionModal}
+          className="inline-flex items-center justify-center gap-2 border border-outline-variant/20 bg-surface-container-low text-on-surface px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-surface-container-high transition-all shrink-0 self-start"
+        >
+          <span className="material-symbols-outlined text-lg">group_work</span>
+          توزيع الضيوف
         </button>
       </header>
 
@@ -531,6 +694,162 @@ export default function SectionsListView({
               >
                 {saving ? "جاري الحفظ..." : editing ? "حفظ التعديل" : "إضافة القسم"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {distributionModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-sm"
+          onClick={closeDistributionModal}
+        >
+          <div
+            className="w-full max-w-6xl max-h-[92vh] rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-2xl flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 sm:px-6 py-4 border-b border-outline-variant/10 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-bold text-on-surface text-lg sm:text-xl">توزيع الضيوف على الأقسام والمجموعات</h2>
+                <p className="text-xs sm:text-sm text-on-surface-variant mt-1">
+                  اختر القسم ثم المجموعة لكل ضيف، ثم احفظ لتحديث البيانات مباشرة.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeDistributionModal}
+                disabled={distributionLoading || distributionSaving}
+                className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="px-4 sm:px-6 py-4 border-b border-outline-variant/10 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1.5">المناسبة</label>
+                <select
+                  value={distributionEventId}
+                  onChange={(e) => handleDistributionEventChange(e.target.value)}
+                  className="w-full px-4 py-3 bg-surface-container-high border border-outline-variant/10 rounded-xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="">اختر المناسبة</option>
+                  {(data?.events ?? []).map((event) => (
+                    <option key={event.id} value={String(event.id)}>
+                      {event.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface-variant mb-1.5">بحث الضيوف</label>
+                <input
+                  type="search"
+                  value={distributionSearch}
+                  onChange={(e) => setDistributionSearch(e.target.value)}
+                  placeholder="بحث بالاسم أو القسم أو المجموعة..."
+                  disabled={!distributionEventId}
+                  className="w-full px-4 py-3 bg-surface-container-high border border-outline-variant/10 rounded-xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              {!distributionEventId ? (
+                <div className="p-10 text-center text-on-surface-variant">اختر المناسبة لعرض الضيوف.</div>
+              ) : distributionLoading ? (
+                <div className="p-10 flex justify-center">
+                  <span className="animate-spin w-10 h-10 border-4 border-primary-container border-t-transparent rounded-full" />
+                </div>
+              ) : filteredDistributionGuests.length === 0 ? (
+                <div className="p-10 text-center text-on-surface-variant">لا يوجد ضيوف لعرضهم.</div>
+              ) : (
+                <table className="w-full min-w-[960px] text-sm">
+                  <thead className="sticky top-0 bg-surface-container-high/95 backdrop-blur border-b border-outline-variant/10 z-10">
+                    <tr>
+                      <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">الاسم</th>
+                      <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">المناسبة</th>
+                      <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">القسم</th>
+                      <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">المجموعة</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant/10">
+                    {filteredDistributionGuests.map((guest) => {
+                      const assignment = distributionAssignments[guest.id] ?? {
+                        sectionId: guest.section ? String(guest.section) : "",
+                        groupId: guest.group ? String(guest.group) : "",
+                      };
+                      const rowSection = distributionEvent?.sections?.find(
+                        (section) => String(section.id) === assignment.sectionId
+                      );
+                      const rowGroups = rowSection?.groups ?? [];
+                      return (
+                        <tr key={guest.id} className="hover:bg-surface-container-high/25">
+                          <td className="px-4 py-3 font-medium text-on-surface">{guest.full_name}</td>
+                          <td className="px-4 py-3 text-on-surface-variant">{guest.event_title}</td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={assignment.sectionId}
+                              onChange={(e) => updateGuestSection(guest.id, e.target.value)}
+                              className="w-full px-3 py-2 bg-surface-container-high border border-outline-variant/10 rounded-lg text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                            >
+                              <option value="">بدون قسم</option>
+                              {(distributionEvent?.sections ?? []).map((section) => (
+                                <option key={section.id} value={String(section.id)}>
+                                  {section.name}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={assignment.groupId}
+                              onChange={(e) => updateGuestGroup(guest.id, e.target.value)}
+                              disabled={!assignment.sectionId}
+                              className="w-full px-3 py-2 bg-surface-container-high border border-outline-variant/10 rounded-lg text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                            >
+                              <option value="">
+                                {assignment.sectionId ? "بدون مجموعة" : "اختر قسماً أولاً"}
+                              </option>
+                              {rowGroups.map((group) => (
+                                <option key={group.id} value={String(group.id)}>
+                                  {group.name}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="px-4 sm:px-6 py-4 border-t border-outline-variant/10 flex items-center justify-between gap-3">
+              <p className="text-xs text-on-surface-variant">
+                {distributionSaving
+                  ? "جاري حفظ التوزيع..."
+                  : `${filteredDistributionGuests.length} صف ظاهر للتوزيع`}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={closeDistributionModal}
+                  disabled={distributionLoading || distributionSaving}
+                  className="px-4 py-2 rounded-xl border border-outline-variant/20 text-on-surface-variant text-sm font-bold disabled:opacity-50"
+                >
+                  إغلاق
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveDistribution}
+                  disabled={!distributionEventId || distributionLoading || distributionSaving}
+                  className="px-4 py-2 rounded-xl bg-primary-container text-on-primary-container text-sm font-bold disabled:opacity-50"
+                >
+                  {distributionSaving ? "جاري الحفظ..." : "حفظ التوزيع"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

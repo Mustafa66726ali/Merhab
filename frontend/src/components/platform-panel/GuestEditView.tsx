@@ -4,11 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import PhoneNumberField from "@/components/common/PhoneNumberField";
-import {
-  GUEST_STATUS_OPTIONS,
-  guestStatusClass,
-  guestStatusDotClass,
-} from "@/components/events/guestStatus";
+import { GUEST_STATUS_OPTIONS } from "@/components/events/guestStatus";
 import { useEvent } from "@/hooks/useEvent";
 import { guestsAPI, type EventGuestDetail } from "@/lib/api";
 
@@ -28,6 +24,21 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 const inputClass =
   "w-full px-4 py-3 bg-surface-container-high border border-outline-variant/10 rounded-xl text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary-container/40 transition-all";
+
+function errMessage(e: unknown, fallback: string): string {
+  if (e && typeof e === "object" && "response" in e) {
+    const data = (e as { response?: { data?: Record<string, unknown> } }).response?.data;
+    if (data) {
+      const detail = data.detail;
+      if (typeof detail === "string" && detail.trim()) return detail;
+      if (Array.isArray(detail) && typeof detail[0] === "string") return detail[0];
+      for (const value of Object.values(data)) {
+        if (Array.isArray(value) && typeof value[0] === "string") return value[0];
+      }
+    }
+  }
+  return fallback;
+}
 
 export default function GuestEditView({
   guestId,
@@ -51,6 +62,7 @@ export default function GuestEditView({
 
   const eventQuery = useEvent(guest?.event ?? 0);
   const event = eventQuery.data;
+  const sectionsLoading = Boolean(guest?.event) && eventQuery.isLoading;
 
   useEffect(() => {
     setLoading(true);
@@ -82,6 +94,8 @@ export default function GuestEditView({
     return (section?.groups ?? []).map((g) => ({ value: String(g.id), label: g.name }));
   }, [event, sectionId]);
 
+  const guestHasAssignment = Boolean(guest?.section_name || guest?.group_name);
+
   const handleSave = async () => {
     if (!fullName.trim()) {
       setError("اسم الضيف مطلوب.");
@@ -101,8 +115,8 @@ export default function GuestEditView({
         dietary_requirements: dietary.trim(),
       });
       router.push(`${guestsBasePath}/${guestId}`);
-    } catch {
-      setError("تعذّر حفظ التعديلات.");
+    } catch (e) {
+      setError(errMessage(e, "تعذّر حفظ التعديلات."));
     } finally {
       setSaving(false);
     }
@@ -204,37 +218,78 @@ export default function GuestEditView({
           </select>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <FieldLabel>القسم</FieldLabel>
-            <select
-              value={sectionId}
-              onChange={(e) => {
-                setSectionId(e.target.value);
-                setGroupId("");
-              }}
-              className={inputClass}
-            >
-              <option value="">بدون قسم</option>
-              {sectionOptions.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
+        <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-high/30 p-5 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-lg">grid_view</span>
+                التوزيع على الأقسام والمجموعات
+              </h2>
+              <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                يمكنك إسناد الضيف لقسم أو مجموعة لاحقاً حتى لو أُضيف بدون تصنيف.
+              </p>
+            </div>
+            {!guestHasAssignment && !sectionId && (
+              <span className="shrink-0 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-bold text-amber-300">
+                غير مُسنَد
+              </span>
+            )}
           </div>
-          <div>
-            <FieldLabel>المجموعة</FieldLabel>
-            <select
-              value={groupId}
-              onChange={(e) => setGroupId(e.target.value)}
-              disabled={!sectionId}
-              className={inputClass}
-            >
-              <option value="">بدون مجموعة</option>
-              {groupOptions.map((g) => (
-                <option key={g.value} value={g.value}>{g.label}</option>
-              ))}
-            </select>
-          </div>
+
+          {sectionsLoading ? (
+            <p className="text-sm text-on-surface-variant py-2">جاري تحميل أقسام المناسبة...</p>
+          ) : sectionOptions.length === 0 ? (
+            <div className="rounded-xl border border-outline-variant/15 bg-surface-container-high px-4 py-3 text-sm text-on-surface-variant space-y-2">
+              <p>لا توجد أقسام في هذه المناسبة بعد.</p>
+              <Link
+                href={`${eventsBasePath}/${guest.event}`}
+                className="inline-flex items-center gap-1 text-primary font-bold text-xs hover:underline"
+              >
+                إدارة المناسبة وإضافة أقسام
+                <span className="material-symbols-outlined text-sm">open_in_new</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <FieldLabel>القسم</FieldLabel>
+                <select
+                  value={sectionId}
+                  onChange={(e) => {
+                    setSectionId(e.target.value);
+                    setGroupId("");
+                  }}
+                  className={inputClass}
+                >
+                  <option value="">بدون قسم</option>
+                  {sectionOptions.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <FieldLabel>المجموعة</FieldLabel>
+                <select
+                  value={groupId}
+                  onChange={(e) => setGroupId(e.target.value)}
+                  disabled={!sectionId}
+                  className={inputClass}
+                >
+                  <option value="">
+                    {sectionId ? "بدون مجموعة" : "اختر قسماً أولاً"}
+                  </option>
+                  {groupOptions.map((g) => (
+                    <option key={g.value} value={g.value}>{g.label}</option>
+                  ))}
+                </select>
+                {sectionId && groupOptions.length === 0 && (
+                  <p className="text-[11px] text-on-surface-variant mt-1.5">
+                    هذا القسم لا يحتوي مجموعات — يمكن حفظ الإسناد للقسم فقط.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div>

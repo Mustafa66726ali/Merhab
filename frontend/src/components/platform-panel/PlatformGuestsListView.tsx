@@ -20,6 +20,11 @@ import {
   type EventListItem,
   type GuestDirectoryEntry,
 } from "@/lib/api";
+import {
+  downloadGuestImportTemplate,
+  exportGuestsExcel,
+  parseGuestExcelFile,
+} from "@/lib/guestExcel";
 import { useAuthStore } from "@/lib/store";
 
 function guestInitial(name: string) {
@@ -27,60 +32,20 @@ function guestInitial(name: string) {
   return t ? t[0] : "?";
 }
 
-function exportGuestsCsv(rows: EventGuestRow[], filename: string) {
-  const header = "الاسم,البريد,الجوال,المناسبة,القسم,المجموعة,الحالة";
-  const lines = rows.map((g) =>
-    [
-      g.full_name,
-      g.email || "",
-      g.phone || "",
-      g.event_title || "",
-      g.section_name || "",
-      g.group_name || "",
-      g.status_label || "",
-    ]
-      .map((v) => `"${String(v).replace(/"/g, "")}"`)
-      .join(",")
-  );
-  const blob = new Blob(["\ufeff" + [header, ...lines].join("\n")], {
-    type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
 function errMessage(e: unknown, fallback: string): string {
   if (e && typeof e === "object" && "response" in e) {
-    const res = (e as { response?: { data?: { detail?: string; email?: string[] } } }).response;
-    const detail = res?.data?.detail;
-    if (typeof detail === "string" && detail.trim()) return detail;
-    const email = res?.data?.email;
-    if (Array.isArray(email) && email[0]) return email[0];
+    const res = (e as {
+      response?: { data?: { detail?: string; errors?: string[]; email?: string[] } };
+    }).response;
+    const data = res?.data;
+    if (data) {
+      if (typeof data.detail === "string" && data.detail.trim()) return data.detail;
+      if (Array.isArray(data.errors) && data.errors[0]) return data.errors[0];
+      const email = data.email;
+      if (Array.isArray(email) && email[0]) return email[0];
+    }
   }
   return fallback;
-}
-
-function parseGuestCsv(text: string) {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean);
-  if (lines.length === 0) return [];
-  const first = lines[0].toLowerCase();
-  const hasHeader =
-    first.includes("name") || first.includes("اسم") || first.includes("email");
-  const dataLines = hasHeader ? lines.slice(1) : lines;
-  return dataLines.map((line) => {
-    const cols = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
-    return {
-      full_name: cols[0] || "",
-      email: cols[1] || "",
-      phone: cols[2] || "",
-    };
-  }).filter((r) => r.full_name);
 }
 
 interface PlatformGuestsListViewProps {
@@ -100,7 +65,9 @@ export default function PlatformGuestsListView({
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const canManageGuests =
-    user?.role === "event_manager" || user?.role === "platform_admin";
+    user?.role === "event_manager" ||
+    user?.role === "platform_admin" ||
+    user?.role === "event_organizer";
   const isEventScope = eventId != null;
   const eventQuery = useEvent(isEventScope ? eventId! : 0);
   const event = eventQuery.data ?? null;
@@ -112,6 +79,7 @@ export default function PlatformGuestsListView({
   const [actionError, setActionError] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const importFileRef = useRef<HTMLInputElement>(null);
@@ -376,14 +344,24 @@ export default function PlatformGuestsListView({
   };
 
   const handleExport = () => {
-    exportGuestsCsv(
+    exportGuestsExcel(
       filtered,
-      `guests-${effectiveEventId ?? "all"}-${new Date().toISOString().slice(0, 10)}.csv`
+      `guests-${effectiveEventId ?? "all"}-${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };
 
-  const handleImportFile = async (file: File) => {
+  const resetImportModal = () => {
+    setImportFile(null);
+    if (importFileRef.current) importFileRef.current.value = "";
+  };
+
+  const handleImportFile = async () => {
+    const file = importFile;
     const targetEvent = effectiveEventId;
+    if (!file) {
+      setActionError("اختر ملف Excel أولاً.");
+      return;
+    }
     if (!targetEvent) {
       setActionError("اختر المناسبة من الفلاتر قبل الاستيراد.");
       return;
@@ -391,13 +369,12 @@ export default function PlatformGuestsListView({
     setImporting(true);
     setActionError("");
     try {
-      const text = await file.text();
-      const rows = parseGuestCsv(text);
+      const rows = await parseGuestExcelFile(file);
       if (rows.length === 0) {
-        setActionError("لم يُعثر على ضيوف في الملف.");
+        setActionError("لم يُعثر على ضيوف في الملف. تأكد من الأعمدة: الاسم، البريد، الجوال.");
         return;
       }
-      await guestsAPI.importGuests(
+      const res = await guestsAPI.importGuests(
         rows.map((r) => ({
           event: targetEvent,
           full_name: r.full_name,
@@ -406,13 +383,32 @@ export default function PlatformGuestsListView({
           status: "pending",
         }))
       );
-      setImportModalOpen(false);
-      refreshGuests();
-    } catch {
-      setActionError("تعذّر استيراد الضيوف.");
+      const data = res.data as
+        | EventGuestRow[]
+        | { created?: EventGuestRow[]; partial?: boolean; detail?: string; errors?: string[] };
+      if (Array.isArray(data)) {
+        setImportModalOpen(false);
+        resetImportModal();
+        refreshGuests();
+        return;
+      }
+      if (data.created?.length) {
+        setImportModalOpen(false);
+        resetImportModal();
+        refreshGuests();
+        if (data.partial && data.errors?.length) {
+          setActionError(data.detail || data.errors[0]);
+        }
+        return;
+      }
+      setActionError(
+        (typeof data === "object" && data && "detail" in data && data.detail) ||
+          "تعذّر استيراد الضيوف."
+      );
+    } catch (e) {
+      setActionError(errMessage(e, "تعذّر استيراد الضيوف."));
     } finally {
       setImporting(false);
-      if (importFileRef.current) importFileRef.current.value = "";
     }
   };
 
@@ -474,6 +470,7 @@ export default function PlatformGuestsListView({
               type="button"
               onClick={() => {
                 setActionError("");
+                resetImportModal();
                 setImportModalOpen(true);
               }}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-outline-variant/25 bg-surface-container-low text-on-surface font-bold text-sm hover:bg-surface-container-high transition-all"
@@ -830,7 +827,12 @@ export default function PlatformGuestsListView({
       {importModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => !importing && setImportModalOpen(false)}
+          onClick={() => {
+            if (!importing) {
+              setImportModalOpen(false);
+              resetImportModal();
+            }
+          }}
         >
           <div
             className="w-full max-w-md rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-2xl"
@@ -838,7 +840,16 @@ export default function PlatformGuestsListView({
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/10">
               <h2 className="font-bold text-on-surface text-lg">استيراد ضيوف</h2>
-              <button type="button" onClick={() => setImportModalOpen(false)} className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!importing) {
+                    setImportModalOpen(false);
+                    resetImportModal();
+                  }
+                }}
+                className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high"
+              >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -849,22 +860,58 @@ export default function PlatformGuestsListView({
                 </p>
               )}
               <p className="text-sm text-on-surface-variant">
-                ملف CSV بأعمدة: الاسم، البريد، الجوال (الصف الأول يمكن أن يكون ترويسة).
+                ملف Excel بأعمدة: الاسم، البريد، الجوال (الصف الأول ترويسة).
               </p>
+              <button
+                type="button"
+                onClick={downloadGuestImportTemplate}
+                className="text-xs font-bold text-primary underline underline-offset-2"
+              >
+                تنزيل نموذج Excel
+              </button>
               <input
                 ref={importFileRef}
                 type="file"
-                accept=".csv,.txt"
+                accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                 disabled={!effectiveEventId || importing}
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImportFile(file);
+                  const file = e.target.files?.[0] ?? null;
+                  setImportFile(file);
+                  setActionError("");
                 }}
                 className="w-full text-sm text-on-surface-variant file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-primary-container file:text-on-primary-container file:font-bold"
               />
+              {importFile && (
+                <p className="text-xs text-on-surface-variant bg-surface-container-high rounded-xl px-3 py-2">
+                  الملف المختار: <span className="font-bold text-on-surface">{importFile.name}</span>
+                </p>
+              )}
             </div>
-            <div className="px-5 py-4 border-t border-outline-variant/10 text-xs text-on-surface-variant">
-              {importing ? "جاري الاستيراد..." : "سيتم إضافة الضيوف للمناسبة المختارة."}
+            <div className="px-5 py-4 border-t border-outline-variant/10 flex items-center justify-between gap-3">
+              <p className="text-xs text-on-surface-variant">
+                {importing ? "جاري الاستيراد..." : "سيتم إضافة الضيوف للمناسبة المختارة."}
+              </p>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  type="button"
+                  disabled={importing}
+                  onClick={() => {
+                    setImportModalOpen(false);
+                    resetImportModal();
+                  }}
+                  className="px-4 py-2 rounded-xl border border-outline-variant/25 text-on-surface text-sm font-bold disabled:opacity-50"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  disabled={!effectiveEventId || !importFile || importing}
+                  onClick={() => void handleImportFile()}
+                  className="px-4 py-2 rounded-xl bg-primary-container text-on-primary-container text-sm font-bold disabled:opacity-50"
+                >
+                  {importing ? "جاري الإضافة..." : "إضافة"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ from apps.integrations.views import IntegrationCredentialViewSet
 from apps.integrations.whatsapp_webhook_views import (
     bot_whatsapp_inbound,
     meta_whatsapp_webhook,
+    twilio_whatsapp_status_callback,
     twilio_whatsapp_webhook,
 )
 
@@ -15,5 +16,10 @@ urlpatterns = [
     path("", include(router.urls)),
     path("whatsapp/webhook/meta/", meta_whatsapp_webhook, name="whatsapp-webhook-meta"),
     path("whatsapp/webhook/twilio/", twilio_whatsapp_webhook, name="whatsapp-webhook-twilio"),
+    path(
+        "whatsapp/webhook/twilio/status/",
+        twilio_whatsapp_status_callback,
+        name="whatsapp-webhook-twilio-status",
+    ),
     path("whatsapp/bot-inbound/", bot_whatsapp_inbound, name="whatsapp-bot-inbound"),
 ]

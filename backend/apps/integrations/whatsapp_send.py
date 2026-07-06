@@ -8,6 +8,7 @@
 
 import base64
 import json
+import logging
 import re
 import urllib.error
 import urllib.parse
@@ -18,7 +19,84 @@ from django.conf import settings
 
 from apps.integrations.models import IntegrationCredential
 
+logger = logging.getLogger(__name__)
+
 # أسماء قوالب Meta الافتراضية (يُستبدلها من .env أو إعدادات التكامل)
+TWILIO_KNOWN_ERRORS: dict[int, str] = {
+    63112: (
+        "Meta عطّلت حساب WhatsApp Business المرتبط بالمرسل (63112). "
+        "راجع Meta Business Manager → Account Quality وأكمل التحقق من النشاط."
+    ),
+    63120: "حساب Meta Business مقفول — تواصل مع Meta Business Support (63120).",
+    63051: "مرسل أو حساب WhatsApp مقيّد من Meta (63051).",
+    63016: "الرقم غير مسجّل على واتساب أو غير صالح (63016).",
+    21211: "رقم المستلم غير صالح (21211).",
+    21608: "الرقم غير مفعّل لاستقبال رسائل WhatsApp عبر Twilio (21608).",
+}
+
+
+def parse_twilio_error(body: str) -> str:
+    """استخراج رسالة خطأ Twilio من JSON."""
+    try:
+        data = json.loads(body)
+        msg = data.get("message") or data.get("error_message")
+        code = data.get("code") or data.get("error_code")
+        if code:
+            try:
+                hint = TWILIO_KNOWN_ERRORS.get(int(code))
+                if hint:
+                    return hint
+            except (TypeError, ValueError):
+                pass
+        if msg and code:
+            return f"Twilio {code}: {msg}"
+        if msg:
+            return str(msg)
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return (body or "خطأ Twilio غير معروف")[:300]
+
+
+def evaluate_twilio_send_response(status_code: int, body: str) -> tuple[bool, str, str | None]:
+    """يُقيّم استجابة Twilio — 201 لا يعني بالضرورة وصول الرسالة للضيف."""
+    if status_code not in (200, 201):
+        return False, parse_twilio_error(body), None
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError:
+        return True, "تم قبول الطلب من Twilio", None
+
+    code = data.get("error_code") or data.get("code")
+    if code:
+        return False, parse_twilio_error(body), data.get("sid")
+
+    msg_status = (data.get("status") or "").lower()
+    sid = data.get("sid")
+    if msg_status in ("failed", "undelivered"):
+        return False, parse_twilio_error(body) or f"Twilio status={msg_status}", sid
+
+    detail = f"قُبلت من Twilio ({msg_status or 'accepted'})"
+    if msg_status == "queued":
+        detail += " — التوصيل غير مؤكد؛ راجع Twilio Message Logs"
+    if sid:
+        detail += f" [{sid}]"
+    return True, detail, sid
+
+
+def _log_twilio_result(action: str, phone: str, status_code: int, body: str) -> None:
+    sent, detail, sid = evaluate_twilio_send_response(status_code, body)
+    if sent:
+        logger.info("Twilio %s accepted to=%s http=%s sid=%s %s", action, phone, status_code, sid, detail)
+    else:
+        logger.warning(
+            "Twilio %s rejected to=%s http=%s sid=%s err=%s",
+            action,
+            phone,
+            status_code,
+            sid,
+            detail,
+        )
+
 META_TEMPLATE_INVITATION = "event_invitation"
 META_TEMPLATE_REMINDER = "event_reminder"
 META_TEMPLATE_LANGUAGE = "ar"
@@ -255,17 +333,20 @@ def send_twilio_content_template(
     status_code, body = _http_post_form(
         api_url, form, (cred.api_key, cred.api_secret)
     )
-    if status_code in (200, 201):
+    _log_twilio_result(f"content:{content_sid}", phone, status_code, body)
+    sent, detail, sid = evaluate_twilio_send_response(status_code, body)
+    if sent:
         return {
             "sent": True,
             "whatsapp_url": fallback_url,
-            "detail": f"تم الإرسال عبر Twilio Content: {content_sid}",
+            "detail": detail,
             "template": content_sid,
+            "twilio_sid": sid,
         }
     return {
         "sent": False,
         "whatsapp_url": fallback_url,
-        "detail": body[:300] or "فشل إرسال قالب Twilio",
+        "detail": detail,
     }
 
 
@@ -450,14 +531,17 @@ def _send_twilio_whatsapp(cred, digits: str, text: str, fallback_url: str) -> di
         {"From": from_number, "To": to_number, "Body": text},
         (cred.api_key, cred.api_secret),
     )
-    if status_code in (200, 201):
+    _log_twilio_result("text", digits, status_code, body)
+    sent, detail, sid = evaluate_twilio_send_response(status_code, body)
+    if sent:
         return {
             "sent": True,
             "whatsapp_url": fallback_url,
-            "detail": "تم الإرسال عبر Twilio WhatsApp",
+            "detail": detail,
+            "twilio_sid": sid,
         }
     return {
         "sent": False,
         "whatsapp_url": fallback_url,
-        "detail": body[:200] or "فشل إرسال واتساب",
+        "detail": detail,
     }

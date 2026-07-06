@@ -393,15 +393,24 @@ class InvitationViewSet(viewsets.ModelViewSet):
         # المزوّد الرسمي يتقدّم تلقائياً متى وُجد اعتماد نشط
         if configured != "manual" and has_active_whatsapp_credential():
             effective = "cloud" if _active_cloud_credential() else "twilio"
-            return Response(
-                {
-                    "provider": effective,
-                    "configured": configured,
-                    "label": labels[effective],
-                    "ready": True,
-                    "automated": True,
-                }
+            from apps.integrations.whatsapp_twilio_setup import (
+                check_twilio_invitation_setup,
             )
+
+            payload = {
+                "provider": effective,
+                "configured": configured,
+                "label": labels[effective],
+                "ready": True,
+                "automated": True,
+            }
+            if effective == "twilio":
+                setup = check_twilio_invitation_setup()
+                payload["ready"] = setup["ready"]
+                payload["issues"] = setup["issues"]
+                if setup["issues"]:
+                    payload["error"] = " | ".join(setup["issues"])
+            return Response(payload)
 
         if configured == "bot":
             info = {
@@ -482,6 +491,27 @@ class InvitationViewSet(viewsets.ModelViewSet):
         template = request.data.get("message") or event.invitation_message
         auto = bool(request.data.get("auto"))
 
+        if auto:
+            from apps.integrations.whatsapp_send import (
+                _active_cloud_credential,
+                _active_twilio_credential,
+            )
+            from apps.integrations.whatsapp_twilio_setup import (
+                check_twilio_invitation_setup,
+            )
+
+            if _active_twilio_credential() and not _active_cloud_credential():
+                setup = check_twilio_invitation_setup()
+                if not setup["ready"]:
+                    return Response(
+                        {
+                            "detail": "لا يمكن الإرسال — إعداد Twilio غير مكتمل",
+                            "issues": setup["issues"],
+                            "auto": True,
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
         results = []
         for guest in guests:
             invite_url = f"{settings.FRONTEND_URL}/i/{guest.public_token}"
@@ -498,19 +528,24 @@ class InvitationViewSet(viewsets.ModelViewSet):
                 detail = outcome.get("detail", "")
                 if sent:
                     mark_guest_invitation_sent(guest)
+            else:
+                detail = "وضع يدوي — لم يُرسل عبر Twilio. فعّل «إرسال تلقائي»."
+
+            if auto and sent:
+                inv_status = Invitation.Status.SENT
+            elif auto:
+                inv_status = Invitation.Status.FAILED
+            else:
+                inv_status = Invitation.Status.PENDING
 
             Invitation.objects.create(
                 event=event,
                 guest=guest,
                 method=Invitation.Method.WHATSAPP,
-                status=(
-                    Invitation.Status.SENT
-                    if (not auto or sent)
-                    else Invitation.Status.FAILED
-                ),
+                status=inv_status,
                 subject=title,
                 message=body,
-                sent_at=timezone.now(),
+                sent_at=timezone.now() if auto and sent else None,
             )
             results.append(
                 {
@@ -528,7 +563,16 @@ class InvitationViewSet(viewsets.ModelViewSet):
                 }
             )
 
-        return Response({"count": len(results), "auto": auto, "invitations": results})
+        sent_count = sum(1 for r in results if r["sent"])
+        return Response(
+            {
+                "count": len(results),
+                "auto": auto,
+                "sent_count": sent_count,
+                "failed_count": len(results) - sent_count,
+                "invitations": results,
+            }
+        )
 
     @action(detail=False, methods=["post"], url_path="remind-batch")
     def remind_batch(self, request):

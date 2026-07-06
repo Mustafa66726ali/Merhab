@@ -284,6 +284,7 @@ export default function InvitationBuilder({ eventId }: Props) {
     state?: string;
     queue?: number;
     error?: string;
+    issues?: string[];
   } | null>(null);
 
   // التذكير التلقائي قبل الحفل (يُرسل عبر Twilio دون تدخّل)
@@ -461,11 +462,22 @@ export default function InvitationBuilder({ eventId }: Props) {
       else if (audienceType === "custom") payload.guest_ids = Array.from(customIds);
       const res = await invitationsAPI.sendBatch(payload);
       setResults(res.data.invitations);
-      setNotice(
-        autoSend
-          ? `تم إرسال ${res.data.count} دعوة تلقائياً عبر المزوّد.`
-          : `تم تجهيز ${res.data.count} دعوة — افتح واتساب لكل ضيف لإتمام الإرسال.`
-      );
+      const sentOk = res.data.sent_count ?? res.data.invitations.filter((r) => r.sent).length;
+      const failed = res.data.failed_count ?? res.data.count - sentOk;
+      if (autoSend) {
+        if (failed > 0) {
+          const firstErr =
+            res.data.invitations.find((r) => !r.sent)?.detail || "خطأ غير معروف";
+          setError(`فشل إرسال ${failed} من ${res.data.count}. السبب: ${firstErr}`);
+          setNotice(`نجح ${sentOk} — فشل ${failed}`);
+        } else {
+          setNotice(`تم إرسال ${sentOk} دعوة تلقائياً عبر ${bot?.label || "المزوّد"}.`);
+        }
+      } else {
+        setNotice(
+          `تم تجهيز ${res.data.count} دعوة — فعّل «إرسال تلقائي» لإرسالها عبر Twilio.`
+        );
+      }
     } catch (e) {
       setError(errMessage(e, "تعذّر إرسال الدعوات."));
     } finally {
@@ -513,7 +525,9 @@ export default function InvitationBuilder({ eventId }: Props) {
 
   // الإرسال العام لكل الضيوف متاح فقط مع مزوّد رسمي (Twilio/Cloud) — لا البوت
   const isOfficialApi =
-    !!bot && (bot.provider === "twilio" || bot.provider === "cloud");
+    !!bot &&
+    (bot.provider === "twilio" || bot.provider === "cloud") &&
+    bot.ready;
 
   const sendToAll = async () => {
     if (!isOfficialApi) return;
@@ -686,7 +700,7 @@ export default function InvitationBuilder({ eventId }: Props) {
           <button
             type="button"
             onClick={() => setAutoSend((v) => !v)}
-            disabled={!!bot && bot.provider === "manual"}
+            disabled={!!bot && (bot.provider === "manual" || !bot.ready)}
             className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50 ${
               autoSend
                 ? "bg-emerald-500/90 text-white"
@@ -723,6 +737,20 @@ export default function InvitationBuilder({ eventId }: Props) {
           </button>
         </div>
       </div>
+
+      {bot?.issues && bot.issues.length > 0 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          <p className="font-bold mb-2 flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">warning</span>
+            إعداد Twilio غير مكتمل — لن تُرسل الدعوات حتى تُصلَح:
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-amber-200/90 text-xs">
+            {bot.issues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {bulkOpen && (
         <div

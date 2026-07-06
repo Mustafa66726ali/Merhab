@@ -267,6 +267,7 @@ export interface WhatsappBotStatus {
   state?: string;
   queue?: number;
   error?: string;
+  issues?: string[];
 }
 
 export const invitationsAPI = {

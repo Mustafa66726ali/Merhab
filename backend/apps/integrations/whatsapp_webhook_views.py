@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import json
 
+import logging
+
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+
+logger = logging.getLogger(__name__)
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -71,6 +75,29 @@ def twilio_whatsapp_webhook(request):
     text = request.POST.get("Body", "")
     phone = request.POST.get("From", "").replace("whatsapp:", "").replace("+", "")
     handle_rsvp_inbound(phone=phone, button_id=button_id, text=text)
+    return HttpResponse(status=200)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def twilio_whatsapp_status_callback(request):
+    """Twilio — تحديث حالة التسليم (failed/delivered/...)."""
+    sid = request.POST.get("MessageSid", "")
+    status = request.POST.get("MessageStatus", "")
+    error_code = request.POST.get("ErrorCode", "")
+    error_message = request.POST.get("ErrorMessage", "")
+    to = request.POST.get("To", "")
+    if error_code or status in ("failed", "undelivered"):
+        logger.warning(
+            "Twilio delivery failed sid=%s to=%s status=%s code=%s msg=%s",
+            sid,
+            to,
+            status,
+            error_code,
+            error_message,
+        )
+    else:
+        logger.info("Twilio delivery sid=%s to=%s status=%s", sid, to, status)
     return HttpResponse(status=200)
 
 

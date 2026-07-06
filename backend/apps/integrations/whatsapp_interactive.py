@@ -27,9 +27,11 @@ from .whatsapp_send import (
     _http_post_form,
     _http_post_json,
     normalize_phone_digits,
+    parse_twilio_error,
     send_twilio_content_template,
     send_via_bot,
 )
+from .whatsapp_twilio_setup import check_twilio_invitation_setup
 
 
 def _cloud_post(cred, payload: dict) -> tuple[bool, str]:
@@ -98,10 +100,10 @@ def _send_cloud_rsvp_buttons(phone: str, guest: Guest) -> bool:
     return ok
 
 
-def _send_twilio_text(phone: str, text: str) -> bool:
+def _send_twilio_text(phone: str, text: str) -> dict:
     cred = _active_twilio_credential()
     if not cred:
-        return False
+        return {"sent": False, "detail": "لا يوجد اعتماد Twilio"}
     from_number = cred.phone_number_id.strip()
     if not from_number.startswith("whatsapp:"):
         from_number = f"whatsapp:+{normalize_phone_digits(from_number)}"
@@ -109,12 +111,14 @@ def _send_twilio_text(phone: str, text: str) -> bool:
     api_url = (
         f"https://api.twilio.com/2010-04-01/Accounts/{cred.api_key}/Messages.json"
     )
-    status_code, _ = _http_post_form(
+    status_code, body = _http_post_form(
         api_url,
         {"From": from_number, "To": to_number, "Body": text},
         (cred.api_key, cred.api_secret),
     )
-    return status_code in (200, 201)
+    if status_code in (200, 201):
+        return {"sent": True, "detail": "نص Twilio"}
+    return {"sent": False, "detail": parse_twilio_error(body)}
 
 
 def _twilio_content_sids() -> dict[str, str]:
@@ -136,64 +140,64 @@ def _send_twilio_interactive_invitation(
     map_u: str | None,
 ) -> dict:
     """دعوة تفاعلية Twilio: قوالب Content بالتسلسل (نص + خريطة + فتح + نعم/لا)."""
+    setup = check_twilio_invitation_setup()
+    if not setup["ready"]:
+        return {
+            "sent": False,
+            "detail": "إعداد Twilio غير مكتمل: " + " | ".join(setup["issues"]),
+            "interactive": True,
+            "issues": setup["issues"],
+        }
+
     sids = _twilio_content_sids()
     token = str(guest.public_token)
-    steps_ok = 0
-    steps_total = 0
     details: list[str] = []
+    errors: list[str] = []
 
-    if sids["invitation"]:
-        steps_total += 1
-        out = send_twilio_content_template(
-            phone,
-            sids["invitation"],
-            invitation_twilio_variables(guest),
-        )
-        if out.get("sent"):
-            steps_ok += 1
-            details.append("invitation")
-    else:
-        steps_total += 1
-        if _send_twilio_text(phone, body):
-            steps_ok += 1
-            details.append("invitation-text")
+    out = send_twilio_content_template(
+        phone,
+        sids["invitation"],
+        invitation_twilio_variables(guest),
+    )
+    if not out.get("sent"):
+        return {
+            "sent": False,
+            "detail": out.get("detail", "فشل إرسال قالب الدعوة"),
+            "interactive": True,
+        }
+    details.append("invitation")
 
     map_var = map_template_variable(guest.event) if map_u else None
     if map_var and sids["map"]:
-        steps_total += 1
         out = send_twilio_content_template(phone, sids["map"], {"1": map_var})
         if out.get("sent"):
-            steps_ok += 1
             details.append("map")
+        else:
+            errors.append(out.get("detail", "map"))
 
-    if sids["open_invite"]:
-        steps_total += 1
-        out = send_twilio_content_template(phone, sids["open_invite"], {"1": token})
-        if out.get("sent"):
-            steps_ok += 1
-            details.append("open")
-    elif inv:
-        steps_total += 1
-        if _send_twilio_text(phone, INVITE_LINK_BODY):
-            steps_ok += 1
-            details.append("open-text")
-
-    if sids["rsvp"]:
-        steps_total += 1
-        out = send_twilio_content_template(phone, sids["rsvp"], {"1": token})
-        if out.get("sent"):
-            steps_ok += 1
-            details.append("rsvp")
+    out = send_twilio_content_template(phone, sids["open_invite"], {"1": token})
+    if out.get("sent"):
+        details.append("open")
     else:
-        steps_total += 1
-        if _send_twilio_text(phone, "هل ستحضر؟\nرد بـ: نعم  أو  لا"):
-            steps_ok += 1
-            details.append("rsvp-text")
+        return {
+            "sent": False,
+            "detail": out.get("detail", "فشل إرسال زر فتح الدعوة"),
+            "interactive": True,
+            "partial": details,
+        }
 
-    sent = steps_ok >= 2
+    out = send_twilio_content_template(phone, sids["rsvp"], {"1": token})
+    if out.get("sent"):
+        details.append("rsvp")
+    else:
+        errors.append(out.get("detail", "rsvp"))
+
+    detail = f"دعوة Twilio ({len(details)} خطوات): {', '.join(details)}"
+    if errors:
+        detail += f" — تحذيرات: {' | '.join(errors)}"
     return {
-        "sent": sent,
-        "detail": f"دعوة Twilio ({steps_ok}/{steps_total}): {', '.join(details)}",
+        "sent": True,
+        "detail": detail,
         "interactive": True,
     }
 
@@ -262,7 +266,7 @@ def send_interactive_invitation(
     if twilio and provider != "manual" and not cloud:
         return _send_twilio_interactive_invitation(phone, guest, body, inv, map_u)
 
-    if provider == "bot":
+    if provider == "bot" and not twilio:
         sent = _send_bot_invitation(phone, guest, body, map_u, inv)
         return {
             "sent": sent,

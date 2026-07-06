@@ -139,6 +139,7 @@ class GuestViewSet(viewsets.ModelViewSet):
         user = self.request.user
         require_platform_permission(user, PERM_EDIT_GUESTS, "غير مصرح — لا تملك صلاحية تعديل الضيوف")
         require_event_access(user, serializer.instance.event)
+        require_event_guest_editable(serializer.instance.event)
         serializer.save()
 
     def perform_destroy(self, instance):
@@ -149,6 +150,8 @@ class GuestViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def import_guests(self, request):
+        from rest_framework.exceptions import ValidationError as DRFValidationError
+
         require_platform_permission(
             request.user,
             PERM_EDIT_GUESTS,
@@ -157,18 +160,53 @@ class GuestViewSet(viewsets.ModelViewSet):
         serializer = GuestImportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         created = []
-        for guest_data in serializer.validated_data["guests"]:
+        row_errors: list[str] = []
+        for row_idx, guest_data in enumerate(serializer.validated_data["guests"], start=1):
             from apps.events.models import Event
 
-            event = Event.objects.select_related("platform").get(pk=guest_data.get("event"))
-            require_event_access(request.user, event)
-            require_event_guest_editable(event)
-            row = dict(guest_data)
-            row.pop("id", None)
-            guest_ser = GuestSerializer(data=row)
-            guest_ser.is_valid(raise_exception=True)
-            guest = guest_ser.save()
-            created.append(GuestSerializer(guest, context={"request": request}).data)
+            try:
+                event = Event.objects.select_related("platform").get(pk=guest_data.get("event"))
+                require_event_access(request.user, event)
+                require_event_guest_editable(event)
+                row = dict(guest_data)
+                row.pop("id", None)
+                guest_ser = GuestSerializer(data=row)
+                guest_ser.is_valid(raise_exception=True)
+                guest = guest_ser.save()
+                created.append(GuestSerializer(guest, context={"request": request}).data)
+            except DRFValidationError as exc:
+                name = (guest_data.get("full_name") or "").strip() or f"صف {row_idx}"
+                detail = exc.detail
+                if isinstance(detail, dict):
+                    if "detail" in detail:
+                        msg = detail["detail"]
+                    else:
+                        first = next(iter(detail.values()), "")
+                        msg = first
+                else:
+                    msg = detail
+                if isinstance(msg, list):
+                    msg = msg[0] if msg else "بيانات غير صالحة"
+                row_errors.append(f"{name}: {msg}")
+            except Event.DoesNotExist:
+                row_errors.append(f"صف {row_idx}: المناسبة غير موجودة")
+
+        if not created:
+            return Response(
+                {
+                    "detail": row_errors[0] if row_errors else "لم يُستورد أي ضيف",
+                    "errors": row_errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload: dict = {"created": created, "count": len(created)}
+        if row_errors:
+            payload["errors"] = row_errors
+            payload["partial"] = True
+            payload["detail"] = f"تم استيراد {len(created)} ضيف مع {len(row_errors)} أخطاء"
+            return Response(payload, status=status.HTTP_201_CREATED)
+
         return Response(created, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
