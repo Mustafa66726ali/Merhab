@@ -6,6 +6,12 @@ import type { EventBrief, EventListItem } from "@/lib/api";
 import { highlightMatch } from "./HighlightText";
 import { eventStatusClass } from "./eventStatus";
 
+type EventMiniCardItem = EventBrief | EventListItem;
+
+function guestStat(value: number | undefined | null) {
+  return Number(value ?? 0);
+}
+
 const STATUS_OPTIONS = [
   { value: "", label: "كل الحالات" },
   { value: "active", label: "نشط" },
@@ -150,11 +156,13 @@ export function EventMiniCards({
   events,
   icon,
   accent = "primary",
+  emptyMessage = "لا توجد بيانات",
 }: {
   title: string;
-  events: EventBrief[];
+  events: EventMiniCardItem[];
   icon: string;
   accent?: "primary" | "tertiary";
+  emptyMessage?: string;
 }) {
   return (
     <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4 sm:p-5">
@@ -165,10 +173,17 @@ export function EventMiniCards({
         <h4 className="font-bold text-on-surface text-sm sm:text-base">{title}</h4>
       </div>
       {events.length === 0 ? (
-        <p className="text-sm text-on-surface-variant py-4 text-center">لا توجد بيانات</p>
+        <p className="text-sm text-on-surface-variant py-4 text-center">{emptyMessage}</p>
       ) : (
         <ul className="space-y-3">
-          {events.map((ev, i) => (
+          {events.map((ev, i) => {
+            const guestsTotal = guestStat(ev.guests_count);
+            const confirmed = guestStat(ev.confirmed_count);
+            const attended = guestStat(ev.attended_count);
+            const invited = guestStat(ev.invited_count);
+            const hasGuests = guestsTotal > 0;
+
+            return (
             <li
               key={ev.id}
               className="flex items-center justify-between gap-3 p-3 rounded-xl bg-surface-container/50 border border-outline-variant/5 hover:border-primary-container/20 transition-colors"
@@ -176,7 +191,7 @@ export function EventMiniCards({
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-xs font-bold text-outline w-5">{i + 1}</span>
                 <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 border border-outline-variant/10">
-                  <EventCoverImage coverImage={ev.cover_image} alt={ev.title} variant="thumb" />
+                  <EventCoverImage coverImage={ev.cover_image} alt="" variant="thumb" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-on-surface truncate">{ev.title}</p>
@@ -184,11 +199,31 @@ export function EventMiniCards({
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs font-bold text-emerald-400">{ev.attended_count} حضور</p>
-                <p className="text-[10px] text-outline">{ev.guests_count} مدعو</p>
+                {!hasGuests ? (
+                  <p className="text-[10px] text-on-surface-variant">لا يوجد ضيوف مسجّل</p>
+                ) : (
+                  <div className="flex flex-wrap justify-end gap-1.5 max-w-[150px]">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-surface-container-high px-2 py-0.5 text-[10px] font-bold text-on-surface tabular-nums">
+                      <span className="material-symbols-outlined text-[12px] text-outline">group</span>
+                      {guestsTotal} مدعو
+                    </span>
+                    {invited > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-primary-container/15 px-2 py-0.5 text-[10px] font-bold text-primary tabular-nums">
+                        {invited} بانتظار
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary tabular-nums">
+                      {confirmed} مؤكد
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400 tabular-nums">
+                      {attended} حضر
+                    </span>
+                  </div>
+                )}
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>

@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AnalyticsBarChart from "./AnalyticsBarChart";
 import ActivityHeatmap from "@/components/charts/ActivityHeatmap";
 import EventsTableSection, { EventMiniCards } from "./EventsTableSection";
-import { eventsAPI, type EventsOverview, type EventListItem } from "@/lib/api";
+import {
+  eventsAPI,
+  extractApiList,
+  type EventsOverview,
+  type EventListItem,
+} from "@/lib/api";
 
 interface EventsDashboardProps {
   platformId?: number;
@@ -51,27 +56,90 @@ export default function EventsDashboard({
   const [overview, setOverview] = useState<EventsOverview>(emptyOverview);
   const [events, setEvents] = useState<EventListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     const params = platformId ? { platform: platformId } : undefined;
-    Promise.all([
-      eventsAPI.overview(params),
-      eventsAPI.list({ ...params, page_size: 500 }),
-    ])
-      .then(([ovRes, listRes]) => {
-        setOverview(ovRes.data);
-        const raw = listRes.data;
-        const list = Array.isArray(raw) ? raw : raw.results ?? [];
-        setEvents(list as EventListItem[]);
+    let cancelled = false;
+
+    setLoading(true);
+    setLoadError("");
+
+    const listPromise = eventsAPI
+      .list({ ...params, page_size: 500 })
+      .then((listRes) => {
+        if (cancelled) return;
+        setEvents(extractApiList<EventListItem>(listRes.data));
       })
       .catch(() => {
-        setOverview(emptyOverview);
+        if (cancelled) return;
         setEvents([]);
+        setLoadError("تعذّر تحميل قائمة الفعاليات من الخادم.");
+      });
+
+    const overviewPromise = eventsAPI
+      .overview(params)
+      .then((ovRes) => {
+        if (cancelled) return;
+        setOverview(ovRes.data);
       })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (cancelled) return;
+        setOverview(emptyOverview);
+      });
+
+    Promise.all([listPromise, overviewPromise]).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [platformId]);
 
-  const s = overview.stats;
+  const s = useMemo(() => {
+    if (events.length === 0) return overview.stats;
+
+    const totalGuests = events.reduce((sum, ev) => sum + (ev.guests_count || 0), 0);
+    const totalConfirmed = events.reduce((sum, ev) => sum + (ev.confirmed_count || 0), 0);
+    const confirmationRate =
+      totalGuests > 0
+        ? Math.round(Math.min(100, (totalConfirmed / totalGuests) * 100) * 10) / 10
+        : 0;
+
+    return {
+      total: events.length,
+      completed: events.filter((ev) => ev.status === "completed").length,
+      cancelled: events.filter((ev) => ev.status === "cancelled").length,
+      active: events.filter((ev) => ev.status === "active").length,
+      archived: events.filter((ev) => ev.status === "archived").length,
+      draft: events.filter((ev) => ev.status === "draft").length,
+      confirmation_rate: confirmationRate,
+      non_confirmation_rate: Math.round(Math.min(100, 100 - confirmationRate) * 10) / 10,
+    };
+  }, [events, overview.stats]);
+
+  const latestFive = useMemo(
+    () =>
+      [...events]
+        .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+        .slice(0, 5),
+    [events]
+  );
+
+  const topAttendanceFive = useMemo(
+    () =>
+      [...events]
+        .filter((ev) => (ev.guests_count || 0) > 0)
+        .sort(
+          (a, b) =>
+            (b.attended_count || 0) - (a.attended_count || 0) ||
+            (b.confirmed_count || 0) - (a.confirmed_count || 0) ||
+            (b.guests_count || 0) - (a.guests_count || 0)
+        )
+        .slice(0, 5),
+    [events]
+  );
 
   const kpiCards = [
     { label: "إجمالي المناسبات", value: s.total, icon: "celebration", color: "primary" },
@@ -111,6 +179,11 @@ export default function EventsDashboard({
             ? "جميع الفعاليات والمناسبات في المنصة المختارة"
             : "عرض جميع الفعاليات والمناسبات في كل المنصات"}
         </p>
+        {loadError && (
+          <p className="mt-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2">
+            {loadError}
+          </p>
+        )}
       </div>
 
       <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
@@ -130,12 +203,13 @@ export default function EventsDashboard({
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <EventMiniCards title="أحدث 5 فعاليات" events={overview.latest} icon="new_releases" />
+        <EventMiniCards title="أحدث 5 فعاليات" events={latestFive} icon="new_releases" />
         <EventMiniCards
           title="أكثر 5 فعاليات بحضور"
-          events={overview.top_attendance}
+          events={topAttendanceFive}
           icon="groups"
           accent="tertiary"
+          emptyMessage="لا توجد فعاليات بضيوف مسجّلين بعد"
         />
       </section>
 

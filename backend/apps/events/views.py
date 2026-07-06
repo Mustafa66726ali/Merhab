@@ -3,6 +3,7 @@ from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
@@ -25,6 +26,7 @@ from .live_media import (
     youtube_embed_url,
 )
 from .live_broadcast_send import send_broadcast_link_to_present_guests
+from .analytics import events_overview
 from .event_seating_overview import build_seating_overview
 from .event_groups_overview import build_groups_guests_csv, build_groups_overview
 from .models import Event, Section, Schedule, Group
@@ -46,8 +48,15 @@ LIVE_MEDIA_ROLES = (
 )
 
 
+class EventPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 1000
+
+
 class EventViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    pagination_class = EventPagination
     filterset_fields = ["status", "platform"]
     search_fields = ["title", "venue", "description", "platform__name"]
     ordering_fields = ["date", "title", "created_at"]
@@ -124,7 +133,7 @@ class EventViewSet(viewsets.ModelViewSet):
         if status:
             qs = qs.filter(status=status)
 
-        return qs
+        return qs.order_by("-created_at", "-id")
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -139,6 +148,22 @@ class EventViewSet(viewsets.ModelViewSet):
         if user.role == User.Role.PLATFORM_ADMIN:
             context["platform"] = get_platform_for_user(user)
         return context
+
+    def list(self, request, *args, **kwargs):
+        from apps.platforms.member_profile import _guest_stats_bulk
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        objects = page if page is not None else list(queryset)
+        stats_map = _guest_stats_bulk([obj.id for obj in objects])
+        serializer = self.get_serializer(
+            objects,
+            many=True,
+            context={**self.get_serializer_context(), "guest_stats_map": stats_map},
+        )
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -158,7 +183,7 @@ class EventViewSet(viewsets.ModelViewSet):
     def overview(self, request):
         platform_id = request.query_params.get("platform")
         pid = int(platform_id) if platform_id else None
-        return Response(events_overview(pid))
+        return Response(events_overview(pid, request))
 
     @action(detail=True, methods=["get"], url_path="groups-overview")
     def groups_overview(self, request, pk=None):

@@ -36,8 +36,15 @@ def _event_queryset(platform_id: int | None = None):
     return qs
 
 
-def _serialize_event_brief(ev: Event) -> dict:
+def _serialize_event_brief(ev: Event, request=None, stats=None) -> dict:
+    from apps.platforms.member_profile import _guest_stats_for_event
+
+    if stats is None:
+        stats = _guest_stats_for_event(ev.id)
     manager = ev.created_by.get_full_name().strip() or ev.created_by.email
+    cover_path = event_cover_url(ev)
+    if cover_path and request is not None:
+        cover_path = request.build_absolute_uri(cover_path)
     return {
         "id": ev.id,
         "title": ev.title,
@@ -46,12 +53,14 @@ def _serialize_event_brief(ev: Event) -> dict:
         "manager_name": manager,
         "status": ev.status,
         "status_label": ev.get_status_display(),
-        "guests_count": ev.guests_count,
-        "attended_count": ev.attended_count,
-        "confirmed_count": ev.confirmed_count,
+        "guests_count": stats["guests_total"],
+        "invited_count": stats["invited"],
+        "attended_count": stats["attended"],
+        "confirmed_count": stats["confirmed"],
+        "declined_count": stats["declined"],
         "date": ev.date.isoformat() if ev.date else "",
         "venue": ev.venue or "",
-        "cover_image": event_cover_url(ev),
+        "cover_image": cover_path,
         "created_at": ev.created_at.isoformat(),
     }
 
@@ -91,14 +100,32 @@ def compute_event_stats(platform_id: int | None = None) -> dict:
     }
 
 
-def latest_events(platform_id: int | None = None, limit: int = 5) -> list[dict]:
+def latest_events(platform_id: int | None = None, limit: int = 5, request=None) -> list[dict]:
+    from apps.platforms.member_profile import _guest_stats_bulk
+
     qs = _event_queryset(platform_id).order_by("-created_at")[:limit]
-    return [_serialize_event_brief(ev) for ev in qs]
+    events = list(qs)
+    stats_map = _guest_stats_bulk([ev.id for ev in events])
+    return [_serialize_event_brief(ev, request, stats_map.get(ev.id)) for ev in events]
 
 
-def top_attendance_events(platform_id: int | None = None, limit: int = 5) -> list[dict]:
-    qs = _event_queryset(platform_id).order_by("-attended_count", "-guests_count")[:limit]
-    return [_serialize_event_brief(ev) for ev in qs]
+def top_attendance_events(platform_id: int | None = None, limit: int = 5, request=None) -> list[dict]:
+    from apps.platforms.member_profile import _guest_stats_bulk
+
+    qs = _event_queryset(platform_id).order_by("-created_at")
+    events = list(qs)
+    stats_map = _guest_stats_bulk([ev.id for ev in events])
+
+    def sort_key(ev: Event) -> tuple:
+        stats = stats_map.get(ev.id) or {}
+        return (
+            stats.get("attended", 0),
+            stats.get("confirmed", 0),
+            stats.get("guests_total", 0),
+        )
+
+    ranked = sorted(events, key=sort_key, reverse=True)[:limit]
+    return [_serialize_event_brief(ev, request, stats_map.get(ev.id)) for ev in ranked]
 
 
 def _bar_heights(values: list[int]) -> list[str]:
@@ -181,10 +208,10 @@ def event_charts(platform_id: int | None = None) -> dict:
     }
 
 
-def events_overview(platform_id: int | None = None) -> dict:
+def events_overview(platform_id: int | None = None, request=None) -> dict:
     return {
         "stats": compute_event_stats(platform_id),
-        "latest": latest_events(platform_id, 5),
-        "top_attendance": top_attendance_events(platform_id, 5),
+        "latest": latest_events(platform_id, 5, request),
+        "top_attendance": top_attendance_events(platform_id, 5, request),
         "charts": event_charts(platform_id),
     }

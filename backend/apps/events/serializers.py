@@ -125,8 +125,10 @@ class GroupSerializer(serializers.ModelSerializer):
 class EventListSerializer(serializers.ModelSerializer):
     sections_count = serializers.SerializerMethodField()
     guests_count = serializers.SerializerMethodField()
+    invited_count = serializers.SerializerMethodField()
     attended_count = serializers.SerializerMethodField()
     confirmed_count = serializers.SerializerMethodField()
+    declined_count = serializers.SerializerMethodField()
     platform_name = serializers.SerializerMethodField()
     platform_id = serializers.SerializerMethodField()
     manager_name = serializers.SerializerMethodField()
@@ -138,10 +140,22 @@ class EventListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "title", "date", "time", "venue", "geo_address", "latitude", "longitude",
             "status", "status_label",
-            "max_guests", "cover_image", "sections_count", "guests_count",
-            "attended_count", "confirmed_count", "platform_id", "platform_name",
+            "max_guests", "cover_image", "sections_count", "guests_count", "invited_count",
+            "attended_count", "confirmed_count", "declined_count", "platform_id", "platform_name",
             "manager_name", "created_at",
         ]
+
+    def _guest_stats(self, obj):
+        stats_map = self.context.get("guest_stats_map") or {}
+        return stats_map.get(obj.id)
+
+    def _count_field(self, obj, stats_key: str, annotate_key: str, fallback_filter):
+        stats = self._guest_stats(obj)
+        if stats is not None:
+            return stats.get(stats_key, 0)
+        if hasattr(obj, annotate_key) and not callable(getattr(obj, annotate_key, None)):
+            return getattr(obj, annotate_key)
+        return fallback_filter()
 
     def get_sections_count(self, obj):
         if hasattr(obj, "sections_count") and not callable(getattr(obj, "sections_count", None)):
@@ -149,19 +163,39 @@ class EventListSerializer(serializers.ModelSerializer):
         return obj.sections.count()
 
     def get_guests_count(self, obj):
-        if hasattr(obj, "guests_count") and not callable(getattr(obj, "guests_count", None)):
-            return obj.guests_count
-        return obj.guests.count()
+        return self._count_field(obj, "guests_total", "guests_count", lambda: obj.guests.count())
+
+    def get_invited_count(self, obj):
+        return self._count_field(
+            obj,
+            "invited",
+            "invited_count",
+            lambda: obj.guests.filter(status=Guest.Status.INVITED).count(),
+        )
 
     def get_attended_count(self, obj):
-        if hasattr(obj, "attended_count"):
-            return obj.attended_count
-        return obj.guests.filter(status="attended").count()
+        return self._count_field(
+            obj,
+            "attended",
+            "attended_count",
+            lambda: obj.guests.filter(status__in=PHYSICAL_PRESENCE_STATUSES).count(),
+        )
 
     def get_confirmed_count(self, obj):
-        if hasattr(obj, "confirmed_count"):
-            return obj.confirmed_count
-        return obj.guests.filter(status__in=CONFIRMED_ATTENDANCE_STATUSES).count()
+        return self._count_field(
+            obj,
+            "confirmed",
+            "confirmed_count",
+            lambda: obj.guests.filter(status__in=CONFIRMED_ATTENDANCE_STATUSES).count(),
+        )
+
+    def get_declined_count(self, obj):
+        return self._count_field(
+            obj,
+            "declined",
+            "declined_count",
+            lambda: obj.guests.filter(status=Guest.Status.DECLINED).count(),
+        )
 
     def get_platform_name(self, obj):
         return obj.platform.name if obj.platform else "—"

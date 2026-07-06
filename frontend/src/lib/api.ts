@@ -1275,8 +1275,10 @@ export interface EventBrief {
   status: string;
   status_label: string;
   guests_count: number;
+  invited_count?: number;
   attended_count: number;
   confirmed_count: number;
+  declined_count?: number;
   date: string;
   venue: string;
   cover_image: string;
@@ -1615,8 +1617,10 @@ export interface EventListItem {
   max_guests: number;
   cover_image?: string;
   guests_count: number;
+  invited_count?: number;
   attended_count: number;
   confirmed_count: number;
+  declined_count?: number;
   platform_id: number | null;
   platform_name: string;
   manager_name: string;
