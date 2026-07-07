@@ -12,8 +12,16 @@ from apps.guests.status_utils import (
 )
 
 
-def _group_section_label(event: Event, group_id: int, guests_by_group: dict) -> tuple[int | None, str, str]:
-    """أقرب قسم للمجموعة حسب توزيع الضيوف."""
+def _group_section_label(event: Event, group, guests_by_group: dict) -> tuple[int | None, str, str]:
+    """قسم المجموعة المعتمد، مع fallback تقديري للبيانات القديمة."""
+    if group.section_id:
+        section = group.section
+        if section:
+            return section.id, section.name, section.color or "#5b2eff"
+        return group.section_id, "", ""
+
+    group_id = group.id
+    # Fallback: في البيانات القديمة قد لا يكون group.section مضبوطاً.
     section_counts: dict[int, int] = {}
     for guest in guests_by_group.get(group_id, []):
         if guest.section_id:
@@ -49,9 +57,7 @@ def build_groups_overview(event: Event) -> dict:
         guests_pending = sum(1 for g in group_guests if g.status == Guest.Status.INVITED)
         rate = rate_percent(guests_confirmed, guests_total)
 
-        section_id, section_name, section_color = _group_section_label(
-            event, group.id, guests_by_group
-        )
+        section_id, section_name, section_color = _group_section_label(event, group, guests_by_group)
 
         groups_payload.append(
             {

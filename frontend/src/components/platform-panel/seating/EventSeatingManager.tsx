@@ -823,13 +823,30 @@ function TableFormModal({
   const [busy, setBusy] = useState(false);
 
   const filteredGroups = useMemo(
-    () => (sectionId ? groups.filter((g) => g.section_id === sectionId) : groups),
+    () => (sectionId === "" ? [] : groups.filter((g) => g.section_id === sectionId)),
     [groups, sectionId]
   );
+  const hasSectionGroups = sectionId !== "" && filteredGroups.length > 0;
+
+  useEffect(() => {
+    if (groupId === "") return;
+    const selectedGroup = groups.find((g) => g.id === groupId);
+    if (!selectedGroup) {
+      setGroupId("");
+      return;
+    }
+    if (sectionId !== "" && selectedGroup.section_id !== sectionId) {
+      setGroupId("");
+    }
+  }, [groupId, groups, sectionId]);
 
   const submit = async () => {
     if (!name.trim()) {
       onError("اسم الطاولة مطلوب");
+      return;
+    }
+    if (sectionId === "") {
+      onError("اختر القسم أولاً");
       return;
     }
     setBusy(true);
@@ -858,7 +875,7 @@ function TableFormModal({
   return (
     <ModalShell title={table ? "تعديل الطاولة" : "طاولة جديدة"} onClose={onClose}>
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="اسم الطاولة">
             <input
               value={name}
@@ -900,7 +917,7 @@ function TableFormModal({
           </div>
         </Field>
 
-        <Field label="القسم (اختياري)">
+        <Field label="القسم">
           <select
             value={sectionId}
             onChange={(e) => {
@@ -910,7 +927,7 @@ function TableFormModal({
             }}
             className="input-field"
           >
-            <option value="">بدون قسم</option>
+            <option value="">اختر القسم</option>
             {sections.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -922,15 +939,16 @@ function TableFormModal({
         <Field label="المجموعة (طاولة واحدة لمجموعة واحدة)">
           <select
             value={groupId}
+            disabled={sectionId === ""}
             onChange={(e) => {
               const v = e.target.value === "" ? "" : Number(e.target.value);
               setGroupId(v);
-              const g = groups.find((x) => x.id === v);
-              if (g && g.section_id) setSectionId(g.section_id);
             }}
-            className="input-field"
+            className="input-field disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <option value="">بدون مجموعة</option>
+            <option value="">
+              {sectionId === "" ? "اختر القسم أولاً" : "بدون مجموعة"}
+            </option>
             {filteredGroups.map((g) => (
               <option key={g.id} value={g.id}>
                 {g.name}
@@ -941,6 +959,11 @@ function TableFormModal({
           <p className="text-[11px] text-on-surface-variant mt-1.5">
             يمكن ربط أكثر من طاولة بنفس المجموعة، لكن كل طاولة لمجموعة واحدة فقط.
           </p>
+          {sectionId !== "" && !hasSectionGroups && (
+            <p className="text-[11px] text-amber-400 mt-1">
+              لا توجد مجموعات مرتبطة بهذا القسم حالياً.
+            </p>
+          )}
         </Field>
       </div>
       <ModalActions busy={busy} onClose={onClose} onSubmit={submit} />
@@ -965,7 +988,7 @@ function ModalShell({
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md bg-surface-container rounded-t-3xl sm:rounded-3xl border border-outline-variant/10 shadow-2xl max-h-[92vh] overflow-y-auto"
+        className="w-full sm:max-w-lg bg-surface-container rounded-t-3xl sm:rounded-3xl border border-outline-variant/10 shadow-2xl max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/10 sticky top-0 bg-surface-container z-10">
