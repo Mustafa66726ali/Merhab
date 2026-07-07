@@ -462,8 +462,8 @@ export default function InvitationBuilder({ eventId }: Props) {
       else if (audienceType === "custom") payload.guest_ids = Array.from(customIds);
       const res = await invitationsAPI.sendBatch(payload);
       setResults(res.data.invitations);
-      const sentOk = res.data.sent_count ?? res.data.invitations.filter((r) => r.sent).length;
-      const failed = res.data.failed_count ?? res.data.count - sentOk;
+      const sentOk = res.data.invitations.filter((r) => r.sent).length;
+      const failed = res.data.count - sentOk;
       if (autoSend) {
         if (failed > 0) {
           const firstErr =

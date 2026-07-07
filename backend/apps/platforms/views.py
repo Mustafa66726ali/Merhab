@@ -5,7 +5,7 @@ from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -83,6 +83,7 @@ from .serializers import (
     PlatformCreateSerializer,
     PlatformUpdateSerializer,
 )
+from apps.integrations.permissions import IsSystemManager
 
 
 class PlatformPagination(PageNumberPagination):
@@ -96,6 +97,28 @@ class PlatformViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "owner__email", "owner__first_name", "owner__last_name"]
     ordering_fields = ["created_at", "name", "status"]
     pagination_class = PlatformPagination
+
+    _SYSTEM_MANAGER_ACTIONS = frozenset({
+        "list",
+        "create",
+        "retrieve",
+        "update",
+        "partial_update",
+        "destroy",
+        "export",
+        "stats",
+        "all_staff",
+        "system_overview",
+        "overview",
+        "staff",
+        "send_message",
+        "send_notification",
+    })
+
+    def get_permissions(self):
+        if self.action in self._SYSTEM_MANAGER_ACTIONS:
+            return [IsSystemManager()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         qs = Platform.objects.select_related("owner").annotate(
