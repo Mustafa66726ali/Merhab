@@ -854,7 +854,7 @@ function TableFormModal({
       name: name.trim(),
       capacity: Number(capacity) || 1,
       shape,
-      section: sectionId === "" ? null : sectionId,
+      section: sectionId,
       group: groupId === "" ? null : groupId,
     };
     try {

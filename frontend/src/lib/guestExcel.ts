@@ -2,6 +2,17 @@ import * as XLSX from "xlsx";
 
 import type { EventGuestRow } from "@/lib/api";
 
+const GUEST_EXPORT_HEADERS = ["الحالة", "المجموعة", "القسم", "المناسبة", "الجوال", "البريد", "الاسم"];
+const GUEST_EXPORT_COLS = [
+  { wch: 14 },
+  { wch: 18 },
+  { wch: 18 },
+  { wch: 24 },
+  { wch: 18 },
+  { wch: 28 },
+  { wch: 28 },
+];
+
 export interface GuestImportRow {
   full_name: string;
   email: string;
@@ -97,26 +108,17 @@ export async function parseGuestExcelFile(file: File): Promise<GuestImportRow[]>
 }
 
 export function exportGuestsExcel(rows: EventGuestRow[], filename: string) {
-  const data = rows.map((guest) => ({
-    الاسم: guest.full_name,
-    البريد: guest.email || "",
-    الجوال: guest.phone || "",
-    المناسبة: guest.event_title || "",
-    القسم: guest.section_name || "",
-    المجموعة: guest.group_name || "",
-    الحالة: guest.status_label || "",
-  }));
-
-  const sheet = XLSX.utils.json_to_sheet(data);
-  sheet["!cols"] = [
-    { wch: 28 },
-    { wch: 28 },
-    { wch: 18 },
-    { wch: 24 },
-    { wch: 18 },
-    { wch: 18 },
-    { wch: 14 },
-  ];
+  const body = rows.map((guest) => [
+    guest.status_label || "",
+    guest.group_name || "",
+    guest.section_name || "",
+    guest.event_title || "",
+    guest.phone || "",
+    guest.email || "",
+    guest.full_name,
+  ]);
+  const sheet = XLSX.utils.aoa_to_sheet([GUEST_EXPORT_HEADERS, ...body]);
+  sheet["!cols"] = GUEST_EXPORT_COLS;
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, sheet, "الضيوف");
@@ -125,10 +127,8 @@ export function exportGuestsExcel(rows: EventGuestRow[], filename: string) {
 }
 
 export function downloadGuestImportTemplate() {
-  const sheet = XLSX.utils.aoa_to_sheet([
-    ["الاسم", "البريد", "الجوال"],
-    ["أحمد محمد", "ahmed@example.com", "966501234567"],
-  ]);
+  const sheet = XLSX.utils.aoa_to_sheet([GUEST_EXPORT_HEADERS]);
+  sheet["!cols"] = GUEST_EXPORT_COLS;
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, sheet, "نموذج");
   XLSX.writeFile(workbook, "guests-import-template.xlsx");
