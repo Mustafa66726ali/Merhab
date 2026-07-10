@@ -753,20 +753,6 @@ export default function InvitationBuilder({ eventId }: Props) {
         </div>
       )}
 
-      {bot?.warnings && bot.warnings.length > 0 && !(bot.issues && bot.issues.length > 0) && (
-        <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
-          <p className="font-bold mb-2 flex items-center gap-2">
-            <span className="material-symbols-outlined text-base">info</span>
-            تنبيه من رسائل Twilio سابقة — يمكنك الإرسال بعد الإصلاح:
-          </p>
-          <ul className="list-disc list-inside space-y-1 text-sky-200/90 text-xs">
-            {bot.warnings.map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {bulkOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
