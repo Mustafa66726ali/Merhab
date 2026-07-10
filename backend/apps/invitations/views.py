@@ -408,6 +408,7 @@ class InvitationViewSet(viewsets.ModelViewSet):
                 setup = check_twilio_invitation_setup()
                 payload["ready"] = setup["ready"]
                 payload["issues"] = setup["issues"]
+                payload["warnings"] = setup.get("warnings") or []
                 if setup["issues"]:
                     payload["error"] = " | ".join(setup["issues"])
             return Response(payload)

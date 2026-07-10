@@ -147,6 +147,7 @@ def _send_twilio_interactive_invitation(
             "detail": "إعداد Twilio غير مكتمل: " + " | ".join(setup["issues"]),
             "interactive": True,
             "issues": setup["issues"],
+            "warnings": setup.get("warnings") or [],
         }
 
     sids = _twilio_content_sids()

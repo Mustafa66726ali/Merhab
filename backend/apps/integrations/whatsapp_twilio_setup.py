@@ -6,6 +6,7 @@ import base64
 import json
 import urllib.error
 import urllib.request
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 
@@ -15,12 +16,16 @@ from .whatsapp_send import (
     _active_twilio_credential,
 )
 
+# إخفاقات التسليم الأقدم من هذه المدة تُتجاهل (لا تمنع الإرسال بعد الإصلاح)
+_DELIVERY_WARNING_WINDOW = timedelta(hours=6)
+
 
 def check_twilio_invitation_setup() -> dict:
-    """يُرجع قائمة مشاكل الإعداد قبل محاولة الإرسال."""
+    """يُرجع مشاكل الإعداد (تمنع الإرسال) وتحذيرات التسليم (لا تمنعه)."""
     provider = (getattr(settings, "WHATSAPP_PROVIDER", "manual") or "manual").lower()
     cred = _active_twilio_credential()
     issues: list[str] = []
+    warnings: list[str] = []
 
     if provider == "manual":
         issues.append(
@@ -39,7 +44,12 @@ def check_twilio_invitation_setup() -> dict:
             "لا يوجد اعتماد Twilio نشط — أضف Account SID + Auth Token + رقم المُرسِل "
             "من صفحة التكاملات."
         )
-        return {"ready": False, "issues": issues, "provider": provider}
+        return {
+            "ready": False,
+            "issues": issues,
+            "warnings": warnings,
+            "provider": provider,
+        }
 
     if not cred.api_key or not cred.api_secret:
         issues.append("Account SID أو Auth Token ناقص في التكاملات.")
@@ -67,23 +77,35 @@ def check_twilio_invitation_setup() -> dict:
             "يجب أن يكون لكل قالب HX منفصل."
         )
 
-    issues.extend(_recent_twilio_delivery_issues(cred))
+    # إخفاقات التسليم السابقة = تحذير فقط؛ لا تمنع الإرسال بعد إصلاح السبب
+    warnings.extend(_recent_twilio_delivery_warnings(cred))
 
     return {
         "ready": len(issues) == 0,
         "issues": issues,
+        "warnings": warnings,
         "provider": provider,
         "sender": cred.phone_number_id,
     }
 
 
-def _recent_twilio_delivery_issues(cred) -> list[str]:
-    """تحذير إذا آخر رسائل Twilio فشلت عند التسليم (بعد قبول الطلب)."""
+def _parse_twilio_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        # Twilio: 2024-01-15T12:30:00Z
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _recent_twilio_delivery_warnings(cred) -> list[str]:
+    """تحذير إذا فشلت رسائل حديثة عند التسليم (لا يمنع الإرسال)."""
     if not cred.api_key or not cred.api_secret:
         return []
     url = (
         f"https://api.twilio.com/2010-04-01/Accounts/{cred.api_key}/Messages.json"
-        "?PageSize=5"
+        "?PageSize=10"
     )
     token = base64.b64encode(f"{cred.api_key}:{cred.api_secret}".encode()).decode()
     req = urllib.request.Request(url)
@@ -95,7 +117,15 @@ def _recent_twilio_delivery_issues(cred) -> list[str]:
         return []
 
     messages = data.get("messages") or []
-    failed = [m for m in messages if m.get("status") == "failed"]
+    cutoff = datetime.now(timezone.utc) - _DELIVERY_WARNING_WINDOW
+    failed = []
+    for msg in messages:
+        if msg.get("status") != "failed":
+            continue
+        created = _parse_twilio_datetime(msg.get("date_created") or msg.get("date_sent"))
+        if created is None or created >= cutoff:
+            failed.append(msg)
+
     if len(failed) < 2:
         return []
 
@@ -112,10 +142,10 @@ def _recent_twilio_delivery_issues(cred) -> list[str]:
     for code in sorted(codes):
         hint = TWILIO_KNOWN_ERRORS.get(code)
         if hint:
-            hints.append(f"آخر رسائل Twilio فشلت عند التسليم: {hint}")
+            hints.append(f"رسائل حديثة فشلت عند التسليم: {hint}")
         else:
             hints.append(
-                f"آخر رسائل Twilio فشلت عند التسليم (رمز {code}). "
+                f"رسائل حديثة فشلت عند التسليم (رمز {code}). "
                 "راجع Twilio Console → Monitor → Logs → Messaging."
             )
     return hints[:2]
