@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from django.conf import settings
 
 from apps.guests.models import Guest
@@ -27,6 +29,8 @@ from .whatsapp_send import (
     _active_cloud_credential,
     _active_twilio_credential,
 )
+
+logger = logging.getLogger(__name__)
 
 # نصوص افتراضية للبوت (تحاكي قوالب Meta)
 BOT_INVITATION_TEXT = (
@@ -160,15 +164,19 @@ def _template_names() -> dict[str, str]:
 
 
 def _qr_public_url(guest: Guest) -> str | None:
-    if not guest.qr_code:
+    """رابط عام مطلق لصورة QR — يجب أن يجلبه Twilio/Meta عبر HTTPS."""
+    token = guest.public_token
+    if not token:
         return None
-    try:
-        path = guest.qr_code.url
-    except ValueError:
+    base = (
+        getattr(settings, "PUBLIC_BASE_URL", None)
+        or getattr(settings, "FRONTEND_URL", "")
+        or ""
+    ).rstrip("/")
+    if not base:
         return None
-    if path.startswith("http"):
-        return path
-    return f"{settings.FRONTEND_URL.rstrip('/')}{path}"
+    # مسار API عام يُرجع PNG مباشرة (موثوق أكثر من /media عبر FRONTEND فقط)
+    return f"{base}/api/v1/public/invitation/{token}/qr.png"
 
 
 def _bot_url_configured() -> bool:
@@ -344,6 +352,12 @@ def send_guest_qr(guest: Guest) -> dict:
     names = _template_names()
     template_sent = False
     qr_result: dict = {"sent": False}
+
+    if image_url and not image_url.startswith("https://"):
+        logger.warning(
+            "QR media URL is not HTTPS — Twilio/WhatsApp will reject it: %s",
+            image_url,
+        )
 
     if _use_meta_templates():
         qr_result = send_whatsapp_template(

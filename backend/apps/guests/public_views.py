@@ -7,6 +7,7 @@
 كما توفّر حمولة غنية لبطاقة الدعوة (البرنامج الزمني، حضور المجموعة، المنسّق).
 """
 
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
@@ -25,6 +26,7 @@ from .inbound_messages import (
     resolve_event_coordinator,
 )
 from .models import Guest
+from .qr_utils import build_guest_qr_png, ensure_guest_qr
 from .rsvp_actions import apply_guest_rsvp
 
 GOING_STATUSES = (
@@ -157,6 +159,25 @@ class PublicInvitationLiveMediaView(APIView):
     def get(self, request, token):
         guest = _get_guest(token)
         return Response(build_live_media_payload(guest.event))
+
+
+class PublicInvitationQrView(APIView):
+    """صورة QR عامة لـ Twilio/Meta MediaUrl — فقط بعد تأكيد الحضور."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, token):
+        guest = _get_guest(token)
+        if guest.status not in GOING_STATUSES:
+            return HttpResponse(status=404)
+        ensure_guest_qr(guest)
+        guest.refresh_from_db()
+        png = build_guest_qr_png(guest.public_token)
+        response = HttpResponse(png, content_type="image/png")
+        response["Cache-Control"] = "public, max-age=300"
+        response["Content-Disposition"] = f'inline; filename="guest-{token}.png"'
+        return response
 
 
 class PublicInvitationView(APIView):

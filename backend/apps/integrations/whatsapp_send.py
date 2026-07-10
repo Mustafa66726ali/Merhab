@@ -409,16 +409,21 @@ def send_whatsapp_image(
         status_code, body = _http_post_form(
             api_url, form, (twilio_cred.api_key, twilio_cred.api_secret)
         )
-        if status_code in (200, 201):
+        _log_twilio_result(f"image:{image_url[:120]}", phone, status_code, body)
+        sent, detail, sid = evaluate_twilio_send_response(status_code, body)
+        if sent:
             return {
                 "sent": True,
                 "whatsapp_url": fallback_url,
-                "detail": "تم إرسال صورة QR عبر Twilio",
+                "detail": detail or "تم إرسال صورة QR عبر Twilio",
+                "twilio_sid": sid,
+                "media_url": image_url,
             }
         return {
             "sent": False,
             "whatsapp_url": fallback_url,
-            "detail": body[:300] or "فشل إرسال الصورة عبر Twilio",
+            "detail": detail or (body[:300] if body else "فشل إرسال الصورة عبر Twilio"),
+            "media_url": image_url,
         }
 
     return {

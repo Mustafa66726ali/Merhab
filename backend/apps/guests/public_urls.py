@@ -4,6 +4,7 @@ from .public_views import (
     PublicInvitationGreetingView,
     PublicInvitationInquiryView,
     PublicInvitationLiveMediaView,
+    PublicInvitationQrView,
     PublicInvitationRespondView,
     PublicInvitationView,
 )
@@ -33,5 +34,10 @@ urlpatterns = [
         "invitation/<uuid:token>/live-media/",
         PublicInvitationLiveMediaView.as_view(),
         name="public-invitation-live-media",
+    ),
+    path(
+        "invitation/<uuid:token>/qr.png",
+        PublicInvitationQrView.as_view(),
+        name="public-invitation-qr",
     ),
 ]

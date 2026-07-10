@@ -157,6 +157,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+PUBLIC_BASE_URL = config(
+    "PUBLIC_BASE_URL",
+    default=config("FRONTEND_URL", default="http://localhost:3000"),
+).rstrip("/")
 # عنوان الواجهة الأمامية — يُستخدم لبناء روابط الدعوة العامة (RSVP)
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000").rstrip("/")
 
