@@ -79,6 +79,7 @@ def _use_twilio_templates() -> bool:
     return bool(
         cfg.get("content_card")
         or cfg.get("content_invitation")
+        or cfg.get("content_reminder_optin")
         or cfg.get("content_reminder")
         or cfg.get("content_qr")
         or cfg.get("content_broadcast")
@@ -154,6 +155,7 @@ def _template_names() -> dict[str, str]:
         ),
         "twilio_invitation": tw_cfg.get("content_card")
         or tw_cfg.get("content_invitation", ""),
+        "twilio_reminder_optin": tw_cfg.get("content_reminder_optin", ""),
         "twilio_reminder": tw_cfg.get("content_reminder", ""),
         "twilio_qr": tw_cfg.get("content_qr", ""),
     }
@@ -327,6 +329,76 @@ def send_guest_reminder(
         "sent": False,
         "whatsapp_url": fallback_url,
         "detail": detail,
+    }
+
+
+def send_guest_day_before_reminder(guest: Guest) -> dict:
+    """تذكير قبل المناسبة بيوم: بطاقة التفاصيل ثم صورة QR."""
+    from .whatsapp_invitation import invitation_card_twilio_variables
+
+    phone = guest.phone or ""
+    invite_url = _invite_url(guest)
+    fallback_url = build_whatsapp_url(phone, invite_url)
+
+    if not normalize_phone_digits(phone):
+        return {"sent": False, "whatsapp_url": fallback_url, "detail": "رقم غير متوفر"}
+
+    names = _template_names()
+    details: list[str] = []
+    errors: list[str] = []
+
+    if _use_twilio_templates() and names.get("twilio_reminder"):
+        out = send_twilio_content_template(
+            phone,
+            names["twilio_reminder"],
+            invitation_card_twilio_variables(guest),
+            fallback_url=fallback_url,
+        )
+        if out.get("sent"):
+            details.append("reminder_card")
+        else:
+            errors.append(out.get("detail") or "فشل قالب التذكير")
+    elif has_active_whatsapp_credential():
+        from .whatsapp_invitation import invitation_body, event_maps_url, BTN_MAP
+
+        text = (
+            f"مرحبا {guest.full_name or 'ضيف'}\n"
+            f"يسعدنا تذكيركم بان موعد مناسبة {guest.event.title or 'المناسبة'} سيكون\n\n"
+            f"التاريخ: {guest.event.date.strftime('%Y-%m-%d') if guest.event.date else '—'}\n"
+            f"الوقت: {guest.event.time.strftime('%H:%M') if guest.event.time else '—'}\n"
+            f"المكان: {(guest.event.venue or guest.event.geo_address or '—')}\n\n"
+            f"{invite_url}"
+        )
+        map_u = event_maps_url(guest.event)
+        if map_u:
+            text += f"\n{BTN_MAP}: {map_u}"
+        out = dispatch_whatsapp(phone, text)
+        if out.get("sent"):
+            details.append("reminder_text")
+        else:
+            errors.append(out.get("detail") or "فشل نص التذكير")
+    else:
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": "لا يوجد مزوّد لإرسال التذكير",
+        }
+
+    qr_out = send_guest_qr(guest)
+    if qr_out.get("sent"):
+        details.append("qr")
+    else:
+        errors.append(qr_out.get("detail") or "فشل إرسال QR")
+
+    sent = "reminder_card" in details or "reminder_text" in details
+    detail = f"تذكير قبل الموعد: {', '.join(details)}" if details else "فشل التذكير"
+    if errors:
+        detail += f" — {'; '.join(errors)}"
+    return {
+        "sent": sent,
+        "detail": detail,
+        "whatsapp_url": fallback_url,
+        "qr_sent": "qr" in details,
     }
 
 

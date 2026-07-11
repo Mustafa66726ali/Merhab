@@ -11,7 +11,7 @@ from .whatsapp_send import (
 
 
 def check_twilio_invitation_setup() -> dict:
-    """يُرجع مشاكل الإعداد الحقيقية فقط — يتطلب قالب twilio/card واحد."""
+    """يتطلب قالب الدعوة + قالب التذكير المسبق."""
     provider = (getattr(settings, "WHATSAPP_PROVIDER", "manual") or "manual").lower()
     cred = _active_twilio_credential()
     issues: list[str] = []
@@ -49,11 +49,25 @@ def check_twilio_invitation_setup() -> dict:
         )
 
     cfg = cred.config or {}
-    card_sid = (cfg.get("content_card") or cfg.get("content_invitation") or "").strip()
-    if not card_sid:
+    invite_sid = (cfg.get("content_card") or cfg.get("content_invitation") or "").strip()
+    if not invite_sid:
         issues.append(
-            "content_invitation مفقود — أنشئ قالب twilio/card في Twilio "
-            "والصق Content SID (HX...) في حقل «قالب الدعوة»."
+            "content_invitation مفقود — قالب twilio/card للدعوة "
+            "(نص + فتح الخريطة + فتح الدعوة)."
+        )
+
+    optin_sid = (cfg.get("content_reminder_optin") or "").strip()
+    if not optin_sid:
+        issues.append(
+            "content_reminder_optin مفقود — قالب Quick Reply "
+            "(نعم ذكرني / لا اعتذر عن الحضور)."
+        )
+
+    reminder_sid = (cfg.get("content_reminder") or "").strip()
+    if not reminder_sid:
+        issues.append(
+            "content_reminder مفقود — قالب twilio/card لتذكير ما قبل الموعد بيوم "
+            "(ثم تُرسل صورة QR تلقائياً)."
         )
 
     return {

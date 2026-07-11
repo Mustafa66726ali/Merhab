@@ -12,13 +12,15 @@ from .whatsapp_invitation import (
     BTN_INVITE,
     BTN_MAP,
     INVITE_LINK_BODY,
-    RSVP_NO,
-    RSVP_YES,
+    REMIND_NO,
+    REMIND_YES,
     event_maps_url,
     invitation_body,
     invitation_card_twilio_variables,
     invite_url,
-    rsvp_button_id,
+    reminder_optin_body,
+    reminder_optin_twilio_variables,
+    remind_button_id,
 )
 from .whatsapp_send import (
     _active_cloud_credential,
@@ -64,41 +66,6 @@ def _send_cloud_cta(phone: str, body_text: str, display: str, url: str) -> bool:
     return ok
 
 
-def _send_cloud_rsvp_buttons(phone: str, guest: Guest) -> bool:
-    cred = _active_cloud_credential()
-    if not cred:
-        return False
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": normalize_phone_digits(phone),
-        "type": "interactive",
-        "interactive": {
-            "type": "button",
-            "body": {"text": "هل ستحضر؟"},
-            "action": {
-                "buttons": [
-                    {
-                        "type": "reply",
-                        "reply": {
-                            "id": rsvp_button_id(guest, True),
-                            "title": RSVP_YES,
-                        },
-                    },
-                    {
-                        "type": "reply",
-                        "reply": {
-                            "id": rsvp_button_id(guest, False),
-                            "title": RSVP_NO,
-                        },
-                    },
-                ]
-            },
-        },
-    }
-    ok, _ = _cloud_post(cred, payload)
-    return ok
-
-
 def _send_twilio_text(phone: str, text: str) -> dict:
     cred = _active_twilio_credential()
     if not cred:
@@ -120,11 +87,14 @@ def _send_twilio_text(phone: str, text: str) -> dict:
     return {"sent": False, "detail": parse_twilio_error(body)}
 
 
-def _twilio_invitation_card_sid() -> str:
-    """Content SID لقالب twilio/card الواحد (content_card أو content_invitation)."""
+def _twilio_content_sid(*keys: str) -> str:
     cred = _active_twilio_credential()
     cfg = (cred.config if cred else {}) or {}
-    return (cfg.get("content_card") or cfg.get("content_invitation") or "").strip()
+    for key in keys:
+        val = (cfg.get(key) or "").strip()
+        if val:
+            return val
+    return ""
 
 
 def _send_twilio_interactive_invitation(
@@ -134,7 +104,7 @@ def _send_twilio_interactive_invitation(
     inv: str,
     map_u: str | None,
 ) -> dict:
-    """دعوة تفاعلية Twilio: رسالة واحدة عبر قالب twilio/card."""
+    """دعوة Twilio: (1) بطاقة الدعوة ثم (2) التذكير المسبق فوراً."""
     setup = check_twilio_invitation_setup()
     if not setup["ready"]:
         return {
@@ -145,10 +115,12 @@ def _send_twilio_interactive_invitation(
             "warnings": setup.get("warnings") or [],
         }
 
-    content_sid = _twilio_invitation_card_sid()
+    invite_sid = _twilio_content_sid("content_invitation", "content_card")
+    optin_sid = _twilio_content_sid("content_reminder_optin")
+
     out = send_twilio_content_template(
         phone,
-        content_sid,
+        invite_sid,
         invitation_card_twilio_variables(guest),
     )
     if not out.get("sent"):
@@ -157,12 +129,62 @@ def _send_twilio_interactive_invitation(
             "detail": out.get("detail", "فشل إرسال قالب الدعوة"),
             "interactive": True,
         }
+
+    out2 = send_twilio_content_template(
+        phone,
+        optin_sid,
+        reminder_optin_twilio_variables(guest),
+    )
+    if not out2.get("sent"):
+        return {
+            "sent": False,
+            "detail": out2.get("detail", "فشل إرسال رسالة التذكير المسبق"),
+            "interactive": True,
+            "partial": ["invitation"],
+        }
+
     return {
         "sent": True,
-        "detail": "دعوة Twilio (بطاقة واحدة: نص + خريطة + فتح + RSVP)",
+        "detail": "دعوة Twilio (دعوة + تذكير مسبق)",
         "interactive": True,
-        "content_sid": content_sid,
+        "content_sid": invite_sid,
+        "optin_sid": optin_sid,
     }
+
+
+def _send_cloud_remind_buttons(phone: str, guest: Guest) -> bool:
+    cred = _active_cloud_credential()
+    if not cred:
+        return False
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": normalize_phone_digits(phone),
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {"text": reminder_optin_body(guest)[:1024]},
+            "action": {
+                "buttons": [
+                    {
+                        "type": "reply",
+                        "reply": {
+                            "id": remind_button_id(guest, True),
+                            "title": REMIND_YES[:20],
+                        },
+                    },
+                    {
+                        "type": "reply",
+                        "reply": {
+                            "id": remind_button_id(guest, False),
+                            "title": REMIND_NO[:20],
+                        },
+                    },
+                ]
+            },
+        },
+    }
+    ok, _ = _cloud_post(cred, payload)
+    return ok
 
 
 def _send_bot_invitation(phone: str, guest: Guest, body: str, map_u: str | None, inv: str) -> bool:
@@ -180,8 +202,8 @@ def _send_bot_invitation(phone: str, guest: Guest, body: str, map_u: str | None,
         "map_button": BTN_MAP,
         "invite_body": INVITE_LINK_BODY,
         "invite_button": BTN_INVITE,
-        "poll_question": "هل ستحضر؟",
-        "poll_options": [RSVP_YES, RSVP_NO],
+        "poll_question": reminder_optin_body(guest),
+        "poll_options": [REMIND_YES, REMIND_NO],
     }
     status_code, _ = _http_post_json(url, payload, headers)
     return status_code in (200, 201, 202)
@@ -192,7 +214,7 @@ def send_interactive_invitation(
     *,
     headline: str = "دعوة الضيف",
 ) -> dict:
-    """دعوة تفاعلية: نص + خريطة + رابط الدعوة + نعم/لا."""
+    """دعوة: تفاصيل + خريطة + رابط، ثم رسالة التذكير المسبق."""
     phone = guest.phone or ""
     digits = normalize_phone_digits(phone)
     if not digits:
@@ -217,7 +239,7 @@ def send_interactive_invitation(
             steps_ok += 1
         if _send_cloud_cta(phone, INVITE_LINK_BODY, BTN_INVITE, inv):
             steps_ok += 1
-        if _send_cloud_rsvp_buttons(phone, guest):
+        if _send_cloud_remind_buttons(phone, guest):
             steps_ok += 1
         sent = steps_ok >= 2
         return {
@@ -233,7 +255,7 @@ def send_interactive_invitation(
         sent = _send_bot_invitation(phone, guest, body, map_u, inv)
         return {
             "sent": sent,
-            "detail": "دعوة تفاعلية عبر البوت (أزرار + استطلاع)",
+            "detail": "دعوة تفاعلية عبر البوت (دعوة + تذكير مسبق)",
             "interactive": True,
             "queued": True,
         }
@@ -241,7 +263,7 @@ def send_interactive_invitation(
     text = f"{body}\n\n{INVITE_LINK_BODY}"
     if map_u:
         text += f"\n{BTN_MAP}: {map_u}"
-    text += "\n\nهل ستحضر؟ رد: نعم أو لا"
+    text += f"\n\n{reminder_optin_body(guest)}\nرد: {REMIND_YES} أو {REMIND_NO}"
     out = send_via_bot(phone, text) if provider == "bot" else {"sent": False}
     return out
 

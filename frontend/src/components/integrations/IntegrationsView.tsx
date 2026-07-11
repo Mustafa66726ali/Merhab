@@ -966,57 +966,93 @@ export default function IntegrationsView() {
                       قوالب Twilio Content (ContentSid)
                     </h4>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      الدعوة تُرسل كـ <span className="font-bold text-on-surface">رسالة واحدة</span> عبر
-                      قالب من نوع <span className="font-mono">twilio/card</span>: نص + زر خريطة
-                      (URL) + زر فتح الدعوة (URL) + نعم/لا (Quick Reply). أنشئ القالب في Twilio
-                      Console ثم الصق Content SID (يبدأ بـ HX).
+                      تدفق الدعوة:{" "}
+                      <span className="font-bold text-on-surface">
+                        1) بطاقة الدعوة → 2) التذكير المسبق (نعم ذكرني / لا) → 3) قبل الموعد بيوم:
+                        تذكير + صورة QR
+                      </span>
+                      . أنشئ القوالب في Twilio ثم الصق Content SID (HX...).
                     </p>
-                    <div className="rounded-lg border border-outline-variant/15 bg-surface-container-low/50 p-3 text-[11px] text-on-surface-variant space-y-1.5 leading-relaxed">
-                      <p className="font-bold text-on-surface text-xs">مواصفات قالب الدعوة (card)</p>
+                    <div className="rounded-lg border border-outline-variant/15 bg-surface-container-low/50 p-3 text-[11px] text-on-surface-variant space-y-2 leading-relaxed">
+                      <p className="font-bold text-on-surface text-xs">1) قالب الدعوة — twilio/card</p>
+                      <pre className="whitespace-pre-wrap font-mono text-[10px] bg-black/20 rounded-lg p-2 overflow-x-auto" dir="rtl">
+{`مرحبا {{1}}
+بكل سرور نتشرف بدعوتكم لحضور {{2}}
+
+التاريخ: {{3}}
+الوقت: {{4}}
+المكان: {{5}}`}
+                      </pre>
                       <p>
-                        النص:{" "}
-                        <span className="font-mono">
-                          مرحبا {"{{1}}"} — دعوة لـ {"{{2}}"} · {"{{3}}"} · {"{{4}}"}
-                        </span>
-                      </p>
-                      <p>
-                        زر URL «الخريطة»:{" "}
+                        زر URL «فتح الخريطة»:{" "}
                         <span className="font-mono" dir="ltr">
-                          {"https://www.google.com/maps?q={{5}}"}
+                          {"https://www.google.com/maps?q={{6}}"}
                         </span>
                       </p>
                       <p>
-                        زر URL «فتح»:{" "}
+                        زر URL «فتح الدعوة»:{" "}
                         <span className="font-mono" dir="ltr">
-                          https://YOUR-DOMAIN.com/i/{"{{6}}"}
+                          {"https://YOUR-DOMAIN.com/i/{{7}}"}
                         </span>
                       </p>
+                      <p className="font-bold text-on-surface text-xs pt-1">
+                        2) التذكير المسبق — twilio/quick-reply أو card
+                      </p>
+                      <pre className="whitespace-pre-wrap font-mono text-[10px] bg-black/20 rounded-lg p-2 overflow-x-auto" dir="rtl">
+{`مرحبا {{1}}
+
+حرصا منا على تذكيركم بموعد المناسبة هل تودون ان نرسل لكم رسالة تذكير قبل الموعد بيوم تتضمن تفاصيل الدعوة ورمز الدخول الخاصة بكم؟`}
+                      </pre>
                       <p>
-                        Quick Reply «نعم» id:{" "}
-                        <span className="font-mono">merhab_rsvp_yes_{"{{6}}"}</span>
+                        Quick Reply «نعم ذكرني» id:{" "}
+                        <span className="font-mono">merhab_remind_yes_{"{{2}}"}</span>
                       </p>
                       <p>
-                        Quick Reply «لا» id:{" "}
-                        <span className="font-mono">merhab_rsvp_no_{"{{6}}"}</span>
+                        Quick Reply «لا اعتذر عن الحضور» id:{" "}
+                        <span className="font-mono">merhab_remind_no_{"{{2}}"}</span>
                       </p>
+                      <p className="font-bold text-on-surface text-xs pt-1">
+                        3) تذكير قبل الموعد بيوم — twilio/card (ثم صورة QR تلقائياً)
+                      </p>
+                      <pre className="whitespace-pre-wrap font-mono text-[10px] bg-black/20 rounded-lg p-2 overflow-x-auto" dir="rtl">
+{`مرحبا {{1}}
+يسعدنا تذكيركم بان موعد مناسبة {{2}} سيكون
+
+التاريخ: {{3}}
+الوقت: {{4}}
+المكان: {{5}}`}
+                      </pre>
                       <p>
-                        المتغيرات: {"{{1}}"} اسم · {"{{2}}"} مناسبة · {"{{3}}"} تاريخ ·{" "}
-                        {"{{4}}"} مكان · {"{{5}}"} إحداثيات/عنوان · {"{{6}}"} رمز الضيف
+                        نفس أزرار الخريطة/الدعوة:{" "}
+                        <span className="font-mono" dir="ltr">
+                          {"maps?q={{6}}"}
+                        </span>{" "}
+                        و{" "}
+                        <span className="font-mono" dir="ltr">
+                          {"/i/{{7}}"}
+                        </span>
                       </p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(
                         [
-                          ["content_invitation", "قالب الدعوة (twilio/card) *", "HX..."],
+                          ["content_invitation", "1. قالب الدعوة (card) *", "HX..."],
+                          ["content_reminder_optin", "2. التذكير المسبق (نعم/لا) *", "HX..."],
+                          ["content_reminder", "3. تذكير قبل الموعد بيوم *", "HX..."],
                           ["content_broadcast", "نص البث المباشر", "HX..."],
                           ["content_broadcast_watch", "زر مشاهدة البث (CTA)", "HX..."],
-                          ["content_reminder", "تذكير (اختياري)", "HX..."],
-                          ["content_qr", "QR بعد التأكيد", "HX..."],
+                          ["content_qr", "نص اختياري قبل صورة QR", "HX..."],
                         ] as const
                       ).map(([key, label, ph]) => (
                         <div
                           key={key}
-                          className={key === "content_invitation" ? "sm:col-span-2" : ""}
+                          className={
+                            key === "content_invitation" ||
+                            key === "content_reminder_optin" ||
+                            key === "content_reminder"
+                              ? "sm:col-span-2"
+                              : ""
+                          }
                         >
                           <label className="block text-xs font-medium text-on-surface-variant mb-2">
                             {label}
@@ -1039,15 +1075,10 @@ export default function IntegrationsView() {
                       ))}
                     </div>
                     <p className="text-[11px] text-on-surface-variant border-t border-outline-variant/10 pt-3 leading-relaxed">
-                      <span className="font-bold text-on-surface">قوالب البث:</span> نص البث —{" "}
-                      <span className="font-mono">
-                        مرحباً {"{{1}}"}{"\n\n"}بث مباشر — {"{{2}}"}
-                      </span>
-                      . زر المشاهدة CTA «مشاهدة» —{" "}
-                      <span className="font-mono" dir="ltr">
-                        https://YOUR-DOMAIN.com/live/{"{{1}}"}
-                      </span>
-                      . استبدل YOUR-DOMAIN بنطاق الإنتاج (نفس FRONTEND_URL).
+                      المتغيرات المشتركة للدعوة/التذكير: {"{{1}}"} اسم · {"{{2}}"} مناسبة ·{" "}
+                      {"{{3}}"} تاريخ · {"{{4}}"} وقت · {"{{5}}"} مكان · {"{{6}}"} خريطة ·{" "}
+                      {"{{7}}"} رمز الضيف. استبدل YOUR-DOMAIN بـ FRONTEND_URL. التذكير المسبق:{" "}
+                      {"{{1}}"} اسم · {"{{2}}"} رمز الضيف فقط.
                     </p>
                   </div>
                 )}

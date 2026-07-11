@@ -1,45 +1,77 @@
-"""أمر إرسال التذكيرات التلقائية المجدوَلة قبل الحفل.
+"""أمر إرسال التذكيرات المجدوَلة قبل الحفل.
 
-يُشغَّل دورياً (مثلاً كل بضع دقائق عبر cron / Task Scheduler، أو مجدوِل المشروع
-المدمج في ``manage.py`` الجذري). لكل فعالية فُعِّل لها التذكير التلقائي، يُرسل
-التذكيرات عندما يحين موعد الإرسال (قبل الحفل بعدد الساعات المحدّد في الإعدادات)
-— وذلك *فقط* عند وجود مزوّد رسمي نشط (Twilio/Cloud)، ولا يعمل عبر بوت الاختبار.
-يضبط ``auto_reminder_sent_at`` بعد الإرسال لمنع التكرار.
+1) تذكيرات الضيوف الذين اختاروا «نعم ذكرني» (قبل الموعد بـ 24 ساعة أو أقرب وقت).
+2) التذكير التلقائي على مستوى الفعالية (إن فُعّل) مع تجنّب التكرار.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-from django.conf import settings as dj_settings
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.events.models import Event
 from apps.guests.models import Guest
+from apps.guests.reminder_schedule import event_aware_datetime
+from apps.integrations.whatsapp_messages import send_guest_day_before_reminder
 from apps.integrations.whatsapp_send import has_active_whatsapp_credential
 from apps.invitations.views import process_event_reminders
 
 
 class Command(BaseCommand):
-    help = "إرسال التذكيرات التلقائية المجدوَلة قبل الحفل عبر المزوّد الرسمي (Twilio/Cloud)."
+    help = "إرسال التذكيرات المجدوَلة (تذكير مسبق للضيف + تذكير الفعالية)."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="عرض الفعاليات المستحقّة دون إرسال فعلي.",
+            help="عرض المستحقّ دون إرسال فعلي.",
         )
 
     def _event_datetime(self, event):
-        naive_dt = datetime.combine(event.date, event.time)
-        if dj_settings.USE_TZ:
-            return timezone.make_aware(naive_dt, timezone.get_current_timezone())
-        return naive_dt
+        return event_aware_datetime(event)
+
+    def _process_guest_day_before(self, *, dry: bool) -> int:
+        now = timezone.now()
+        qs = (
+            Guest.objects.filter(
+                reminder_opted_in=True,
+                reminder_sent_at__isnull=True,
+                reminder_scheduled_for__isnull=False,
+                reminder_scheduled_for__lte=now,
+                status=Guest.Status.CONFIRMED,
+            )
+            .exclude(Q(phone="") | Q(phone__isnull=True))
+            .select_related("event")
+        )
+
+        sent_count = 0
+        for guest in qs:
+            event_dt = self._event_datetime(guest.event)
+            if event_dt is None or now > event_dt:
+                continue
+            label = f"guest#{guest.id} {guest.full_name}"
+            if dry:
+                self.stdout.write(
+                    f"مستحقّ (ضيف): {label} — {guest.reminder_scheduled_for:%Y-%m-%d %H:%M}"
+                )
+                continue
+            outcome = send_guest_day_before_reminder(guest)
+            if outcome.get("sent"):
+                guest.reminder_sent_at = timezone.now()
+                guest.save(update_fields=["reminder_sent_at"])
+                sent_count += 1
+                self.stdout.write(f"أُرسل تذكير+QR: {label}")
+            else:
+                self.stdout.write(
+                    f"فشل تذكير: {label} — {outcome.get('detail', '')}"
+                )
+        return sent_count
 
     def handle(self, *args, **options):
         dry = bool(options.get("dry_run"))
         now = timezone.now()
 
-        # التذكير التلقائي يعتمد على مزوّد رسمي فقط (Twilio/Cloud) وليس البوت
         if not dry and not has_active_whatsapp_credential():
             self.stdout.write(
                 "تخطّي: لا يوجد مزوّد رسمي نشط (Twilio/Cloud) — "
@@ -47,33 +79,39 @@ class Command(BaseCommand):
             )
             return
 
+        guest_sent = self._process_guest_day_before(dry=dry)
+
         candidates = Event.objects.filter(
             auto_reminder_enabled=True,
             auto_reminder_sent_at__isnull=True,
             date__gte=now.date(),
         )
 
-        total_sent = 0
+        total_sent = guest_sent
         for event in candidates:
             if not event.date or not event.time:
                 continue
             event_dt = self._event_datetime(event)
+            if event_dt is None:
+                continue
             send_at = event_dt - timedelta(
                 hours=event.auto_reminder_hours_before or 0
             )
 
-            # مستحقّ فقط إذا حان وقت الإرسال ولم يبدأ الحفل بعد
             if not (send_at <= now <= event_dt):
                 continue
 
-            guests = Guest.objects.filter(event=event).select_related(
-                "event", "section", "group"
+            # تجنّب إعادة إرسال لمن استلم التذكير المسبق المجدول
+            guests = (
+                Guest.objects.filter(event=event)
+                .filter(reminder_sent_at__isnull=True)
+                .select_related("event", "section", "group")
             )
             label = f"#{event.id} {event.title}"
 
             if dry:
                 self.stdout.write(
-                    f"مستحقّ: {label} — موعد الإرسال {send_at:%Y-%m-%d %H:%M} "
+                    f"مستحقّ (فعالية): {label} — موعد الإرسال {send_at:%Y-%m-%d %H:%M} "
                     f"— ضيوف: {guests.count()}"
                 )
                 continue

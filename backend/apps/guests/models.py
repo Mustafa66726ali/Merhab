@@ -63,6 +63,22 @@ class Guest(models.Model):
     responded_at = models.DateTimeField(
         null=True, blank=True, verbose_name="تاريخ الرد على الدعوة"
     )
+    reminder_opted_in = models.BooleanField(
+        default=False,
+        verbose_name="وافق على التذكير المسبق",
+        help_text="نعم ذكرني — يُجدول التذكير ورمز QR قبل المناسبة بيوم",
+    )
+    reminder_scheduled_for = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="موعد إرسال التذكير المجدول",
+    )
+    reminder_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="تاريخ إرسال التذكير المجدول",
+    )
     greeting = models.TextField(blank=True, verbose_name="كلمة تهنئة من الضيف")
     notes = models.TextField(blank=True, verbose_name="ملاحظات")
     dietary_requirements = models.TextField(blank=True, verbose_name="متطلبات غذائية")
@@ -88,6 +104,7 @@ class Guest(models.Model):
             models.Index(fields=["event", "status"]),
             models.Index(fields=["event", "created_at"]),
             models.Index(fields=["status"]),
+            models.Index(fields=["reminder_scheduled_for", "reminder_sent_at"]),
         ]
 
     def __str__(self):
