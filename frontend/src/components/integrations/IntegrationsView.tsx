@@ -966,28 +966,58 @@ export default function IntegrationsView() {
                       قوالب Twilio Content (ContentSid)
                     </h4>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      أنشئ قوالب واتساب في Twilio Console وانسخ Content SID لكل قالب
-                      (يبدأ بـ HX). الدعوة التفاعلية تُرسل بالتسلسل: نص → خريطة → فتح →
-                      نعم/لا. البث المباشر: نص → زر «مشاهدة». متغيرات الدعوة{" "}
-                      <span className="font-mono">{"{{1}}"}</span>–
-                      <span className="font-mono">{"{{4}}"}</span>،
-                      والخريطة/الفتح/RSVP/مشاهدة تستخدم{" "}
-                      <span className="font-mono">{"{{1}}"}</span> (إحداثيات أو token).
+                      الدعوة تُرسل كـ <span className="font-bold text-on-surface">رسالة واحدة</span> عبر
+                      قالب من نوع <span className="font-mono">twilio/card</span>: نص + زر خريطة
+                      (URL) + زر فتح الدعوة (URL) + نعم/لا (Quick Reply). أنشئ القالب في Twilio
+                      Console ثم الصق Content SID (يبدأ بـ HX).
                     </p>
+                    <div className="rounded-lg border border-outline-variant/15 bg-surface-container-low/50 p-3 text-[11px] text-on-surface-variant space-y-1.5 leading-relaxed">
+                      <p className="font-bold text-on-surface text-xs">مواصفات قالب الدعوة (card)</p>
+                      <p>
+                        النص:{" "}
+                        <span className="font-mono">
+                          مرحبا {"{{1}}"} — دعوة لـ {"{{2}}"} · {"{{3}}"} · {"{{4}}"}
+                        </span>
+                      </p>
+                      <p>
+                        زر URL «الخريطة»:{" "}
+                        <span className="font-mono" dir="ltr">
+                          {"https://www.google.com/maps?q={{5}}"}
+                        </span>
+                      </p>
+                      <p>
+                        زر URL «فتح»:{" "}
+                        <span className="font-mono" dir="ltr">
+                          https://YOUR-DOMAIN.com/i/{"{{6}}"}
+                        </span>
+                      </p>
+                      <p>
+                        Quick Reply «نعم» id:{" "}
+                        <span className="font-mono">merhab_rsvp_yes_{"{{6}}"}</span>
+                      </p>
+                      <p>
+                        Quick Reply «لا» id:{" "}
+                        <span className="font-mono">merhab_rsvp_no_{"{{6}}"}</span>
+                      </p>
+                      <p>
+                        المتغيرات: {"{{1}}"} اسم · {"{{2}}"} مناسبة · {"{{3}}"} تاريخ ·{" "}
+                        {"{{4}}"} مكان · {"{{5}}"} إحداثيات/عنوان · {"{{6}}"} رمز الضيف
+                      </p>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {(
                         [
-                          ["content_invitation", "1. نص الدعوة", "HX..."],
-                          ["content_map", "2. زر الخريطة (CTA)", "HX..."],
-                          ["content_open_invite", "3. زر فتح الدعوة (CTA)", "HX..."],
-                          ["content_rsvp", "4. هل ستحضر؟ (Quick Reply)", "HX..."],
-                          ["content_broadcast", "5. نص البث المباشر", "HX..."],
-                          ["content_broadcast_watch", "6. زر مشاهدة البث (CTA)", "HX..."],
+                          ["content_invitation", "قالب الدعوة (twilio/card) *", "HX..."],
+                          ["content_broadcast", "نص البث المباشر", "HX..."],
+                          ["content_broadcast_watch", "زر مشاهدة البث (CTA)", "HX..."],
                           ["content_reminder", "تذكير (اختياري)", "HX..."],
                           ["content_qr", "QR بعد التأكيد", "HX..."],
                         ] as const
                       ).map(([key, label, ph]) => (
-                        <div key={key}>
+                        <div
+                          key={key}
+                          className={key === "content_invitation" ? "sm:col-span-2" : ""}
+                        >
                           <label className="block text-xs font-medium text-on-surface-variant mb-2">
                             {label}
                           </label>
@@ -1009,12 +1039,15 @@ export default function IntegrationsView() {
                       ))}
                     </div>
                     <p className="text-[11px] text-on-surface-variant border-t border-outline-variant/10 pt-3 leading-relaxed">
-                      <span className="font-bold text-on-surface">قوالب البث (5 و 6):</span>{" "}
-                      القالب 5 —{" "}
-                      <span className="font-mono">مرحباً {"{{1}}"}{"\n\n"}بث مباشر — {"{{2}}"}</span>
-                      . القالب 6 — زر CTA باسم «مشاهدة» والرابط{" "}
-                      <span className="font-mono">https://YOUR-DOMAIN.com/live/{"{{1}}"}</span>{" "}
-                      (ضع رمز البث فقط في {"{{1}}"}، وليس الرابط كاملاً).
+                      <span className="font-bold text-on-surface">قوالب البث:</span> نص البث —{" "}
+                      <span className="font-mono">
+                        مرحباً {"{{1}}"}{"\n\n"}بث مباشر — {"{{2}}"}
+                      </span>
+                      . زر المشاهدة CTA «مشاهدة» —{" "}
+                      <span className="font-mono" dir="ltr">
+                        https://YOUR-DOMAIN.com/live/{"{{1}}"}
+                      </span>
+                      . استبدل YOUR-DOMAIN بنطاق الإنتاج (نفس FRONTEND_URL).
                     </p>
                   </div>
                 )}

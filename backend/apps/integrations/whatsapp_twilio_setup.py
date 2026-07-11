@@ -11,7 +11,7 @@ from .whatsapp_send import (
 
 
 def check_twilio_invitation_setup() -> dict:
-    """يُرجع مشاكل الإعداد الحقيقية فقط — رسائل التسليم القديمة لا تمنع الإرسال."""
+    """يُرجع مشاكل الإعداد الحقيقية فقط — يتطلب قالب twilio/card واحد."""
     provider = (getattr(settings, "WHATSAPP_PROVIDER", "manual") or "manual").lower()
     cred = _active_twilio_credential()
     issues: list[str] = []
@@ -49,21 +49,11 @@ def check_twilio_invitation_setup() -> dict:
         )
 
     cfg = cred.config or {}
-    required = {
-        "content_invitation": "قالب نص الدعوة (1. نص الدعوة)",
-        "content_open_invite": "قالب زر فتح الدعوة (3. فتح الدعوة)",
-        "content_rsvp": "قالب نعم/لا (4. RSVP)",
-    }
-    for key, label in required.items():
-        if not (cfg.get(key) or "").strip():
-            issues.append(f"{key} مفقود — {label}")
-
-    map_sid = (cfg.get("content_map") or "").strip()
-    open_sid = (cfg.get("content_open_invite") or "").strip()
-    if map_sid and open_sid and map_sid == open_sid:
+    card_sid = (cfg.get("content_card") or cfg.get("content_invitation") or "").strip()
+    if not card_sid:
         issues.append(
-            "content_map و content_open_invite يستخدمان نفس Content SID — "
-            "يجب أن يكون لكل قالب HX منفصل."
+            "content_invitation مفقود — أنشئ قالب twilio/card في Twilio "
+            "والصق Content SID (HX...) في حقل «قالب الدعوة»."
         )
 
     return {

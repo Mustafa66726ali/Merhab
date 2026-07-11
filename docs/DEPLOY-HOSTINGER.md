@@ -158,10 +158,10 @@ docker compose up -d
    - **API Key** = Account SID
    - **API Secret** = Auth Token
    - **Phone Number ID** = رقم واتساب بصيغة `+966...` (يُحوَّل تلقائياً إلى `whatsapp:+966...`)
-3. في **config** أضف Content SID لكل قالب (انظر `docs/META-WHATSAPP-TEMPLATES.md`):
-   - `content_invitation`
-   - `content_reminder`
-   - `content_qr`
+3. في **config** أضف Content SID (انظر `docs/META-WHATSAPP-TEMPLATES.md`):
+   - `content_invitation` — **مطلوب**: قالب `twilio/card` (نص + خريطة + فتح + نعم/لا)
+   - `content_broadcast` / `content_broadcast_watch` — للبث المباشر (اختياري)
+   - `content_reminder` / `content_qr` — اختياري
 4. فعّل التكامل واجعله **أساسياً (primary)**.
 
 بديل: **WhatsApp Cloud API** (Meta مباشرة) مع نفس أسماء القوالب في حقول `template_*`.

@@ -137,16 +137,50 @@
 
 ### عبر Twilio
 
-1. أنشئ **Content Templates** في Twilio Console (انظر الجدول أدناه)
-2. انسخ **Content SID** (`HX...`) لكل قالب
-3. في تكامل **WhatsApp (Twilio)** → config:
+1. أنشئ قالب **Content** من نوع **`twilio/card`** في Twilio Console (رسالة واحدة)
+2. انسخ **Content SID** (`HX...`)
+3. في تكامل **WhatsApp (Twilio)** → الصقه في **قالب الدعوة (twilio/card)**
+
+#### قالب الدعوة الواحد (`content_invitation`)
+
+**النوع:** `twilio/card`  
+**اللغة:** `ar`
+
+**نص الجسم (مثال):**
+
+```
+مرحبا {{1}}
+يسعدنا دعوتك لحضور: {{2}}
+
+التاريخ: {{3}}
+المكان: {{4}}
+```
+
+**الأزرار:**
+
+| النوع | العنوان | القيمة |
+|-------|---------|--------|
+| URL | الخريطة | `https://www.google.com/maps?q={{5}}` |
+| URL | فتح | `https://YOUR-DOMAIN.com/i/{{6}}` |
+| QUICK_REPLY | نعم | id: `merhab_rsvp_yes_{{6}}` |
+| QUICK_REPLY | لا | id: `merhab_rsvp_no_{{6}}` |
+
+| المتغير | المحتوى |
+|---------|---------|
+| {{1}} | اسم الضيف |
+| {{2}} | اسم المناسبة |
+| {{3}} | التاريخ والوقت |
+| {{4}} | الموقع |
+| {{5}} | إحداثيات أو عنوان للخريطة |
+| {{6}} | رمز الضيف (UUID) — لرابط `/i/` وأزرار RSVP |
+
+> استبدل `YOUR-DOMAIN.com` بـ domain الإنتاج HTTPS (نفس `FRONTEND_URL`).
+
+#### قوالب إضافية (اختيارية / بث)
 
 | مفتاح في مرحّاب | القالب في Twilio |
 |-----------------|------------------|
-| `content_invitation` | نص الدعوة ({{1}}–{{4}}) |
-| `content_map` | زر الخريطة CTA — URL: `https://www.google.com/maps?q={{1}}` |
-| `content_open_invite` | زر فتح — URL: `https://YOUR-DOMAIN.com/i/{{1}}` |
-| `content_rsvp` | Quick Reply نعم/لا — id: `merhab_rsvp_yes_{{1}}` / `merhab_rsvp_no_{{1}}` |
+| `content_invitation` | **مطلوب** — بطاقة الدعوة أعلاه |
 | `content_broadcast` | نص البث ({{1}}–{{2}}) |
 | `content_broadcast_watch` | زر مشاهدة CTA — URL: `https://YOUR-DOMAIN.com/live/{{1}}` |
 | `content_reminder` | تذكير (اختياري) |
@@ -168,14 +202,16 @@ WHATSAPP_TEMPLATE_LANGUAGE=ar
 
 ## دعوة تفاعلية (الوضع الافتراضي في مرحّاب)
 
-عند `WHATSAPP_INVITATION_INTERACTIVE=True` (افتراضي) تُرسل الدعوة كالتالي:
+عند `WHATSAPP_INVITATION_INTERACTIVE=True` (افتراضي) تُرسل الدعوة عبر Twilio كـ **رسالة واحدة** (`twilio/card`):
 
 1. **نص الدعوة** — ترحيب + اسم المناسبة + التاريخ + المكان  
-2. **زر/رابط الخريطة** — يفتح Google Maps  
-3. **زر/رابط الدعوة** — يفتح صفحة `/i/{token}`  
+2. **زر الخريطة** — يفتح Google Maps  
+3. **زر فتح الدعوة** — يفتح صفحة `/i/{token}`  
 4. **هل ستحضر؟** — أزرار **نعم** / **لا**  
    - **نعم** → تأكيد حضور + إرسال QR  
    - **لا** → تسجيل اعتذار  
+
+> عبر Cloud API أو البوت المحلي تبقى الخطوات منفصلة؛ عبر Twilio تُدمَج في بطاقة واحدة.
 
 ### Webhooks (Twilio / Meta / البوت)
 

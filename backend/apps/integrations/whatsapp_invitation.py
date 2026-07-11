@@ -33,7 +33,7 @@ def event_maps_url(event) -> str | None:
 
 
 def map_template_variable(event) -> str | None:
-    """قيمة {{1}} لقالب Twilio CTA الخريطة (maps?q={{1}})."""
+    """قيمة استعلام الخريطة لـ maps?q={{n}} — لا تُرجع فارغاً إن أمكن."""
     lat, lng = event.latitude, event.longitude
     if lat is not None and lng is not None:
         return f"{lat},{lng}"
@@ -47,7 +47,7 @@ def map_template_variable(event) -> str | None:
 
 
 def invitation_twilio_variables(guest: Guest) -> dict[str, str]:
-    """متغيرات نص الدعوة {{1}}..{{4}}."""
+    """متغيرات نص الدعوة {{1}}..{{4}} (مسار قديم / Meta)."""
     event = guest.event
     venue = (event.venue or event.geo_address or "—").strip() or "—"
     return {
@@ -55,6 +55,27 @@ def invitation_twilio_variables(guest: Guest) -> dict[str, str]:
         "2": event.title or "مناسبة",
         "3": _event_datetime_label(guest),
         "4": venue,
+    }
+
+
+def invitation_card_twilio_variables(guest: Guest) -> dict[str, str]:
+    """متغيرات قالب twilio/card الواحد للدعوة.
+
+    {{1}} الاسم · {{2}} المناسبة · {{3}} التاريخ · {{4}} المكان
+    {{5}} استعلام الخريطة (maps?q={{5}}) · {{6}} رمز الضيف (/i/{{6}} و RSVP)
+    """
+    event = guest.event
+    venue = (event.venue or event.geo_address or "—").strip() or "—"
+    map_q = map_template_variable(event) or venue or (event.title or "مناسبة")
+    # واتساب يرفض المتغيرات الفارغة أو المسافات الزائدة
+    map_q = " ".join(str(map_q).split()) or "مناسبة"
+    return {
+        "1": (guest.full_name or "ضيف").strip() or "ضيف",
+        "2": (event.title or "مناسبة").strip() or "مناسبة",
+        "3": _event_datetime_label(guest),
+        "4": venue,
+        "5": map_q,
+        "6": str(guest.public_token),
     }
 
 

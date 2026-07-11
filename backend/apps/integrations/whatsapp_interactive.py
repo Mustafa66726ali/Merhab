@@ -16,9 +16,8 @@ from .whatsapp_invitation import (
     RSVP_YES,
     event_maps_url,
     invitation_body,
-    invitation_twilio_variables,
+    invitation_card_twilio_variables,
     invite_url,
-    map_template_variable,
     rsvp_button_id,
 )
 from .whatsapp_send import (
@@ -121,15 +120,11 @@ def _send_twilio_text(phone: str, text: str) -> dict:
     return {"sent": False, "detail": parse_twilio_error(body)}
 
 
-def _twilio_content_sids() -> dict[str, str]:
+def _twilio_invitation_card_sid() -> str:
+    """Content SID لقالب twilio/card الواحد (content_card أو content_invitation)."""
     cred = _active_twilio_credential()
     cfg = (cred.config if cred else {}) or {}
-    return {
-        "invitation": (cfg.get("content_invitation") or "").strip(),
-        "map": (cfg.get("content_map") or "").strip(),
-        "open_invite": (cfg.get("content_open_invite") or "").strip(),
-        "rsvp": (cfg.get("content_rsvp") or "").strip(),
-    }
+    return (cfg.get("content_card") or cfg.get("content_invitation") or "").strip()
 
 
 def _send_twilio_interactive_invitation(
@@ -139,7 +134,7 @@ def _send_twilio_interactive_invitation(
     inv: str,
     map_u: str | None,
 ) -> dict:
-    """دعوة تفاعلية Twilio: قوالب Content بالتسلسل (نص + خريطة + فتح + نعم/لا)."""
+    """دعوة تفاعلية Twilio: رسالة واحدة عبر قالب twilio/card."""
     setup = check_twilio_invitation_setup()
     if not setup["ready"]:
         return {
@@ -150,15 +145,11 @@ def _send_twilio_interactive_invitation(
             "warnings": setup.get("warnings") or [],
         }
 
-    sids = _twilio_content_sids()
-    token = str(guest.public_token)
-    details: list[str] = []
-    errors: list[str] = []
-
+    content_sid = _twilio_invitation_card_sid()
     out = send_twilio_content_template(
         phone,
-        sids["invitation"],
-        invitation_twilio_variables(guest),
+        content_sid,
+        invitation_card_twilio_variables(guest),
     )
     if not out.get("sent"):
         return {
@@ -166,40 +157,11 @@ def _send_twilio_interactive_invitation(
             "detail": out.get("detail", "فشل إرسال قالب الدعوة"),
             "interactive": True,
         }
-    details.append("invitation")
-
-    map_var = map_template_variable(guest.event) if map_u else None
-    if map_var and sids["map"]:
-        out = send_twilio_content_template(phone, sids["map"], {"1": map_var})
-        if out.get("sent"):
-            details.append("map")
-        else:
-            errors.append(out.get("detail", "map"))
-
-    out = send_twilio_content_template(phone, sids["open_invite"], {"1": token})
-    if out.get("sent"):
-        details.append("open")
-    else:
-        return {
-            "sent": False,
-            "detail": out.get("detail", "فشل إرسال زر فتح الدعوة"),
-            "interactive": True,
-            "partial": details,
-        }
-
-    out = send_twilio_content_template(phone, sids["rsvp"], {"1": token})
-    if out.get("sent"):
-        details.append("rsvp")
-    else:
-        errors.append(out.get("detail", "rsvp"))
-
-    detail = f"دعوة Twilio ({len(details)} خطوات): {', '.join(details)}"
-    if errors:
-        detail += f" — تحذيرات: {' | '.join(errors)}"
     return {
         "sent": True,
-        "detail": detail,
+        "detail": "دعوة Twilio (بطاقة واحدة: نص + خريطة + فتح + RSVP)",
         "interactive": True,
+        "content_sid": content_sid,
     }
 
 

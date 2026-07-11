@@ -47,6 +47,7 @@ interface DropdownPosition {
   top: number;
   right: number;
   width: number;
+  maxHeight: number;
 }
 
 function useDropdownPosition(
@@ -65,13 +66,32 @@ function useDropdownPosition(
       const el = anchorRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const width = Math.min(400, window.innerWidth - 16);
-      const right = Math.max(8, window.innerWidth - rect.right);
-      setPos({
-        top: rect.bottom + 8,
-        right,
-        width,
-      });
+      const margin = 8;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // على الجوال: عرض شبه كامل مع هوامش؛ على الشاشات الأوسع: حتى 400px بمحاذاة الزر
+      const width = Math.min(400, vw - margin * 2);
+      let right: number;
+      if (vw < 640) {
+        right = margin;
+      } else {
+        right = vw - rect.right;
+        const maxRight = Math.max(margin, vw - width - margin);
+        right = Math.min(Math.max(right, margin), maxRight);
+      }
+
+      let top = rect.bottom + 8;
+      const spaceBelow = vh - top - margin;
+      const spaceAbove = rect.top - margin;
+      let maxHeight = Math.min(vh * 0.72, Math.max(spaceBelow, 160));
+      if (spaceBelow < 220 && spaceAbove > spaceBelow) {
+        maxHeight = Math.min(vh * 0.72, Math.max(spaceAbove - 8, 160));
+        top = Math.max(margin, rect.top - maxHeight - 8);
+      } else {
+        top = Math.min(top, Math.max(margin, vh - maxHeight - margin));
+      }
+
+      setPos({ top, right, width, maxHeight });
     };
 
     update();
@@ -114,12 +134,12 @@ function DropdownPanel({
     <>
       <div className="fixed inset-0 z-[190]" onClick={onClose} aria-hidden="true" />
       <div
-        className="fixed z-[200] bg-surface-container/95 backdrop-blur-xl border border-outline-variant/25 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden"
+        className="fixed z-[200] flex flex-col bg-surface-container/95 backdrop-blur-xl border border-outline-variant/25 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden max-w-[calc(100vw-1rem)]"
         style={{
           top: pos.top,
           right: pos.right,
           width: pos.width,
-          maxHeight: `min(72vh, ${window.innerHeight - pos.top - 16}px)`,
+          maxHeight: pos.maxHeight,
         }}
         role="dialog"
         aria-modal="true"
@@ -260,7 +280,7 @@ export default function HeaderComms({
           anchorRef={msgBtnRef}
           onClose={() => setShowMessages(false)}
         >
-          <div className="px-4 py-3 border-b border-outline-variant/10 flex justify-between items-center gap-2 bg-gradient-to-l from-primary/10 to-transparent">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-outline-variant/10 flex justify-between items-center gap-2 bg-gradient-to-l from-primary/10 to-transparent shrink-0">
             <span className="text-sm font-bold text-on-surface">الرسائل</span>
             {msgUnread > 0 && (
               <span className="text-[10px] font-bold text-primary bg-primary-container/15 px-2 py-0.5 rounded-full shrink-0">
@@ -268,9 +288,9 @@ export default function HeaderComms({
               </span>
             )}
           </div>
-          <div className="overflow-y-auto sidebar-scroll max-h-[min(52vh,360px)]">
+          <div className="overflow-y-auto sidebar-scroll flex-1 min-h-0 overscroll-contain">
             {!hasMessageItems ? (
-              <p className="text-center text-sm text-on-surface-variant py-10 px-4">
+              <p className="text-center text-sm text-on-surface-variant py-8 sm:py-10 px-4">
                 لا توجد رسائل جديدة
               </p>
             ) : (
@@ -280,7 +300,7 @@ export default function HeaderComms({
                     key={`g-${m.id}`}
                     type="button"
                     onClick={() => openGuestMessage(m)}
-                    className="w-full text-right px-4 py-3 border-b border-outline-variant/5 hover:bg-surface-container-high/60 transition-colors bg-emerald-500/5"
+                    className="w-full text-right px-3 sm:px-4 py-2.5 sm:py-3 border-b border-outline-variant/5 hover:bg-surface-container-high/60 transition-colors bg-emerald-500/5"
                   >
                     <div className="flex items-start gap-2">
                       <span className="material-symbols-outlined text-base text-fuchsia-400 shrink-0 mt-0.5">
@@ -290,7 +310,7 @@ export default function HeaderComms({
                         <p className="text-sm font-bold text-on-surface truncate">
                           {m.kind === "inquiry" ? "استفسار" : "تهنئة"} — {m.guest_name}
                         </p>
-                        <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2">
+                        <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2 break-words">
                           {m.content}
                         </p>
                         <p className="text-[10px] text-outline mt-1">{formatTime(m.created_at)}</p>
@@ -303,7 +323,7 @@ export default function HeaderComms({
                     key={m.id}
                     type="button"
                     onClick={() => openMessage(m)}
-                    className="w-full text-right px-4 py-3 border-b border-outline-variant/5 hover:bg-surface-container-high/60 transition-colors bg-primary-container/5"
+                    className="w-full text-right px-3 sm:px-4 py-2.5 sm:py-3 border-b border-outline-variant/5 hover:bg-surface-container-high/60 transition-colors bg-primary-container/5"
                   >
                     <div className="flex items-start gap-2">
                       <span className="material-symbols-outlined text-base text-primary shrink-0 mt-0.5">
@@ -313,10 +333,10 @@ export default function HeaderComms({
                         <p className="text-sm font-bold text-on-surface truncate">
                           {m.subject || "رسالة"}
                         </p>
-                        <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2">
+                        <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2 break-words">
                           {m.body}
                         </p>
-                        <p className="text-[10px] text-outline mt-1">
+                        <p className="text-[10px] text-outline mt-1 truncate">
                           {m.is_outgoing ? `إلى ${m.recipient_name}` : `من ${m.sender_name}`} ·{" "}
                           {formatTime(m.created_at)}
                         </p>
@@ -328,7 +348,7 @@ export default function HeaderComms({
             )}
           </div>
           {messagesHref && (
-            <div className="px-4 py-3 border-t border-outline-variant/10 bg-surface-container-low/80">
+            <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-outline-variant/10 bg-surface-container-low/80 shrink-0">
               <Link
                 href={`${messagesHref}?tab=gratitudes`}
                 onClick={() => setShowMessages(false)}
@@ -365,17 +385,17 @@ export default function HeaderComms({
           anchorRef={notifBtnRef}
           onClose={() => setShowNotifications(false)}
         >
-          <div className="px-4 py-3 border-b border-outline-variant/10 flex justify-between items-center gap-2 bg-gradient-to-l from-red-500/10 to-transparent">
-            <span className="text-sm font-bold text-on-surface">إشعارات النظام</span>
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-outline-variant/10 flex justify-between items-center gap-2 bg-gradient-to-l from-red-500/10 to-transparent shrink-0">
+            <span className="text-sm font-bold text-on-surface truncate">إشعارات النظام</span>
             {notifUnread > 0 && (
               <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full shrink-0">
                 {notifUnread} جديد
               </span>
             )}
           </div>
-          <div className="overflow-y-auto sidebar-scroll max-h-[min(52vh,360px)]">
+          <div className="overflow-y-auto sidebar-scroll flex-1 min-h-0 overscroll-contain">
             {notifications.length === 0 ? (
-              <p className="text-center text-sm text-on-surface-variant py-10 px-4">
+              <p className="text-center text-sm text-on-surface-variant py-8 sm:py-10 px-4">
                 لا توجد إشعارات
               </p>
             ) : (
@@ -384,24 +404,30 @@ export default function HeaderComms({
                   key={n.id}
                   type="button"
                   onClick={() => openNotification(n)}
-                  className={`w-full text-right px-4 py-3 border-b border-outline-variant/5 hover:bg-surface-container-high/60 transition-colors ${
+                  className={`w-full text-right px-3 sm:px-4 py-2.5 sm:py-3 border-b border-outline-variant/5 hover:bg-surface-container-high/60 transition-colors ${
                     !n.is_read ? "bg-primary-container/8" : ""
                   }`}
                 >
-                  <div className="flex items-start gap-2.5">
+                  <div className="flex items-start gap-2 sm:gap-2.5">
                     <span
-                      className={`material-symbols-outlined text-lg shrink-0 mt-0.5 ${
+                      className={`material-symbols-outlined text-base sm:text-lg shrink-0 mt-0.5 ${
                         NOTIF_KIND_COLORS[n.kind || "system"] || "text-primary"
                       }`}
                     >
                       {n.icon || "notifications"}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-on-surface">{n.title}</p>
+                      <p className="text-sm font-bold text-on-surface line-clamp-2 break-words">
+                        {n.title}
+                      </p>
                       {n.kind_label && (
-                        <p className="text-[10px] text-primary/80 font-bold mt-0.5">{n.kind_label}</p>
+                        <p className="text-[10px] text-primary/80 font-bold mt-0.5 truncate">
+                          {n.kind_label}
+                        </p>
                       )}
-                      <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2">{n.body}</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2 break-words">
+                        {n.body}
+                      </p>
                       <p className="text-[10px] text-outline mt-1">{formatTime(n.created_at)}</p>
                     </div>
                     {!n.is_read && (
@@ -413,7 +439,7 @@ export default function HeaderComms({
             )}
           </div>
           {notificationsHref && (
-            <div className="px-4 py-3 border-t border-outline-variant/10 bg-surface-container-low/80">
+            <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-outline-variant/10 bg-surface-container-low/80 shrink-0">
               <Link
                 href={notificationsHref}
                 onClick={() => setShowNotifications(false)}

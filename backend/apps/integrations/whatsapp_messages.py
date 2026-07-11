@@ -77,12 +77,10 @@ def _use_twilio_templates() -> bool:
         return False
     cfg = (cred.config or {}) if cred else {}
     return bool(
-        cfg.get("content_invitation")
+        cfg.get("content_card")
+        or cfg.get("content_invitation")
         or cfg.get("content_reminder")
         or cfg.get("content_qr")
-        or cfg.get("content_map")
-        or         cfg.get("content_open_invite")
-        or cfg.get("content_rsvp")
         or cfg.get("content_broadcast")
         or cfg.get("content_broadcast_watch")
     )
@@ -154,12 +152,10 @@ def _template_names() -> dict[str, str]:
             cfg.get("template_language")
             or getattr(settings, "WHATSAPP_TEMPLATE_LANGUAGE", "ar")
         ),
-        "twilio_invitation": tw_cfg.get("content_invitation", ""),
+        "twilio_invitation": tw_cfg.get("content_card")
+        or tw_cfg.get("content_invitation", ""),
         "twilio_reminder": tw_cfg.get("content_reminder", ""),
         "twilio_qr": tw_cfg.get("content_qr", ""),
-        "twilio_map": tw_cfg.get("content_map", ""),
-        "twilio_open_invite": tw_cfg.get("content_open_invite", ""),
-        "twilio_rsvp": tw_cfg.get("content_rsvp", ""),
     }
 
 

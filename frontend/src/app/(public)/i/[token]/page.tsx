@@ -68,7 +68,7 @@ export default function PublicInvitationPage() {
     );
   }
 
-  const { event, guest, group_members, qr_url } = data;
+  const { event, guest, group_members } = data;
   const locationLabel = formatEventLocation(event);
   const mapsUrl = eventMapsUrl(event);
   const status = guest.status;
@@ -76,7 +76,6 @@ export default function PublicInvitationPage() {
   const attended = status === "attended";
   const confirmed = status === "confirmed";
   const declined = status === "declined";
-  const showQr = Boolean(qr_url) || confirmed || seated || attended;
 
   return (
     <Page>
@@ -140,7 +139,7 @@ export default function PublicInvitationPage() {
           </div>
         </section>
 
-        {/* 3 — تأكيد الحضور (+ QR مضغوط بعد التأكيد) */}
+        {/* 3 — تأكيد الحضور */}
         <section className="bg-surface-container-high p-3.5 sm:p-4 rounded-2xl space-y-3 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-24 h-24 bg-primary/10 blur-[48px] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
           {seated ? (
@@ -154,7 +153,7 @@ export default function PublicInvitationPage() {
           ) : confirmed ? (
             <div className="space-y-2.5 relative">
               <Banner tone="emerald" icon="task_alt" title="تم تأكيد حضورك">
-                احتفظ برمز الدخول أدناه
+                نتشرف بحضورك
               </Banner>
               <button
                 onClick={() => respond("decline")}
@@ -211,29 +210,6 @@ export default function PublicInvitationPage() {
                   {acting === "decline" ? "جارِ الإرسال..." : "اعتذار"}
                 </button>
               </div>
-            </div>
-          )}
-
-          {showQr && (
-            <div
-              className={`rounded-xl text-center p-3 ${
-                qr_url
-                  ? "bg-white"
-                  : "bg-surface-container-lowest border border-dashed border-outline-variant/40"
-              }`}
-            >
-              {qr_url ? (
-                <QrBlock qrUrl={qr_url} guestName={guest.full_name} eventTitle={event.title} />
-              ) : (
-                <div className="flex items-center justify-center gap-2 py-1">
-                  <span className="material-symbols-outlined text-outline text-xl opacity-40">
-                    qr_code_2
-                  </span>
-                  <p className="text-[11px] text-on-surface-variant arabic-display">
-                    سيظهر رمز الدخول بعد تأكيد الحضور
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </section>
@@ -386,89 +362,6 @@ function GreetingBox({ token, initial }: { token: string; initial: string }) {
         <p className="text-[11px] text-emerald-400 px-0.5">تم إرسال كلمتك — شكراً لك</p>
       )}
     </section>
-  );
-}
-
-function QrBlock({
-  qrUrl,
-  guestName,
-  eventTitle,
-}: {
-  qrUrl: string;
-  guestName: string;
-  eventTitle: string;
-}) {
-  const [busy, setBusy] = useState(false);
-
-  const fetchDataUrl = async (): Promise<string> => {
-    const res = await fetch(qrUrl, { cache: "no-store" });
-    const blob = await res.blob();
-    return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  const downloadPng = async () => {
-    setBusy(true);
-    try {
-      const dataUrl = await fetchDataUrl();
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `دعوة-${guestName}.png`;
-      a.click();
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const downloadPdf = async () => {
-    setBusy(true);
-    try {
-      const dataUrl = await fetchDataUrl();
-      const { jsPDF } = await import("jspdf");
-      const doc = new jsPDF({ unit: "mm", format: "a4" });
-      const pageW = doc.internal.pageSize.getWidth();
-      doc.setFontSize(16);
-      doc.text(eventTitle, pageW / 2, 30, { align: "center" });
-      doc.setFontSize(12);
-      doc.text(guestName, pageW / 2, 40, { align: "center" });
-      const size = 90;
-      doc.addImage(dataUrl, "PNG", (pageW - size) / 2, 55, size, size);
-      doc.setFontSize(10);
-      doc.text("Show this code at the entrance", pageW / 2, 160, { align: "center" });
-      doc.save(`دعوة-${guestName}.pdf`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <p className="text-[#1c1b28] text-[11px] font-bold">رمز الدخول الخاص بك</p>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={qrUrl} alt="رمز الدخول" className="w-36 h-36 sm:w-40 sm:h-40 object-contain" />
-      <p className="text-[#1c1b28] text-[10px] font-bold">{guestName}</p>
-      <div className="grid grid-cols-2 gap-2 w-full">
-        <button
-          onClick={downloadPng}
-          disabled={busy}
-          className="flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-bold text-white bg-primary-container disabled:opacity-50"
-        >
-          <span className="material-symbols-outlined text-sm">image</span>
-          صورة
-        </button>
-        <button
-          onClick={downloadPdf}
-          disabled={busy}
-          className="flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-bold text-[#1c1b28] bg-[#e8e6f0] disabled:opacity-50"
-        >
-          <span className="material-symbols-outlined text-sm">picture_as_pdf</span>
-          PDF
-        </button>
-      </div>
-    </div>
   );
 }
 
