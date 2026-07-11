@@ -2,14 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { publicInvitationAPI, type PublicInvitation, type PublicInvitationCoordinator } from "@/lib/api";
-import InvitationLiveMedia from "@/components/invitation/InvitationLiveMedia";
+import { publicInvitationAPI, type PublicInvitation } from "@/lib/api";
 import { eventMapsUrl, formatEventLocation } from "@/lib/eventLocation";
 
 /**
  * صفحة الدعوة العامة — يفتحها الضيف عبر رابط فريد.
- * تصميم مطابق لقالب الدعوة (Digital Majlis) مع إزالة: الشريط العلوي،
- * الشريط السفلي (Invite/Timeline/Guest List/RSVP)، وزرّي البث المباشر ورفع الصور.
+ * الترتيب: غلاف → بيانات الحدث → تأكيد الحضور → مجموعة الضيف → رسالة لأهل المناسبة.
  */
 export default function PublicInvitationPage() {
   const params = useParams();
@@ -51,9 +49,9 @@ export default function PublicInvitationPage() {
   if (loading) {
     return (
       <Page>
-        <div className="flex flex-col items-center gap-4 py-32">
-          <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin" />
-          <p className="text-on-surface-variant text-sm">جارِ تحميل الدعوة...</p>
+        <div className="flex flex-col items-center gap-3 py-24">
+          <div className="w-9 h-9 rounded-full border-3 border-primary/30 border-t-primary animate-spin" />
+          <p className="text-on-surface-variant text-xs">جارِ تحميل الدعوة...</p>
         </div>
       </Page>
     );
@@ -62,15 +60,15 @@ export default function PublicInvitationPage() {
   if (error || !data) {
     return (
       <Page>
-        <div className="flex flex-col items-center gap-4 py-32 text-center">
-          <span className="material-symbols-outlined text-6xl text-error">error</span>
-          <p className="text-on-surface font-bold text-lg">{error || "الدعوة غير متاحة"}</p>
+        <div className="flex flex-col items-center gap-3 py-24 text-center px-4">
+          <span className="material-symbols-outlined text-4xl text-error">error</span>
+          <p className="text-on-surface font-bold text-sm">{error || "الدعوة غير متاحة"}</p>
         </div>
       </Page>
     );
   }
 
-  const { event, guest, schedules, group_members, coordinator, qr_url, live_media } = data;
+  const { event, guest, group_members, qr_url } = data;
   const locationLabel = formatEventLocation(event);
   const mapsUrl = eventMapsUrl(event);
   const status = guest.status;
@@ -78,153 +76,129 @@ export default function PublicInvitationPage() {
   const attended = status === "attended";
   const confirmed = status === "confirmed";
   const declined = status === "declined";
+  const showQr = Boolean(qr_url) || confirmed || seated || attended;
 
   return (
     <Page>
-      <main className="max-w-md mx-auto px-4 py-10 space-y-12">
-        {/* Hero — صورة وخلفية مطابقة لقالب الدعوة */}
-        <section className="relative h-[530px] flex flex-col items-center justify-center text-center space-y-6 overflow-hidden rounded-[2rem]">
+      <main className="max-w-md mx-auto px-3 sm:px-4 py-5 sm:py-6 space-y-4 sm:space-y-5">
+        {/* 1 — غلاف الحدث */}
+        <section className="relative h-[220px] sm:h-[260px] flex flex-col items-center justify-end text-center overflow-hidden rounded-2xl">
           <div className="absolute inset-0 z-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={event.cover_image || "/invitation-hero.jpg"}
               alt={event.title}
-              className="w-full h-full object-cover opacity-40"
+              className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
           </div>
-          <div className="relative z-10 space-y-4 px-6">
-            <span className="uppercase tracking-[0.2em] text-primary font-bold text-xs">
+          <div className="relative z-10 space-y-1.5 px-4 pb-4 w-full">
+            <span className="uppercase tracking-[0.18em] text-primary font-bold text-[10px]">
               {event.platform_name || "دعوة خاصة"}
             </span>
-            <h2 className="arabic-display text-4xl font-extrabold leading-tight text-on-surface">
+            <h1 className="arabic-display text-xl sm:text-2xl font-extrabold leading-snug text-on-surface">
               {event.invitation_title || event.title}
-            </h2>
-            <div className="w-12 h-1 bg-primary mx-auto rounded-full" />
-            <p className="arabic-display text-2xl font-bold text-on-surface-variant">
+            </h1>
+            <div className="w-8 h-0.5 bg-primary mx-auto rounded-full" />
+            <p className="arabic-display text-sm font-bold text-on-surface-variant">
               {guest.full_name}
             </p>
           </div>
         </section>
 
-        {/* Description */}
-        {(event.description || event.invitation_message) && (
-          <section className="text-center px-4">
-            <p className="arabic-display text-lg text-on-surface-variant leading-relaxed italic">
-              {event.description || ""}
-            </p>
-          </section>
-        )}
-
-        {/* Details */}
-        <section className="grid grid-cols-1 gap-4">
-          <DetailCard icon="calendar_month" label="التاريخ" value={formatDate(event.date)} />
-          <DetailCard
-            icon="schedule"
-            label="الوقت"
-            value={event.time ? formatTime(event.time) : "—"}
-          />
-          <div className="bg-surface-container-high p-6 rounded-2xl space-y-4">
-            <div className="flex items-center gap-5">
-              <div className="bg-primary-container/20 p-4 rounded-xl">
-                <span className="material-symbols-outlined text-primary text-3xl">location_on</span>
-              </div>
-              <div className="min-w-0">
-                <h3 className="arabic-display text-sm text-on-surface-variant">الموقع</h3>
-                <p className="arabic-display text-xl font-bold text-on-surface break-words">
-                  {locationLabel || "سيُعلن لاحقاً"}
-                </p>
-              </div>
+        {/* 2 — بيانات الحدث */}
+        <section className="bg-surface-container-high rounded-2xl p-3 sm:p-3.5 space-y-2.5">
+          <div className="grid grid-cols-2 gap-2">
+            <MetaChip icon="calendar_month" label="التاريخ" value={formatDate(event.date)} />
+            <MetaChip
+              icon="schedule"
+              label="الوقت"
+              value={event.time ? formatTime(event.time) : "—"}
+            />
+          </div>
+          <div className="flex items-start gap-2.5 rounded-xl bg-surface-container-lowest/60 px-3 py-2.5">
+            <span className="material-symbols-outlined text-primary text-lg mt-0.5 shrink-0">
+              location_on
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] text-on-surface-variant">الموقع</p>
+              <p className="arabic-display text-sm font-bold text-on-surface break-words leading-snug">
+                {locationLabel || "سيُعلن لاحقاً"}
+              </p>
             </div>
             {mapsUrl && (
               <a
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-4 bg-surface-container-highest rounded-xl text-primary font-bold flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors"
+                className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/15 transition-colors"
               >
-                <span className="material-symbols-outlined">map</span>
-                <span>عرض الخريطة</span>
+                <span className="material-symbols-outlined text-sm">map</span>
+                خريطة
               </a>
             )}
           </div>
         </section>
 
-        {live_media?.enabled && (
-          <InvitationLiveMedia token={token} initial={live_media} />
-        )}
-
-        {/* Section / Group */}
-        {(guest.section_name || guest.group_name) && (
-          <section className="grid grid-cols-2 gap-4">
-            {guest.section_name && (
-              <SoftCard icon="grid_view" title={guest.section_name} sub="القسم المخصّص لك" />
-            )}
-            {guest.group_name && (
-              <SoftCard icon="group" title={guest.group_name} sub="مجموعتك" />
-            )}
-          </section>
-        )}
-
-        {/* RSVP */}
-        <section className="bg-surface-container-high p-8 rounded-[2rem] space-y-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 blur-[60px] rounded-full -translate-x-1/2 -translate-y-1/2" />
+        {/* 3 — تأكيد الحضور (+ QR مضغوط بعد التأكيد) */}
+        <section className="bg-surface-container-high p-3.5 sm:p-4 rounded-2xl space-y-3 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-24 h-24 bg-primary/10 blur-[48px] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
           {seated ? (
             <Banner tone="emerald" icon="event_seat" title="تم إجلاسك في مقعدك">
-              تم إدراجك في مقعدك داخل القاعة — نتمنى لك أمسية سعيدة
+              نتمنى لك أمسية سعيدة
             </Banner>
           ) : attended ? (
             <Banner tone="emerald" icon="check_circle" title="تم تسجيل حضورك">
-              شكراً لحضورك — نتمنى لك وقتاً ممتعاً
+              شكراً لحضورك
             </Banner>
           ) : confirmed ? (
-            <div className="space-y-4">
+            <div className="space-y-2.5 relative">
               <Banner tone="emerald" icon="task_alt" title="تم تأكيد حضورك">
-                نتشرف بحضورك — احتفظ برمز الدخول أدناه
+                احتفظ برمز الدخول أدناه
               </Banner>
               <button
                 onClick={() => respond("decline")}
                 disabled={acting !== null}
-                className="w-full py-3 rounded-xl text-sm font-bold text-on-surface-variant bg-surface-container-highest hover:bg-surface-bright transition-colors disabled:opacity-50"
+                className="w-full py-2 rounded-xl text-xs font-bold text-on-surface-variant bg-surface-container-highest hover:bg-surface-bright transition-colors disabled:opacity-50"
               >
                 تغيير ردي إلى اعتذار
               </button>
             </div>
           ) : declined ? (
-            <div className="space-y-4">
+            <div className="space-y-2.5 relative">
               <Banner tone="rose" icon="cancel" title="تم تسجيل اعتذارك">
                 نأسف لعدم تمكنك من الحضور
               </Banner>
               <button
                 onClick={() => respond("confirm")}
                 disabled={acting !== null}
-                className="w-full py-4 rounded-xl font-bold text-white active:scale-95 transition-transform disabled:opacity-50"
+                className="w-full py-2.5 rounded-xl text-sm font-bold text-white active:scale-[0.98] transition-transform disabled:opacity-50"
                 style={{
                   backgroundImage: "linear-gradient(135deg, #5b2eff 0%, #c8bfff 100%)",
-                  boxShadow: "0px 10px 20px rgba(66,0,218,0.3)",
+                  boxShadow: "0px 8px 16px rgba(66,0,218,0.25)",
                 }}
               >
                 {acting === "confirm" ? "جارِ التأكيد..." : "بل سأحضر — تأكيد الحضور"}
               </button>
             </div>
           ) : (
-            <>
-              <div className="text-center space-y-2 relative">
-                <h2 className="arabic-display text-2xl font-bold text-on-surface">
+            <div className="space-y-3 relative">
+              <div className="text-center space-y-0.5">
+                <h2 className="arabic-display text-base font-bold text-on-surface">
                   هل ستشرفنا بحضورك؟
                 </h2>
-                <p className="text-on-surface-variant text-sm">
+                <p className="text-on-surface-variant text-[11px]">
                   نرجو تأكيد الحضور لضمان أفضل استقبال
                 </p>
               </div>
-              <div className="flex flex-col gap-4 relative">
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={() => respond("confirm")}
                   disabled={acting !== null}
-                  className="w-full py-4 text-white rounded-xl font-bold active:scale-95 transition-transform disabled:opacity-50"
+                  className="w-full py-2.5 text-sm text-white rounded-xl font-bold active:scale-[0.98] transition-transform disabled:opacity-50"
                   style={{
                     backgroundImage: "linear-gradient(135deg, #5b2eff 0%, #c8bfff 100%)",
-                    boxShadow: "0px 10px 20px rgba(66,0,218,0.3)",
+                    boxShadow: "0px 8px 16px rgba(66,0,218,0.25)",
                   }}
                 >
                   {acting === "confirm" ? "جارِ التأكيد..." : "تأكيد الحضور"}
@@ -232,99 +206,63 @@ export default function PublicInvitationPage() {
                 <button
                   onClick={() => respond("decline")}
                   disabled={acting !== null}
-                  className="py-4 bg-surface-container-highest rounded-xl text-on-surface font-medium active:scale-95 transition-transform disabled:opacity-50"
+                  className="py-2 rounded-xl text-xs bg-surface-container-highest text-on-surface font-medium active:scale-[0.98] transition-transform disabled:opacity-50"
                 >
                   {acting === "decline" ? "جارِ الإرسال..." : "اعتذار"}
                 </button>
               </div>
-            </>
-          )}
-        </section>
-
-        {/* QR */}
-        <section
-          className={`p-8 rounded-[2rem] text-center space-y-6 ${
-            qr_url
-              ? "bg-white"
-              : "bg-surface-container-lowest border border-dashed border-outline-variant"
-          }`}
-        >
-          {qr_url ? (
-            <QrBlock qrUrl={qr_url} guestName={guest.full_name} eventTitle={event.title} />
-          ) : (
-            <>
-              <p className="text-sm text-on-surface-variant arabic-display">
-                سيظهر رمز الدخول (QR Code) الخاص بك هنا بعد تأكيد الحضور
-              </p>
-              <div className="w-48 h-48 mx-auto bg-surface-container-high rounded-2xl flex items-center justify-center relative">
-                <span className="material-symbols-outlined text-outline text-6xl opacity-20">
-                  qr_code_2
-                </span>
-                <span className="material-symbols-outlined text-primary text-3xl absolute">
-                  lock
-                </span>
-              </div>
-            </>
-          )}
-        </section>
-
-        {/* Timeline */}
-        {schedules.length > 0 && (
-          <section className="space-y-6">
-            <h3 className="arabic-display text-xl font-bold px-2 flex items-center gap-3 text-on-surface">
-              <span className="w-2 h-8 bg-primary rounded-full" />
-              برنامج الحفل
-            </h3>
-            <div className="relative">
-              <div className="absolute top-0 right-[23px] bottom-0 w-0.5 bg-outline-variant/30" />
-              {schedules.map((s, i) => (
-                <div
-                  key={i}
-                  className={`relative pr-16 ${i === schedules.length - 1 ? "" : "pb-10"}`}
-                >
-                  <div className="absolute right-0 top-1 w-12 h-12 bg-surface-container-high rounded-full border-4 border-background z-10 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-base">
-                      celebration
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold text-primary tracking-widest" dir="ltr">
-                      {formatTime(s.start_time)}
-                    </span>
-                    <h4 className="arabic-display font-bold text-lg text-on-surface">{s.title}</h4>
-                    {s.description && (
-                      <p className="text-sm text-on-surface-variant italic">{s.description}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
-          </section>
-        )}
+          )}
 
-        {/* Who's attending from your group */}
+          {showQr && (
+            <div
+              className={`rounded-xl text-center p-3 ${
+                qr_url
+                  ? "bg-white"
+                  : "bg-surface-container-lowest border border-dashed border-outline-variant/40"
+              }`}
+            >
+              {qr_url ? (
+                <QrBlock qrUrl={qr_url} guestName={guest.full_name} eventTitle={event.title} />
+              ) : (
+                <div className="flex items-center justify-center gap-2 py-1">
+                  <span className="material-symbols-outlined text-outline text-xl opacity-40">
+                    qr_code_2
+                  </span>
+                  <p className="text-[11px] text-on-surface-variant arabic-display">
+                    سيظهر رمز الدخول بعد تأكيد الحضور
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* 4 — من سيحضر من مجموعتك */}
         {group_members.length > 0 && (
-          <section className="bg-surface-container-low p-6 rounded-[2rem] space-y-5">
-            <h3 className="arabic-display font-bold text-on-surface">من سيحضر من مجموعتك</h3>
-            <div className="space-y-3">
+          <section className="bg-surface-container-low p-3 sm:p-3.5 rounded-2xl space-y-2.5">
+            <h3 className="arabic-display text-sm font-bold text-on-surface px-0.5">
+              من سيحضر من مجموعتك
+            </h3>
+            <div className="space-y-1.5">
               {group_members.map((m, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-between p-3 bg-surface-container-high rounded-xl ${
+                  className={`flex items-center justify-between px-2.5 py-2 bg-surface-container-high rounded-xl ${
                     m.going ? "" : "opacity-60"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container text-xs font-bold">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container text-[10px] font-bold shrink-0">
                       {m.initials}
                     </div>
-                    <span className="arabic-display font-medium text-on-surface">
+                    <span className="arabic-display text-xs font-medium text-on-surface truncate">
                       {m.full_name}
-                      {m.is_self && <span className="text-primary text-xs"> (أنت)</span>}
+                      {m.is_self && <span className="text-primary text-[10px]"> (أنت)</span>}
                     </span>
                   </div>
                   <span
-                    className={`material-symbols-outlined ${
+                    className={`material-symbols-outlined text-base shrink-0 ${
                       m.going
                         ? "text-emerald-400"
                         : m.declined
@@ -341,25 +279,14 @@ export default function PublicInvitationPage() {
           </section>
         )}
 
-        {/* Greeting message */}
+        {/* 5 — رسالة لأهل المناسبة */}
         <GreetingBox token={token} initial={guest.greeting} />
 
-        {/* Coordinator inquiry */}
-        {coordinator && (
-          <CoordinatorInquiryBox token={token} coordinator={coordinator} />
-        )}
-
-        {/* Footer */}
-        <footer className="text-center pt-6 pb-8 space-y-3">
-          <h2 className="arabic-display text-2xl font-black gradient-text">مرحّاب</h2>
-          <p className="text-sm text-on-surface-variant tracking-[0.3em] uppercase font-bold">
+        <footer className="text-center pt-2 pb-4 space-y-1.5">
+          <h2 className="arabic-display text-base font-black gradient-text">مرحّاب</h2>
+          <p className="text-[10px] text-on-surface-variant tracking-[0.25em] uppercase font-bold">
             حيث تبدأ الحفاوة
           </p>
-          <div className="flex justify-center gap-3 pt-2">
-            <span className="w-2 h-2 rounded-full bg-primary/20" />
-            <span className="w-2 h-2 rounded-full bg-primary/50" />
-            <span className="w-2 h-2 rounded-full bg-primary/20" />
-          </div>
         </footer>
       </main>
     </Page>
@@ -376,28 +303,16 @@ function Page({ children }: { children: React.ReactNode }) {
   );
 }
 
-function DetailCard({ icon, label, value }: { icon: string; label: string; value: string }) {
+function MetaChip({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
-    <div className="bg-surface-container-high p-6 rounded-2xl flex items-center gap-5">
-      <div className="bg-primary-container/20 p-4 rounded-xl shrink-0">
-        <span className="material-symbols-outlined text-primary text-3xl">{icon}</span>
-      </div>
+    <div className="flex items-start gap-2 rounded-xl bg-surface-container-lowest/60 px-2.5 py-2">
+      <span className="material-symbols-outlined text-primary text-base mt-0.5 shrink-0">
+        {icon}
+      </span>
       <div className="min-w-0">
-        <h3 className="arabic-display text-sm text-on-surface-variant">{label}</h3>
-        <p className="arabic-display text-xl font-bold text-on-surface">{value}</p>
+        <p className="text-[10px] text-on-surface-variant">{label}</p>
+        <p className="arabic-display text-xs font-bold text-on-surface leading-snug">{value}</p>
       </div>
-    </div>
-  );
-}
-
-function SoftCard({ icon, title, sub }: { icon: string; title: string; sub: string }) {
-  return (
-    <div className="bg-surface-container-low p-6 rounded-2xl text-center space-y-3">
-      <div className="w-12 h-12 bg-secondary-container rounded-full mx-auto flex items-center justify-center">
-        <span className="material-symbols-outlined text-secondary">{icon}</span>
-      </div>
-      <h3 className="arabic-display font-bold text-on-surface truncate">{title}</h3>
-      <p className="text-xs text-on-surface-variant">{sub}</p>
     </div>
   );
 }
@@ -418,10 +333,10 @@ function Banner({
       ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
       : "border-[#e07a93]/40 bg-[#e07a93]/10 text-[#f4a6ba]";
   return (
-    <div className={`rounded-2xl border px-4 py-4 text-center relative ${toneClass}`}>
-      <span className="material-symbols-outlined text-3xl">{icon}</span>
-      <p className="font-black text-base mt-1">{title}</p>
-      <p className="text-xs opacity-90 mt-1">{children}</p>
+    <div className={`rounded-xl border px-3 py-2.5 text-center relative ${toneClass}`}>
+      <span className="material-symbols-outlined text-xl">{icon}</span>
+      <p className="font-black text-sm mt-0.5">{title}</p>
+      <p className="text-[11px] opacity-90 mt-0.5">{children}</p>
     </div>
   );
 }
@@ -443,13 +358,10 @@ function GreetingBox({ token, initial }: { token: string; initial: string }) {
   };
 
   return (
-    <section className="space-y-3">
-      <label className="arabic-display font-bold px-2 block text-on-surface">
-        كلمة تهنئة لأهل الحفل
+    <section className="space-y-1.5">
+      <label className="arabic-display text-sm font-bold px-0.5 block text-on-surface">
+        رسالة لأهل المناسبة
       </label>
-      <p className="text-xs text-on-surface-variant px-2">
-        تُعرض في لوحة التحكم ضمن «تهنئات واستفسارات الضيوف»
-      </p>
       <div className="relative">
         <textarea
           value={value}
@@ -457,109 +369,22 @@ function GreetingBox({ token, initial }: { token: string; initial: string }) {
             setValue(e.target.value);
             setSaved(false);
           }}
-          placeholder="اكتب مشاعرك هنا..."
-          className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 pl-16 focus:ring-2 focus:ring-primary focus:border-primary text-on-surface arabic-display h-32 outline-none resize-none"
+          placeholder="اكتب كلمتك هنا..."
+          rows={3}
+          className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-3 pl-12 text-sm focus:ring-2 focus:ring-primary focus:border-primary text-on-surface arabic-display outline-none resize-none"
         />
         <button
           onClick={send}
           disabled={saving || !value.trim()}
-          className="absolute bottom-4 left-4 bg-primary-container p-2.5 rounded-xl text-white disabled:opacity-50"
+          className="absolute bottom-2.5 left-2.5 bg-primary-container p-2 rounded-lg text-white disabled:opacity-50"
           title="إرسال"
         >
-          <span className="material-symbols-outlined">{saved ? "check" : "send"}</span>
+          <span className="material-symbols-outlined text-base">{saved ? "check" : "send"}</span>
         </button>
       </div>
       {saved && value && (
-        <p className="text-xs text-emerald-400 px-2">تم إرسال كلمتك — شكراً لك</p>
+        <p className="text-[11px] text-emerald-400 px-0.5">تم إرسال كلمتك — شكراً لك</p>
       )}
-    </section>
-  );
-}
-
-function CoordinatorInquiryBox({
-  token,
-  coordinator,
-}: {
-  token: string;
-  coordinator: PublicInvitationCoordinator;
-}) {
-  const [value, setValue] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
-
-  const send = async () => {
-    if (!value.trim()) return;
-    setSaving(true);
-    setError("");
-    try {
-      await publicInvitationAPI.inquiry(token, value.trim());
-      setSaved(true);
-      setValue("");
-    } catch {
-      setError("تعذّر إرسال الاستفسار — حاول مرة أخرى");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <section className="bg-surface-container-highest p-6 rounded-[2rem] space-y-4">
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-          <span className="material-symbols-outlined text-primary">support_agent</span>
-        </div>
-        <div className="min-w-0 flex-1">
-          <h4 className="arabic-display font-bold text-on-surface">{coordinator.name}</h4>
-          <p className="text-xs text-on-surface-variant mt-1">
-            منسّق الحفل — اكتب استفسارك وسيصل مباشرة للمنسّق
-          </p>
-        </div>
-        {coordinator.phone && (
-          <div className="flex gap-2 shrink-0">
-            {coordinator.whatsapp_url && (
-              <a
-                href={coordinator.whatsapp_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center"
-                title="واتساب"
-              >
-                <span className="material-symbols-outlined">chat</span>
-              </a>
-            )}
-            <a
-              href={`tel:${coordinator.phone}`}
-              className="w-10 h-10 bg-primary-container text-white rounded-full flex items-center justify-center"
-              title="اتصال"
-            >
-              <span className="material-symbols-outlined">call</span>
-            </a>
-          </div>
-        )}
-      </div>
-      <textarea
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          setSaved(false);
-        }}
-        placeholder="اكتب استفسارك هنا..."
-        className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-primary text-on-surface arabic-display h-28 outline-none resize-none"
-      />
-      {error && <p className="text-xs text-error px-1">{error}</p>}
-      {saved && <p className="text-xs text-emerald-400 px-1">تم إرسال استفسارك للمنسّق — سيتواصل معك قريباً</p>}
-      <button
-        type="button"
-        onClick={send}
-        disabled={saving || !value.trim()}
-        className="w-full py-3.5 rounded-xl font-bold text-white disabled:opacity-50"
-        style={{
-          backgroundImage: "linear-gradient(135deg, #5b2eff 0%, #7b52ff 100%)",
-        }}
-      >
-        {saving ? "جارِ الإرسال..." : "إرسال للمنسّق"}
-      </button>
     </section>
   );
 }
@@ -620,27 +445,27 @@ function QrBlock({
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <p className="text-[#1c1b28] text-sm font-bold mb-3">رمز الدخول الخاص بك</p>
+    <div className="flex flex-col items-center gap-2">
+      <p className="text-[#1c1b28] text-[11px] font-bold">رمز الدخول الخاص بك</p>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={qrUrl} alt="رمز الدخول" className="w-52 h-52 object-contain" />
-      <p className="text-[#1c1b28] text-xs font-bold mt-2">{guestName}</p>
-      <div className="grid grid-cols-2 gap-3 w-full mt-5">
+      <img src={qrUrl} alt="رمز الدخول" className="w-36 h-36 sm:w-40 sm:h-40 object-contain" />
+      <p className="text-[#1c1b28] text-[10px] font-bold">{guestName}</p>
+      <div className="grid grid-cols-2 gap-2 w-full">
         <button
           onClick={downloadPng}
           disabled={busy}
-          className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold text-on-primary bg-primary-container text-white disabled:opacity-50"
+          className="flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-bold text-white bg-primary-container disabled:opacity-50"
         >
-          <span className="material-symbols-outlined text-base">image</span>
-          تنزيل صورة
+          <span className="material-symbols-outlined text-sm">image</span>
+          صورة
         </button>
         <button
           onClick={downloadPdf}
           disabled={busy}
-          className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold text-[#1c1b28] bg-[#e8e6f0] disabled:opacity-50"
+          className="flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-bold text-[#1c1b28] bg-[#e8e6f0] disabled:opacity-50"
         >
-          <span className="material-symbols-outlined text-base">picture_as_pdf</span>
-          تنزيل PDF
+          <span className="material-symbols-outlined text-sm">picture_as_pdf</span>
+          PDF
         </button>
       </div>
     </div>
@@ -651,9 +476,9 @@ function formatDate(iso: string): string {
   if (!iso) return "—";
   try {
     return new Date(iso).toLocaleDateString("ar-SA", {
-      weekday: "long",
+      weekday: "short",
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
     });
   } catch {
@@ -663,7 +488,6 @@ function formatDate(iso: string): string {
 
 function formatTime(value: string): string {
   if (!value) return "";
-  // قد تكون قيمة وقت (HH:MM:SS) أو تاريخاً ووقتاً كاملاً
   const d = value.includes("T") || value.includes(" ") ? new Date(value) : null;
   try {
     if (d && !isNaN(d.getTime())) {
