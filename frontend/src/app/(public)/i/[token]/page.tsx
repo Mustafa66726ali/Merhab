@@ -140,79 +140,67 @@ export default function PublicInvitationPage() {
         </section>
 
         {/* 3 — تأكيد الحضور */}
-        <section className="bg-surface-container-high p-3.5 sm:p-4 rounded-2xl space-y-3 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-24 h-24 bg-primary/10 blur-[48px] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-          {seated ? (
-            <Banner tone="emerald" icon="event_seat" title="تم إجلاسك في مقعدك">
-              نتمنى لك أمسية سعيدة
-            </Banner>
-          ) : attended ? (
-            <Banner tone="emerald" icon="check_circle" title="تم تسجيل حضورك">
-              شكراً لحضورك
-            </Banner>
-          ) : confirmed ? (
-            <div className="space-y-2.5 relative">
-              <Banner tone="emerald" icon="task_alt" title="تم تأكيد حضورك">
-                نتشرف بحضورك
-              </Banner>
-              <button
-                onClick={() => respond("decline")}
-                disabled={acting !== null}
-                className="w-full py-2 rounded-xl text-xs font-bold text-on-surface-variant bg-surface-container-highest hover:bg-surface-bright transition-colors disabled:opacity-50"
-              >
-                تغيير ردي إلى اعتذار
-              </button>
-            </div>
-          ) : declined ? (
-            <div className="space-y-2.5 relative">
-              <Banner tone="rose" icon="cancel" title="تم تسجيل اعتذارك">
-                نأسف لعدم تمكنك من الحضور
-              </Banner>
-              <button
-                onClick={() => respond("confirm")}
-                disabled={acting !== null}
-                className="w-full py-2.5 rounded-xl text-sm font-bold text-white active:scale-[0.98] transition-transform disabled:opacity-50"
-                style={{
-                  backgroundImage: "linear-gradient(135deg, #5b2eff 0%, #c8bfff 100%)",
-                  boxShadow: "0px 8px 16px rgba(66,0,218,0.25)",
-                }}
-              >
-                {acting === "confirm" ? "جارِ التأكيد..." : "بل سأحضر — تأكيد الحضور"}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3 relative">
-              <div className="text-center space-y-0.5">
-                <h2 className="arabic-display text-base font-bold text-on-surface">
-                  هل ستشرفنا بحضورك؟
-                </h2>
-                <p className="text-on-surface-variant text-[11px]">
-                  نرجو تأكيد الحضور لضمان أفضل استقبال
-                </p>
+        {!seated && !attended && (
+          <section className="bg-surface-container-high p-3.5 sm:p-4 rounded-2xl space-y-3 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-24 h-24 bg-primary/10 blur-[48px] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+            {confirmed ? (
+              <div className="relative">
+                <button
+                  onClick={() => respond("decline")}
+                  disabled={acting !== null}
+                  className="w-full py-2 rounded-xl text-xs font-bold text-on-surface-variant bg-surface-container-highest hover:bg-surface-bright transition-colors disabled:opacity-50"
+                >
+                  تغيير ردي إلى اعتذار
+                </button>
               </div>
-              <div className="flex flex-col gap-2">
+            ) : declined ? (
+              <div className="relative">
                 <button
                   onClick={() => respond("confirm")}
                   disabled={acting !== null}
-                  className="w-full py-2.5 text-sm text-white rounded-xl font-bold active:scale-[0.98] transition-transform disabled:opacity-50"
+                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white active:scale-[0.98] transition-transform disabled:opacity-50"
                   style={{
                     backgroundImage: "linear-gradient(135deg, #5b2eff 0%, #c8bfff 100%)",
                     boxShadow: "0px 8px 16px rgba(66,0,218,0.25)",
                   }}
                 >
-                  {acting === "confirm" ? "جارِ التأكيد..." : "تأكيد الحضور"}
-                </button>
-                <button
-                  onClick={() => respond("decline")}
-                  disabled={acting !== null}
-                  className="py-2 rounded-xl text-xs bg-surface-container-highest text-on-surface font-medium active:scale-[0.98] transition-transform disabled:opacity-50"
-                >
-                  {acting === "decline" ? "جارِ الإرسال..." : "اعتذار"}
+                  {acting === "confirm" ? "جارِ التأكيد..." : "بل سأحضر — تأكيد الحضور"}
                 </button>
               </div>
-            </div>
-          )}
-        </section>
+            ) : (
+              <div className="space-y-3 relative">
+                <div className="text-center space-y-0.5">
+                  <h2 className="arabic-display text-base font-bold text-on-surface">
+                    هل ستشرفنا بحضورك؟
+                  </h2>
+                  <p className="text-on-surface-variant text-[11px]">
+                    نرجو تأكيد الحضور لضمان أفضل استقبال
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => respond("confirm")}
+                    disabled={acting !== null}
+                    className="w-full py-2.5 text-sm text-white rounded-xl font-bold active:scale-[0.98] transition-transform disabled:opacity-50"
+                    style={{
+                      backgroundImage: "linear-gradient(135deg, #5b2eff 0%, #c8bfff 100%)",
+                      boxShadow: "0px 8px 16px rgba(66,0,218,0.25)",
+                    }}
+                  >
+                    {acting === "confirm" ? "جارِ التأكيد..." : "تأكيد الحضور"}
+                  </button>
+                  <button
+                    onClick={() => respond("decline")}
+                    disabled={acting !== null}
+                    className="py-2 rounded-xl text-xs bg-surface-container-highest text-on-surface font-medium active:scale-[0.98] transition-transform disabled:opacity-50"
+                  >
+                    {acting === "decline" ? "جارِ الإرسال..." : "اعتذار"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* 4 — من سيحضر من مجموعتك */}
         {group_members.length > 0 && (
@@ -289,30 +277,6 @@ function MetaChip({ icon, label, value }: { icon: string; label: string; value: 
         <p className="text-[10px] text-on-surface-variant">{label}</p>
         <p className="arabic-display text-xs font-bold text-on-surface leading-snug">{value}</p>
       </div>
-    </div>
-  );
-}
-
-function Banner({
-  tone,
-  icon,
-  title,
-  children,
-}: {
-  tone: "emerald" | "rose";
-  icon: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  const toneClass =
-    tone === "emerald"
-      ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
-      : "border-[#e07a93]/40 bg-[#e07a93]/10 text-[#f4a6ba]";
-  return (
-    <div className={`rounded-xl border px-3 py-2.5 text-center relative ${toneClass}`}>
-      <span className="material-symbols-outlined text-xl">{icon}</span>
-      <p className="font-black text-sm mt-0.5">{title}</p>
-      <p className="text-[11px] opacity-90 mt-0.5">{children}</p>
     </div>
   );
 }
