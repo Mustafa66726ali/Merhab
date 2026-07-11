@@ -17,9 +17,12 @@ from apps.platforms.platform_permissions import (
 
 
 def _user_can_view_guest_inbound(user: User) -> bool:
-    """عرض تهنئات واستفسارات الضيوف — متاح لمدير الفعالية دون اشتراط إرسال الرسائل."""
+    """تهنئات واستفسارات الضيوف — للمنظم/مدير الفعالية والمنسّق المرتبط بالحفل فقط.
+
+    لا تظهر لمدير النظام (السوبر أدمن) ولا لمالك المنصة العام.
+    """
     if user.role in (User.Role.SYSTEM_MANAGER, User.Role.PLATFORM_ADMIN):
-        return True
+        return False
     if user.role in (User.Role.EVENT_MANAGER, User.Role.EVENT_ORGANIZER):
         return get_platform_for_user(user) is not None
     if user.role == User.Role.STAFF:
@@ -113,7 +116,7 @@ def guest_contacts_for_user(user: User, event_id=None):
 
 
 def guest_inbound_queryset(user: User, kind: str | None = None, event_id=None):
-    """رسائل واردة من الضيوف (تهنئة / استفسار) لعرضها في لوحة التحكم."""
+    """رسائل واردة من الضيوف (تهنئة / استفسار) — للمنظم والمنسّق المرتبطين بالحفل فقط."""
     if not _user_can_view_guest_inbound(user):
         return Message.objects.none()
 
@@ -125,42 +128,32 @@ def guest_inbound_queryset(user: User, kind: str | None = None, event_id=None):
         kind__in=(Message.Kind.GREETING, Message.Kind.INQUIRY),
     )
 
-    if user.role == User.Role.SYSTEM_MANAGER:
-        pass
-    elif user.role == User.Role.PLATFORM_ADMIN:
+    from apps.events.models import Event
+
+    accessible_event_ids: list[int] = []
+
+    if user.role == User.Role.STAFF:
+        from apps.staff.models import StaffMember
+
+        accessible_event_ids = list(
+            StaffMember.objects.filter(user=user, is_active=True).values_list(
+                "event_id", flat=True
+            )
+        )
+    else:
         platform = get_platform_for_user(user)
         if not platform:
             return Message.objects.none()
-        qs = qs.filter(event__platform_id=platform.id)
-    else:
-        platform = get_platform_for_user(user)
-        if not platform and user.role != User.Role.STAFF:
-            return Message.objects.none()
-        from apps.events.models import Event
+        for event in Event.objects.filter(platform_id=platform.id).prefetch_related(
+            "managers"
+        ):
+            if user_can_access_event(user, event):
+                accessible_event_ids.append(event.id)
 
-        accessible_event_ids = []
-        if user.role == User.Role.STAFF:
-            from apps.staff.models import StaffMember
+    if not accessible_event_ids:
+        return Message.objects.none()
 
-            accessible_event_ids = list(
-                StaffMember.objects.filter(user=user, is_active=True).values_list(
-                    "event_id", flat=True
-                )
-            )
-            if user.role == User.Role.STAFF:
-                qs = qs.filter(event_id__in=accessible_event_ids)
-                if kind in (Message.Kind.GREETING, Message.Kind.INQUIRY):
-                    qs = qs.filter(kind=kind)
-                elif user.role == User.Role.STAFF:
-                    qs = qs.filter(kind=Message.Kind.INQUIRY)
-                if event_id:
-                    qs = qs.filter(event_id=event_id)
-                return qs.order_by("-created_at")
-        else:
-            for event in Event.objects.filter(platform_id=platform.id).prefetch_related("managers"):
-                if user_can_access_event(user, event):
-                    accessible_event_ids.append(event.id)
-            qs = qs.filter(event_id__in=accessible_event_ids)
+    qs = qs.filter(event_id__in=accessible_event_ids)
 
     if kind in (Message.Kind.GREETING, Message.Kind.INQUIRY):
         qs = qs.filter(kind=kind)

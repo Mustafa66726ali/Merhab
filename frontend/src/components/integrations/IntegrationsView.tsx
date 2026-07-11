@@ -992,7 +992,7 @@ export default function IntegrationsView() {
                       <p>
                         زر URL «فتح الدعوة»:{" "}
                         <span className="font-mono" dir="ltr">
-                          {"https://YOUR-DOMAIN.com/i/{{7}}"}
+                          {"https://merhaab.com/i/{{7}}"}
                         </span>
                       </p>
                       <p className="font-bold text-on-surface text-xs pt-1">
@@ -1025,35 +1025,42 @@ export default function IntegrationsView() {
                       <p>
                         نفس أزرار الخريطة/الدعوة:{" "}
                         <span className="font-mono" dir="ltr">
-                          {"maps?q={{6}}"}
+                          {"https://www.google.com/maps?q={{6}}"}
                         </span>{" "}
                         و{" "}
                         <span className="font-mono" dir="ltr">
-                          {"/i/{{7}}"}
+                          {"https://merhaab.com/i/{{7}}"}
                         </span>
                       </p>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                       {(
                         [
-                          ["content_invitation", "1. قالب الدعوة (card) *", "HX..."],
-                          ["content_reminder_optin", "2. التذكير المسبق (نعم/لا) *", "HX..."],
-                          ["content_reminder", "3. تذكير قبل الموعد بيوم *", "HX..."],
-                          ["content_broadcast", "نص البث المباشر", "HX..."],
-                          ["content_broadcast_watch", "زر مشاهدة البث (CTA)", "HX..."],
+                          [
+                            "content_invitation",
+                            "1. قالب الدعوة (card) * — Content SID",
+                            "HX...",
+                          ],
+                          [
+                            "content_reminder_optin",
+                            "2. التذكير المسبق نعم ذكرني / لا * — Content SID",
+                            "HX...",
+                          ],
+                          [
+                            "content_reminder",
+                            "3. تذكير قبل الموعد بيوم (card) * — Content SID",
+                            "HX...",
+                          ],
+                          ["content_broadcast", "نص البث المباشر (اختياري)", "HX..."],
+                          [
+                            "content_broadcast_watch",
+                            "زر مشاهدة البث CTA (اختياري)",
+                            "HX...",
+                          ],
                           ["content_qr", "نص اختياري قبل صورة QR", "HX..."],
                         ] as const
                       ).map(([key, label, ph]) => (
-                        <div
-                          key={key}
-                          className={
-                            key === "content_invitation" ||
-                            key === "content_reminder_optin" ||
-                            key === "content_reminder"
-                              ? "sm:col-span-2"
-                              : ""
-                          }
-                        >
+                        <div key={key}>
                           <label className="block text-xs font-medium text-on-surface-variant mb-2">
                             {label}
                           </label>
@@ -1064,21 +1071,32 @@ export default function IntegrationsView() {
                             onChange={(e) =>
                               setForm((f) => ({
                                 ...f,
-                                config: { ...(f.config ?? {}), [key]: e.target.value },
+                                config: {
+                                  ...(f.config ?? {}),
+                                  [key]: e.target.value.trim(),
+                                },
                               }))
                             }
                             className="input-field w-full font-mono text-sm"
                             dir="ltr"
                             placeholder={ph}
+                            autoComplete="off"
+                            spellCheck={false}
                           />
                         </div>
                       ))}
                     </div>
                     <p className="text-[11px] text-on-surface-variant border-t border-outline-variant/10 pt-3 leading-relaxed">
-                      المتغيرات المشتركة للدعوة/التذكير: {"{{1}}"} اسم · {"{{2}}"} مناسبة ·{" "}
-                      {"{{3}}"} تاريخ · {"{{4}}"} وقت · {"{{5}}"} مكان · {"{{6}}"} خريطة ·{" "}
-                      {"{{7}}"} رمز الضيف. استبدل YOUR-DOMAIN بـ FRONTEND_URL. التذكير المسبق:{" "}
-                      {"{{1}}"} اسم · {"{{2}}"} رمز الضيف فقط.
+                      المفاتيح مطابقة للباكند:{" "}
+                      <span className="font-mono">content_invitation</span> ·{" "}
+                      <span className="font-mono">content_reminder_optin</span> ·{" "}
+                      <span className="font-mono">content_reminder</span>. المتغيرات:{" "}
+                      {"{{1}}"} اسم · {"{{2}}"} مناسبة · {"{{3}}"} تاريخ · {"{{4}}"} وقت ·{" "}
+                      {"{{5}}"} مكان · {"{{6}}"} خريطة · {"{{7}}"} رمز الضيف. للتذكير المسبق:{" "}
+                      {"{{1}}"} اسم · {"{{2}}"} رمز الضيف. رابط الدعوة:{" "}
+                      <span className="font-mono" dir="ltr">
+                        https://merhaab.com/i/{"{{7}}"}
+                      </span>
                     </p>
                   </div>
                 )}

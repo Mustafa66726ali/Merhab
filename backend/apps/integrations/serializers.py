@@ -140,6 +140,35 @@ class IntegrationCredentialWriteSerializer(serializers.ModelSerializer):
         if provider and provider in PROVIDER_META:
             if not attrs.get("category"):
                 attrs["category"] = PROVIDER_META[provider]["category"]
+
+        # تنظيف مفاتيح قوالب Twilio القديمة والإبقاء على القوالب الحالية فقط
+        if provider == "whatsapp_twilio" and "config" in attrs:
+            cfg = dict(attrs.get("config") or {})
+            allowed = {
+                "content_invitation",
+                "content_card",  # توافق قديم → يُقرأ كدعوة
+                "content_reminder_optin",
+                "content_reminder",
+                "content_broadcast",
+                "content_broadcast_watch",
+                "content_qr",
+                "content_reminder_legacy",
+            }
+            legacy_drop = {
+                "content_map",
+                "content_open_invite",
+                "content_rsvp",
+            }
+            cleaned = {
+                k: (v.strip() if isinstance(v, str) else v)
+                for k, v in cfg.items()
+                if k in allowed and k not in legacy_drop and v not in (None, "")
+            }
+            # إن وُجد content_card فقط بدون invitation انسخه
+            if cleaned.get("content_card") and not cleaned.get("content_invitation"):
+                cleaned["content_invitation"] = cleaned["content_card"]
+            attrs["config"] = cleaned
+
         return attrs
 
     def create(self, validated_data):
