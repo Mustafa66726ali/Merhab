@@ -159,7 +159,7 @@ docker compose up -d
    - **API Secret** = Auth Token
    - **Phone Number ID** = رقم واتساب بصيغة `+966...` (يُحوَّل تلقائياً إلى `whatsapp:+966...`)
 3. في **config** أضف Content SID (انظر `docs/META-WHATSAPP-TEMPLATES.md`):
-   - `content_invitation` — بطاقة الدعوة (نص + خريطة + فتح)
+   - `content_invitation` — دعوة call-to-action (نص + زر فتح الدعوة)
    - `content_reminder_optin` — نعم ذكرني / لا اعتذر
    - `content_reminder` — تذكير قبل الموعد بيوم (ثم QR تلقائياً)
    - `content_broadcast` / `content_broadcast_watch` — اختياري للبث

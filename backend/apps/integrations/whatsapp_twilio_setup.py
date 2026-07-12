@@ -54,8 +54,8 @@ def check_twilio_invitation_setup() -> dict:
     invite_sid = (cfg.get("content_card") or cfg.get("content_invitation") or "").strip()
     if not invite_sid:
         issues.append(
-            "content_invitation مفقود — قالب twilio/card للدعوة "
-            "(نص + فتح الخريطة + فتح الدعوة)."
+            "content_invitation مفقود — قالب twilio/call-to-action للدعوة "
+            "(نص + زر فتح الدعوة)."
         )
 
     optin_sid = (cfg.get("content_reminder_optin") or "").strip()
@@ -68,16 +68,16 @@ def check_twilio_invitation_setup() -> dict:
     reminder_sid = (cfg.get("content_reminder") or "").strip()
     if not reminder_sid:
         issues.append(
-            "content_reminder مفقود — قالب twilio/card لتذكير ما قبل الموعد بيوم "
+            "content_reminder مفقود — قالب twilio/call-to-action لتذكير ما قبل الموعد بيوم "
             "(ثم تُرسل صورة QR تلقائياً)."
         )
 
     warnings: list[str] = []
     # تشخيص عدد متغيرات قوالب Content مقابل ما يرسله مرحّاب
     expected = {
-        "content_invitation": (7, invite_sid),
+        "content_invitation": (5, invite_sid),
         "content_reminder_optin": (2, optin_sid),
-        "content_reminder": (7, reminder_sid),
+        "content_reminder": (5, reminder_sid),
     }
     for label, (want_n, sid) in expected.items():
         if not sid:

@@ -52,30 +52,30 @@ def _event_date_label(guest: Guest) -> str:
     event = guest.event
     if event.date:
         return event.date.strftime("%Y-%m-%d")
-    return "—"
+    return "-"
 
 
 def _event_time_label(guest: Guest) -> str:
     event = guest.event
     if event.time:
         return event.time.strftime("%H:%M")
-    return "—"
+    return "-"
 
 
 def _event_datetime_label(guest: Guest) -> str:
     parts = []
     d, t = _event_date_label(guest), _event_time_label(guest)
-    if d != "—":
+    if d != "-":
         parts.append(d)
-    if t != "—":
+    if t != "-":
         parts.append(t)
-    return " - ".join(parts) if parts else "—"
+    return " - ".join(parts) if parts else "-"
 
 
 def invitation_twilio_variables(guest: Guest) -> dict[str, str]:
     """متغيرات قديمة {{1}}..{{4}} (مسار Meta/legacy)."""
     event = guest.event
-    venue = (event.venue or event.geo_address or "—").strip() or "—"
+    venue = (event.venue or event.geo_address or "-").strip() or "-"
     return {
         "1": guest.full_name or "ضيف",
         "2": event.title or "مناسبة",
@@ -85,23 +85,21 @@ def invitation_twilio_variables(guest: Guest) -> dict[str, str]:
 
 
 def invitation_card_twilio_variables(guest: Guest) -> dict[str, str]:
-    """متغيرات قوالب الدعوة والتذكير (twilio/card).
+    """متغيرات قوالب الدعوة والتذكير (Call to action / واتساب).
 
-    {{1}} الاسم · {{2}} المناسبة · {{3}} التاريخ · {{4}} الوقت
-    {{5}} المكان · {{6}} استعلام الخريطة · {{7}} رمز الضيف
+    صيغة موافقة واتساب (5 متغيرات فقط + زر رابط واحد):
+    {{1}} الاسم · {{2}} المناسبة · {{3}} التاريخ والوقت
+    {{4}} المكان · {{5}} رمز الضيف لرابط /i/{{5}}
     """
     event = guest.event
-    venue = (event.venue or event.geo_address or "—").strip() or "—"
-    map_q = map_template_variable(event) or venue or (event.title or "مناسبة")
-    map_q = " ".join(str(map_q).split()) or "مناسبة"
+    venue = (event.venue or event.geo_address or "-").strip() or "-"
+    venue = " ".join(venue.split()) or "-"
     return {
         "1": (guest.full_name or "ضيف").strip() or "ضيف",
         "2": (event.title or "مناسبة").strip() or "مناسبة",
-        "3": _event_date_label(guest),
-        "4": _event_time_label(guest),
-        "5": venue,
-        "6": map_q,
-        "7": str(guest.public_token),
+        "3": _event_datetime_label(guest),
+        "4": venue,
+        "5": str(guest.public_token),
     }
 
 
@@ -119,14 +117,13 @@ def invite_url(guest: Guest, base: str) -> str:
 
 def invitation_body(guest: Guest, *, headline: str = "دعوة الضيف") -> str:
     event = guest.event
-    venue = (event.venue or event.geo_address or "—").strip() or "—"
+    venue = (event.venue or event.geo_address or "-").strip() or "-"
     return (
         f"{headline}\n\n"
-        f"مرحبا {guest.full_name or 'ضيف'}\n"
-        f"بكل سرور نتشرف بدعوتكم لحضور {event.title or 'مناسبتنا'}\n\n"
-        f"التاريخ: {_event_date_label(guest)}\n"
-        f"الوقت: {_event_time_label(guest)}\n"
-        f"المكان: {venue}"
+        f"مرحبا بك يا {guest.full_name or 'ضيف'} نشكر دعوتكم لحضور مناسبة "
+        f"{event.title or 'مناسبتنا'}\n\n"
+        f"الموعد يوم {_event_datetime_label(guest)} والمكان {venue}\n\n"
+        "للاطلاع على التفاصيل وتأكيد الحضور افتح رابط الدعوة وشكرا لثقتكم بمرحاب"
     )
 
 
