@@ -7,6 +7,8 @@ from django.conf import settings
 from .whatsapp_send import (
     _active_cloud_credential,
     _active_twilio_credential,
+    fetch_twilio_content,
+    twilio_content_variable_keys,
 )
 
 
@@ -70,10 +72,31 @@ def check_twilio_invitation_setup() -> dict:
             "(ثم تُرسل صورة QR تلقائياً)."
         )
 
+    warnings: list[str] = []
+    # تشخيص عدد متغيرات قوالب Content مقابل ما يرسله مرحّاب
+    expected = {
+        "content_invitation": (7, invite_sid),
+        "content_reminder_optin": (2, optin_sid),
+        "content_reminder": (7, reminder_sid),
+    }
+    for label, (want_n, sid) in expected.items():
+        if not sid:
+            continue
+        content = fetch_twilio_content(cred, sid)
+        keys = twilio_content_variable_keys(content)
+        if content is None:
+            warnings.append(f"{label}: تعذّر جلب القالب {sid} من Twilio.")
+        elif len(keys) != want_n:
+            warnings.append(
+                f"{label} ({sid}): القالب يعرّف {{{','.join(keys)}}} "
+                f"n={len(keys)} — مرحّاب يتوقع n={want_n}. "
+                "حدّث القالب أو الـ SID لتفادي 63028."
+            )
+
     return {
         "ready": len(issues) == 0,
         "issues": issues,
-        "warnings": [],
+        "warnings": warnings,
         "provider": provider,
         "sender": cred.phone_number_id,
     }

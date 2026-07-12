@@ -51,6 +51,12 @@ TWILIO_KNOWN_ERRORS: dict[int, str] = {
     21608: "الرقم غير مفعّل لاستقبال رسائل WhatsApp عبر Twilio (21608).",
     21610: "المستلم ألغى الاشتراك / لا يمكن مراسلته (21610).",
     63024: "فشل إرسال القالب — قد يكون غير معتمد لواتساب أو المتغيرات ناقصة (63024).",
+    63028: (
+        "عدد متغيرات القالب لا يطابق ما يرسله مرحّاب (63028). "
+        "قالب الدعوة/التذكير يحتاج {{1}}…{{7}} بالضبط، "
+        "والتذكير المسبق {{1}} و{{2}} فقط. "
+        "حدّث Content SID في التكاملات ليطابق القالب الجديد المعتمد."
+    ),
 }
 
 
@@ -169,6 +175,73 @@ def confirm_twilio_delivery(
         f"قُبلت من Twilio وما زالت {last_status or 'قيد الانتظار'} "
         f"— إن فشلت لاحقاً ستظهر في Messaging Logs [{sid}]"
     )
+
+
+def fetch_twilio_content(cred, content_sid: str) -> dict | None:
+    """جلب تعريف قالب Content من Twilio (المتغيرات والأنواع)."""
+    if not content_sid or not cred or not cred.api_key or not cred.api_secret:
+        return None
+    url = f"https://content.twilio.com/v1/Content/{content_sid}"
+    token = base64.b64encode(f"{cred.api_key}:{cred.api_secret}".encode()).decode()
+    req = urllib.request.Request(url)
+    req.add_header("Authorization", f"Basic {token}")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read().decode())
+    except (urllib.error.URLError, json.JSONDecodeError, OSError, TimeoutError) as exc:
+        logger.warning("Twilio fetch content failed sid=%s err=%s", content_sid, exc)
+        return None
+
+
+def twilio_content_variable_keys(content: dict | None) -> list[str]:
+    """مفاتيح المتغيرات المتوقعة عند الإرسال.
+
+    المصدر الأساسي: حقل ``variables`` في تعريف Content (هذا ما يطابق 63028).
+    إن كان فارغاً نمسح ``{{n}}`` من أنواع القالب.
+    """
+    if not content:
+        return []
+    keys: set[str] = set()
+    declared = content.get("variables") or {}
+    if isinstance(declared, dict) and declared:
+        keys.update(str(k) for k in declared.keys())
+    else:
+        blob = json.dumps(content.get("types") or {}, ensure_ascii=False)
+        keys.update(re.findall(r"\{\{(\w+)\}\}", blob))
+
+    def _sort_key(k: str):
+        return (0, int(k)) if k.isdigit() else (1, k)
+
+    return sorted(keys, key=_sort_key)
+
+
+def align_twilio_content_variables(
+    variables: dict[str, str],
+    template_keys: list[str],
+) -> tuple[dict[str, str], str]:
+    """يطابق ContentVariables مع ما يعرّفه القالب لتفادي 63028."""
+    if not template_keys:
+        return dict(variables), ""
+    aligned: dict[str, str] = {}
+    for key in template_keys:
+        raw = variables.get(key)
+        if raw is None or str(raw).strip() == "":
+            aligned[key] = "-"
+        else:
+            aligned[key] = " ".join(str(raw).split()) or "-"
+    note = ""
+    if set(variables.keys()) != set(aligned.keys()):
+        note = (
+            f"طُبّقت متغيرات القالب n={len(aligned)} "
+            f"(الكود جهّز n={len(variables)}): {{{','.join(template_keys)}}}"
+        )
+        logger.info(
+            "Twilio ContentVariables aligned prepared=%s expect=%s",
+            sorted(variables.keys()),
+            template_keys,
+        )
+    return aligned, note
+
 
 def _log_twilio_result(action: str, phone: str, status_code: int, body: str) -> None:
     sent, detail, sid = evaluate_twilio_send_response(status_code, body)
@@ -408,6 +481,13 @@ def send_twilio_content_template(
     if not from_number.startswith("whatsapp:"):
         from_number = f"whatsapp:+{normalize_phone_digits(from_number)}"
     to_number = f"whatsapp:+{digits}"
+
+    # مطابقة المتغيرات مع تعريف القالب في Twilio (يمنع 63028)
+    content_def = fetch_twilio_content(cred, content_sid)
+    template_keys = twilio_content_variable_keys(content_def)
+    aligned, align_note = align_twilio_content_variables(variables, template_keys)
+    payload_vars = aligned
+
     api_url = (
         f"https://api.twilio.com/2010-04-01/Accounts/{cred.api_key}/Messages.json"
     )
@@ -415,19 +495,28 @@ def send_twilio_content_template(
         "From": from_number,
         "To": to_number,
         "ContentSid": content_sid,
-        "ContentVariables": json.dumps(variables, ensure_ascii=False),
+        "ContentVariables": json.dumps(payload_vars, ensure_ascii=False),
     }
     status_code, body = _http_post_form(
         api_url, form, (cred.api_key, cred.api_secret)
     )
+    var_keys = ",".join(
+        sorted(payload_vars.keys(), key=lambda k: int(k) if str(k).isdigit() else 0)
+    )
+    vars_hint = f" [SID={content_sid} vars={{{var_keys}}} n={len(payload_vars)}]"
+    if align_note:
+        vars_hint += f" ({align_note})"
+    if content_def is None:
+        vars_hint += " (تعذّر جلب تعريف القالب من Twilio)"
     _log_twilio_result(f"content:{content_sid}", phone, status_code, body)
     sent, detail, sid = evaluate_twilio_send_response(status_code, body)
     if not sent:
         return {
             "sent": False,
             "whatsapp_url": fallback_url,
-            "detail": detail,
+            "detail": f"{detail}{vars_hint}",
             "twilio_sid": sid,
+            "template": content_sid,
         }
 
     # التحقق من التسليم الفعلي (أخطاء مثل 63013 تظهر بعد القبول)
@@ -442,14 +531,14 @@ def send_twilio_content_template(
         return {
             "sent": False,
             "whatsapp_url": fallback_url,
-            "detail": verify_detail,
+            "detail": f"{verify_detail}{vars_hint}",
             "template": content_sid,
             "twilio_sid": sid,
         }
     return {
         "sent": True,
         "whatsapp_url": fallback_url,
-        "detail": verify_detail,
+        "detail": verify_detail + (f" — {align_note}" if align_note else ""),
         "template": content_sid,
         "twilio_sid": sid,
     }
