@@ -316,6 +316,7 @@ export default function InvitationBuilder({ eventId }: Props) {
     sent: number;
     failed: number;
     skipped?: number;
+    firstError?: string;
   } | null>(null);
   const [bulkError, setBulkError] = useState("");
 
@@ -510,11 +511,22 @@ export default function InvitationBuilder({ eventId }: Props) {
       const skippedNote = res.data.skipped
         ? ` (تم تجاوز ${res.data.skipped} معتذر)`
         : "";
-      setNotice(
-        autoSend
-          ? `تم إرسال ${res.data.count} تذكير${skippedNote} تلقائياً عبر المزوّد.`
-          : `تم تجهيز ${res.data.count} تذكير${skippedNote} — افتح واتساب لكل ضيف لإتمام الإرسال.`
-      );
+      if (autoSend) {
+        const sentOk = res.data.reminders.filter((r) => r.sent).length;
+        const failed = res.data.count - sentOk;
+        if (failed > 0) {
+          const firstErr =
+            res.data.reminders.find((r) => !r.sent)?.detail || "خطأ غير معروف";
+          setError(`فشل إرسال ${failed} من ${res.data.count}. السبب: ${firstErr}`);
+          setNotice(`نجح ${sentOk} — فشل ${failed}${skippedNote}`);
+        } else {
+          setNotice(`تم إرسال ${res.data.count} تذكير${skippedNote} تلقائياً عبر المزوّد.`);
+        }
+      } else {
+        setNotice(
+          `تم تجهيز ${res.data.count} تذكير${skippedNote} — افتح واتساب لكل ضيف لإتمام الإرسال.`
+        );
+      }
     } catch (e) {
       setError(errMessage(e, "تعذّر إرسال التذكيرات."));
     } finally {
@@ -553,7 +565,17 @@ export default function InvitationBuilder({ eventId }: Props) {
         setResults(list);
         const total = res.data.count ?? list.length;
         const sent = list.filter((r) => r.sent).length;
-        setBulkSummary({ kind: "invite", total, sent, failed: total - sent });
+        const firstError = list.find((r) => !r.sent)?.detail;
+        setBulkSummary({
+          kind: "invite",
+          total,
+          sent,
+          failed: total - sent,
+          firstError: firstError || undefined,
+        });
+        if (total - sent > 0 && firstError) {
+          setError(`فشل إرسال ${total - sent} من ${total}. السبب: ${firstError}`);
+        }
       } else {
         const res = await invitationsAPI.remindBatch({
           event: eventId,
@@ -565,13 +587,18 @@ export default function InvitationBuilder({ eventId }: Props) {
         setReminderResults(list);
         const total = res.data.count ?? list.length;
         const sent = list.filter((r) => r.sent).length;
+        const firstError = list.find((r) => !r.sent)?.detail;
         setBulkSummary({
           kind: "remind",
           total,
           sent,
           failed: total - sent,
           skipped: res.data.skipped,
+          firstError: firstError || undefined,
         });
+        if (total - sent > 0 && firstError) {
+          setError(`فشل إرسال ${total - sent} من ${total}. السبب: ${firstError}`);
+        }
       }
       setBulkPhase("done");
     } catch (e) {
@@ -608,6 +635,9 @@ export default function InvitationBuilder({ eventId }: Props) {
             )
           : prev
       );
+      if (!sent && detail) {
+        setError(detail);
+      }
     } catch (e) {
       setError(errMessage(e, "تعذّر الإرسال عبر البوت."));
     } finally {
@@ -769,8 +799,8 @@ export default function InvitationBuilder({ eventId }: Props) {
                     : "جارٍ إرسال التذكيرات للجميع…"}
                 </h3>
                 <p className="mt-2 text-sm text-on-surface-variant">
-                  يتم الإرسال مباشرة عبر {bot?.label || "Twilio"} لكل الضيوف
-                  ({guests.length}). يرجى الانتظار…
+                  يتم الإرسال عبر {bot?.label || "Twilio"} والتحقق من نتيجة التسليم
+                  لكل ضيف ({guests.length}). قد يستغرق ذلك بضع ثوانٍ لكل رسالة…
                 </p>
               </>
             )}
@@ -817,6 +847,11 @@ export default function InvitationBuilder({ eventId }: Props) {
                       تم تجاوز {bulkSummary.skipped} ضيفاً (معتذر).
                     </p>
                   )}
+                {bulkSummary.failed > 0 && bulkSummary.firstError && (
+                  <p className="mt-3 text-xs text-rose-300 text-start leading-relaxed break-words rounded-xl bg-rose-500/10 px-3 py-2">
+                    سبب الفشل: {bulkSummary.firstError}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => setBulkOpen(false)}
@@ -1184,8 +1219,9 @@ export default function InvitationBuilder({ eventId }: Props) {
                   {results.map((r) => (
                     <div
                       key={r.guest_id}
-                      className="flex items-center gap-2 bg-surface-container-high rounded-xl px-3 py-2"
+                      className="bg-surface-container-high rounded-xl px-3 py-2 space-y-1.5"
                     >
+                      <div className="flex items-center gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-on-surface truncate">
                           {r.full_name}
@@ -1197,7 +1233,7 @@ export default function InvitationBuilder({ eventId }: Props) {
                       {r.auto ? (
                         <span
                           title={r.detail}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold shrink-0 ${
                             r.sent
                               ? "bg-emerald-400/10 text-emerald-300"
                               : "bg-rose-400/10 text-rose-300"
@@ -1250,6 +1286,12 @@ export default function InvitationBuilder({ eventId }: Props) {
                           )}
                         </>
                       )}
+                      </div>
+                      {r.auto && !r.sent && r.detail && (
+                        <p className="text-[11px] leading-relaxed text-rose-300/95 break-words">
+                          {r.detail}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1265,8 +1307,9 @@ export default function InvitationBuilder({ eventId }: Props) {
                   {reminderResults.map((r) => (
                     <div
                       key={r.guest_id}
-                      className="flex items-center gap-2 bg-surface-container-high rounded-xl px-3 py-2"
+                      className="bg-surface-container-high rounded-xl px-3 py-2 space-y-1.5"
                     >
+                      <div className="flex items-center gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-on-surface truncate">
                           {r.full_name}
@@ -1284,7 +1327,7 @@ export default function InvitationBuilder({ eventId }: Props) {
                       {r.auto ? (
                         <span
                           title={r.detail}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold shrink-0 ${
                             r.sent
                               ? "bg-emerald-400/10 text-emerald-300"
                               : "bg-rose-400/10 text-rose-300"
@@ -1336,6 +1379,12 @@ export default function InvitationBuilder({ eventId }: Props) {
                             )
                           )}
                         </>
+                      )}
+                      </div>
+                      {r.auto && !r.sent && r.detail && (
+                        <p className="text-[11px] leading-relaxed text-rose-300/95 break-words">
+                          {r.detail}
+                        </p>
                       )}
                     </div>
                   ))}

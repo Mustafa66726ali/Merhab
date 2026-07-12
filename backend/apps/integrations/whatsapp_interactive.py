@@ -126,8 +126,9 @@ def _send_twilio_interactive_invitation(
     if not out.get("sent"):
         return {
             "sent": False,
-            "detail": out.get("detail", "فشل إرسال قالب الدعوة"),
+            "detail": f"فشل قالب الدعوة: {out.get('detail', 'خطأ غير معروف')}",
             "interactive": True,
+            "twilio_sid": out.get("twilio_sid"),
         }
 
     out2 = send_twilio_content_template(
@@ -138,14 +139,21 @@ def _send_twilio_interactive_invitation(
     if not out2.get("sent"):
         return {
             "sent": False,
-            "detail": out2.get("detail", "فشل إرسال رسالة التذكير المسبق"),
+            "detail": (
+                f"الدعوة وصلت لكن فشل التذكير المسبق: "
+                f"{out2.get('detail', 'خطأ غير معروف')}"
+            ),
             "interactive": True,
             "partial": ["invitation"],
+            "twilio_sid": out2.get("twilio_sid"),
         }
 
     return {
         "sent": True,
-        "detail": "دعوة Twilio (دعوة + تذكير مسبق)",
+        "detail": (
+            f"دعوة Twilio (دعوة + تذكير مسبق) — "
+            f"{out.get('detail', '')} | {out2.get('detail', '')}"
+        )[:500],
         "interactive": True,
         "content_sid": invite_sid,
         "optin_sid": optin_sid,

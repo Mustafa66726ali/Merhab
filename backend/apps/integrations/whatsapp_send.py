@@ -10,6 +10,7 @@ import base64
 import json
 import logging
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -29,7 +30,10 @@ TWILIO_KNOWN_ERRORS: dict[int, str] = {
     ),
     63120: "حساب Meta Business مقفول — تواصل مع Meta Business Support (63120).",
     63051: "مرسل أو حساب WhatsApp مقيّد من Meta (63051).",
-    63016: "الرقم غير مسجّل على واتساب أو غير صالح (63016).",
+    63016: (
+        "القالب غير مطابق أو غير معتمد / الرقم غير صالح (63016). "
+        "تأكد أن Content Template بحالة Approved وأن المتغيرات تطابق القالب."
+    ),
     63013: (
         "مخالفة سياسة واتساب (63013) — غالباً متغير قالب فارغ، مسافات زائدة، "
         "أو رابط زر غير عام. راجع قالب Content ومتغيراته."
@@ -38,9 +42,34 @@ TWILIO_KNOWN_ERRORS: dict[int, str] = {
         "فشل تحميل الوسائط (63019) — تأكد أن رابط الصورة/الملف عام ومتاح لـ Twilio "
         "ويُرجع ملفاً غير فارغ بنوع Content-Type صحيح."
     ),
+    63007: (
+        "رقم المرسل غير مربوط كقناة واتساب في Twilio (63007). "
+        "ضع رقم WhatsApp Sender الفعّال (ONLINE) في التكاملات."
+    ),
+    63049: "Meta رفضت الرسالة (63049) — راجع جودة الحساب أو محتوى القالب.",
     21211: "رقم المستلم غير صالح (21211).",
     21608: "الرقم غير مفعّل لاستقبال رسائل WhatsApp عبر Twilio (21608).",
+    21610: "المستلم ألغى الاشتراك / لا يمكن مراسلته (21610).",
+    63024: "فشل إرسال القالب — قد يكون غير معتمد لواتساب أو المتغيرات ناقصة (63024).",
 }
+
+
+def format_twilio_error_code(code, message: str | None = None) -> str:
+    """رسالة تشخيص عربية من رمز Twilio."""
+    try:
+        code_int = int(code)
+    except (TypeError, ValueError):
+        code_int = None
+    if code_int is not None:
+        hint = TWILIO_KNOWN_ERRORS.get(code_int)
+        if hint:
+            return hint
+        if message:
+            return f"Twilio {code_int}: {message}"
+        return f"فشل تسليم Twilio (رمز {code_int}). راجع Monitor → Messaging Logs."
+    if message:
+        return str(message)[:300]
+    return "خطأ Twilio غير معروف"
 
 
 def parse_twilio_error(body: str) -> str:
@@ -49,17 +78,8 @@ def parse_twilio_error(body: str) -> str:
         data = json.loads(body)
         msg = data.get("message") or data.get("error_message")
         code = data.get("code") or data.get("error_code")
-        if code:
-            try:
-                hint = TWILIO_KNOWN_ERRORS.get(int(code))
-                if hint:
-                    return hint
-            except (TypeError, ValueError):
-                pass
-        if msg and code:
-            return f"Twilio {code}: {msg}"
-        if msg:
-            return str(msg)
+        if code or msg:
+            return format_twilio_error_code(code, msg)
     except (json.JSONDecodeError, TypeError):
         pass
     return (body or "خطأ Twilio غير معروف")[:300]
@@ -85,11 +105,70 @@ def evaluate_twilio_send_response(status_code: int, body: str) -> tuple[bool, st
 
     detail = f"قُبلت من Twilio ({msg_status or 'accepted'})"
     if msg_status == "queued":
-        detail += " — التوصيل غير مؤكد؛ راجع Twilio Message Logs"
+        detail += " — جارٍ التحقق من التسليم…"
     if sid:
         detail += f" [{sid}]"
     return True, detail, sid
 
+
+def _twilio_fetch_message(cred, sid: str) -> dict | None:
+    """جلب حالة رسالة من Twilio Messages API."""
+    if not sid or not cred.api_key or not cred.api_secret:
+        return None
+    url = (
+        f"https://api.twilio.com/2010-04-01/Accounts/{cred.api_key}/Messages/{sid}.json"
+    )
+    token = base64.b64encode(f"{cred.api_key}:{cred.api_secret}".encode()).decode()
+    req = urllib.request.Request(url)
+    req.add_header("Authorization", f"Basic {token}")
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            return json.loads(resp.read().decode())
+    except (urllib.error.URLError, json.JSONDecodeError, OSError, TimeoutError) as exc:
+        logger.warning("Twilio fetch message failed sid=%s err=%s", sid, exc)
+        return None
+
+
+def confirm_twilio_delivery(
+    cred,
+    sid: str | None,
+    *,
+    timeout_sec: float = 10.0,
+    interval_sec: float = 0.9,
+) -> tuple[bool, str]:
+    """ينتظر نتيجة التسليم بعد قبول الطلب — يُظهر رمز الخطأ إن فشل.
+
+    الرسائل الفاشلة تظهر غالباً خلال ثانية؛ ننتظر حتى الحالة النهائية أو انتهاء المهلة.
+    """
+    if not sid:
+        return True, "قُبلت من Twilio (بدون SID للتحقق)"
+
+    deadline = time.monotonic() + timeout_sec
+    last_status = "queued"
+    while time.monotonic() < deadline:
+        data = _twilio_fetch_message(cred, sid)
+        if not data:
+            time.sleep(interval_sec)
+            continue
+        last_status = (data.get("status") or "").lower()
+        err_code = data.get("error_code")
+        err_msg = data.get("error_message") or data.get("message")
+        if last_status in ("failed", "undelivered"):
+            detail = format_twilio_error_code(err_code, err_msg)
+            return False, f"{detail} [{sid}]"
+        # delivered/read = نجاح مؤكد؛ sent قد يفشل لاحقاً لذلك ننتظر أكثر قليلاً
+        if last_status in ("delivered", "read"):
+            return True, f"تم التسليم عبر Twilio ({last_status}) [{sid}]"
+        # بعد وصول الحالة sent نتحقق مرة أو مرتين إضافيتين لالتقاط فشل سريع
+        if last_status == "sent" and time.monotonic() + interval_sec * 2 >= deadline:
+            return True, f"أُرسلت عبر Twilio (sent) [{sid}]"
+        time.sleep(interval_sec)
+
+    # لم تكتمل بعد — لا نعتبرها فشلاً قاطعاً لكن ننبّه
+    return True, (
+        f"قُبلت من Twilio وما زالت {last_status or 'قيد الانتظار'} "
+        f"— إن فشلت لاحقاً ستظهر في Messaging Logs [{sid}]"
+    )
 
 def _log_twilio_result(action: str, phone: str, status_code: int, body: str) -> None:
     sent, detail, sid = evaluate_twilio_send_response(status_code, body)
@@ -343,18 +422,36 @@ def send_twilio_content_template(
     )
     _log_twilio_result(f"content:{content_sid}", phone, status_code, body)
     sent, detail, sid = evaluate_twilio_send_response(status_code, body)
-    if sent:
+    if not sent:
         return {
-            "sent": True,
+            "sent": False,
             "whatsapp_url": fallback_url,
             "detail": detail,
+            "twilio_sid": sid,
+        }
+
+    # التحقق من التسليم الفعلي (أخطاء مثل 63013 تظهر بعد القبول)
+    verify_ok, verify_detail = confirm_twilio_delivery(cred, sid)
+    if not verify_ok:
+        logger.warning(
+            "Twilio content delivery failed sid=%s to=%s detail=%s",
+            sid,
+            phone,
+            verify_detail,
+        )
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": verify_detail,
             "template": content_sid,
             "twilio_sid": sid,
         }
     return {
-        "sent": False,
+        "sent": True,
         "whatsapp_url": fallback_url,
-        "detail": detail,
+        "detail": verify_detail,
+        "template": content_sid,
+        "twilio_sid": sid,
     }
 
 
@@ -419,18 +516,28 @@ def send_whatsapp_image(
         )
         _log_twilio_result(f"image:{image_url[:120]}", phone, status_code, body)
         sent, detail, sid = evaluate_twilio_send_response(status_code, body)
-        if sent:
+        if not sent:
             return {
-                "sent": True,
+                "sent": False,
                 "whatsapp_url": fallback_url,
-                "detail": detail or "تم إرسال صورة QR عبر Twilio",
-                "twilio_sid": sid,
+                "detail": detail or (body[:300] if body else "فشل إرسال الصورة عبر Twilio"),
                 "media_url": image_url,
+                "twilio_sid": sid,
+            }
+        verify_ok, verify_detail = confirm_twilio_delivery(twilio_cred, sid)
+        if not verify_ok:
+            return {
+                "sent": False,
+                "whatsapp_url": fallback_url,
+                "detail": verify_detail,
+                "media_url": image_url,
+                "twilio_sid": sid,
             }
         return {
-            "sent": False,
+            "sent": True,
             "whatsapp_url": fallback_url,
-            "detail": detail or (body[:300] if body else "فشل إرسال الصورة عبر Twilio"),
+            "detail": verify_detail or "تم إرسال صورة QR عبر Twilio",
+            "twilio_sid": sid,
             "media_url": image_url,
         }
 
@@ -546,15 +653,24 @@ def _send_twilio_whatsapp(cred, digits: str, text: str, fallback_url: str) -> di
     )
     _log_twilio_result("text", digits, status_code, body)
     sent, detail, sid = evaluate_twilio_send_response(status_code, body)
-    if sent:
+    if not sent:
         return {
-            "sent": True,
+            "sent": False,
             "whatsapp_url": fallback_url,
             "detail": detail,
             "twilio_sid": sid,
         }
+    verify_ok, verify_detail = confirm_twilio_delivery(cred, sid)
+    if not verify_ok:
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": verify_detail,
+            "twilio_sid": sid,
+        }
     return {
-        "sent": False,
+        "sent": True,
         "whatsapp_url": fallback_url,
-        "detail": detail,
+        "detail": verify_detail,
+        "twilio_sid": sid,
     }
