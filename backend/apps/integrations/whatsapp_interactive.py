@@ -222,7 +222,7 @@ def send_interactive_invitation(
     *,
     headline: str = "دعوة الضيف",
 ) -> dict:
-    """دعوة: تفاصيل + خريطة + رابط، ثم رسالة التذكير المسبق."""
+    """النمط الوحيد عبر Twilio: بطاقة دعوة ثم تذكير مسبق (نعم ذكرني / لا)."""
     phone = guest.phone or ""
     digits = normalize_phone_digits(phone)
     if not digits:
@@ -234,13 +234,16 @@ def send_interactive_invitation(
     map_u = event_maps_url(guest.event)
 
     provider = (getattr(settings, "WHATSAPP_PROVIDER", "manual") or "manual").lower()
-    steps_ok = 0
-    steps_total = 2 + (1 if map_u else 0) + 1
-
     cloud = _active_cloud_credential()
     twilio = _active_twilio_credential()
 
+    # Twilio Content هو المسار الأساسي للدعوات عند توفر الاعتماد
+    if twilio and provider != "manual":
+        return _send_twilio_interactive_invitation(phone, guest, body, inv, map_u)
+
     if cloud and provider != "manual":
+        steps_ok = 0
+        steps_total = 2 + (1 if map_u else 0) + 1
         if _send_cloud_post_text(digits, body, cloud):
             steps_ok += 1
         if map_u and _send_cloud_cta(phone, "الموقع على الخريطة", BTN_MAP, map_u):
@@ -256,10 +259,7 @@ def send_interactive_invitation(
             "interactive": True,
         }
 
-    if twilio and provider != "manual" and not cloud:
-        return _send_twilio_interactive_invitation(phone, guest, body, inv, map_u)
-
-    if provider == "bot" and not twilio:
+    if provider == "bot":
         sent = _send_bot_invitation(phone, guest, body, map_u, inv)
         return {
             "sent": sent,
@@ -272,9 +272,7 @@ def send_interactive_invitation(
     if map_u:
         text += f"\n{BTN_MAP}: {map_u}"
     text += f"\n\n{reminder_optin_body(guest)}\nرد: {REMIND_YES} أو {REMIND_NO}"
-    out = send_via_bot(phone, text) if provider == "bot" else {"sent": False}
-    return out
-
+    return {"sent": False, "detail": "لا يوجد مزوّد واتساب للإرسال التلقائي", "preview": text}
 
 def _send_cloud_post_text(digits: str, text: str, cred) -> bool:
     payload = {

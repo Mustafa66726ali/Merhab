@@ -975,21 +975,32 @@ export default function IntegrationsView() {
                     </p>
                     <div className="rounded-lg border border-outline-variant/15 bg-surface-container-low/50 p-3 text-[11px] text-on-surface-variant space-y-2 leading-relaxed">
                       <p className="font-bold text-on-surface text-xs">
-                        1) قالب الدعوة — twilio/call-to-action (ليس Card)
+                        النمط الوحيد: 1) بطاقة دعوة → 2) تذكير مسبق → 3) قبل الموعد بيوم تذكير+QR
+                      </p>
+                      <p className="font-bold text-on-surface text-xs">
+                        1) قالب الدعوة — twilio/card
                       </p>
                       <pre className="whitespace-pre-wrap font-mono text-[10px] bg-black/20 rounded-lg p-2 overflow-x-auto" dir="rtl">
-{`مرحبا بك يا {{1}} نشكر دعوتكم لحضور مناسبة {{2}}
+{`مرحبا {{1}}
+بكل سرور نتشرف بدعوتكم لحضور {{2}}
 
-الموعد يوم {{3}} والمكان {{4}}
+التاريخ: {{3}}
+الوقت: {{4}}
+المكان: {{5}}
 
-للاطلاع على التفاصيل وتأكيد الحضور اضغط الزر أدناه وشكرا لثقتكم بمرحاب`}
+للاطلاع على التفاصيل استخدم الأزرار أدناه وشكرا لثقتكم بمرحاب`}
                       </pre>
                       <p>
-                        زر URL واحد «فتح الدعوة»:{" "}
+                        زر URL «فتح الخريطة»:{" "}
                         <span className="font-mono" dir="ltr">
-                          {"https://merhaab.com/i/{{5}}"}
+                          {"https://www.google.com/maps?q={{6}}"}
                         </span>
-                        {" — بدون زر خريطة (الخريطة داخل صفحة الدعوة)."}
+                      </p>
+                      <p>
+                        زر URL «فتح الدعوة»:{" "}
+                        <span className="font-mono" dir="ltr">
+                          {"https://merhaab.com/i/{{7}}"}
+                        </span>
                       </p>
                       <p className="font-bold text-on-surface text-xs pt-1">
                         2) التذكير المسبق — twilio/quick-reply
@@ -997,7 +1008,7 @@ export default function IntegrationsView() {
                       <pre className="whitespace-pre-wrap font-mono text-[10px] bg-black/20 rounded-lg p-2 overflow-x-auto" dir="rtl">
 {`مرحبا {{1}}
 
-حرصا منا على تذكيركم بموعد المناسبة هل تودون ان نرسل لكم رسالة تذكير قبل الموعد بيوم تتضمن تفاصيل الدعوة ورمز الدخول الخاصة بكم؟`}
+هل تودون ان نرسل لكم رسالة تذكير قبل المناسبة بيوم تتضمن تفاصيل الدعوة ورمز الدخول الخاص بكم؟`}
                       </pre>
                       <p>
                         Quick Reply «نعم ذكرني» id:{" "}
@@ -1008,19 +1019,26 @@ export default function IntegrationsView() {
                         <span className="font-mono">merhab_remind_no_{"{{2}}"}</span>
                       </p>
                       <p className="font-bold text-on-surface text-xs pt-1">
-                        3) تذكير قبل الموعد بيوم — twilio/call-to-action (ثم صورة QR تلقائياً)
+                        3) تذكير قبل الموعد بيوم — twilio/card (ثم صورة QR تلقائياً)
                       </p>
                       <pre className="whitespace-pre-wrap font-mono text-[10px] bg-black/20 rounded-lg p-2 overflow-x-auto" dir="rtl">
-{`مرحبا بك يا {{1}} نذكركم بموعد مناسبة {{2}}
+{`مرحبا {{1}}
+يسعدنا تذكيركم بان موعد مناسبة {{2}} سيكون
 
-الموعد يوم {{3}} والمكان {{4}}
+التاريخ: {{3}}
+الوقت: {{4}}
+المكان: {{5}}
 
-اضغط الزر لفتح الدعوة ورمز الدخول سيصلكم في الرسالة التالية وشكرا مرحاب`}
+رمز الدخول سيصلكم في الرسالة التالية وشكرا مرحاب`}
                       </pre>
                       <p>
-                        نفس زر الدعوة:{" "}
+                        نفس أزرار الخريطة/الدعوة:{" "}
                         <span className="font-mono" dir="ltr">
-                          {"https://merhaab.com/i/{{5}}"}
+                          {"https://www.google.com/maps?q={{6}}"}
+                        </span>{" "}
+                        و{" "}
+                        <span className="font-mono" dir="ltr">
+                          {"https://merhaab.com/i/{{7}}"}
                         </span>
                       </p>
                     </div>
@@ -1029,7 +1047,7 @@ export default function IntegrationsView() {
                         [
                           [
                             "content_invitation",
-                            "1. قالب الدعوة (call-to-action) * — Content SID",
+                            "1. قالب الدعوة (card) * — Content SID",
                             "HX...",
                           ],
                           [
@@ -1039,7 +1057,7 @@ export default function IntegrationsView() {
                           ],
                           [
                             "content_reminder",
-                            "3. تذكير قبل الموعد بيوم (call-to-action) * — Content SID",
+                            "3. تذكير قبل الموعد بيوم (card) * — Content SID",
                             "HX...",
                           ],
                           ["content_broadcast", "نص البث المباشر (اختياري)", "HX..."],
@@ -1082,11 +1100,11 @@ export default function IntegrationsView() {
                       <span className="font-mono">content_invitation</span> ·{" "}
                       <span className="font-mono">content_reminder_optin</span> ·{" "}
                       <span className="font-mono">content_reminder</span>. المتغيرات:{" "}
-                      {"{{1}}"} اسم · {"{{2}}"} مناسبة · {"{{3}}"} تاريخ/وقت ·{" "}
-                      {"{{4}}"} مكان · {"{{5}}"} رمز الضيف. للتذكير المسبق:{" "}
+                      {"{{1}}"} اسم · {"{{2}}"} مناسبة · {"{{3}}"} تاريخ · {"{{4}}"} وقت ·{" "}
+                      {"{{5}}"} مكان · {"{{6}}"} خريطة · {"{{7}}"} رمز الضيف. للتذكير المسبق:{" "}
                       {"{{1}}"} اسم · {"{{2}}"} رمز الضيف. رابط الدعوة:{" "}
                       <span className="font-mono" dir="ltr">
-                        https://merhaab.com/i/{"{{5}}"}
+                        https://merhaab.com/i/{"{{7}}"}
                       </span>
                     </p>
                   </div>

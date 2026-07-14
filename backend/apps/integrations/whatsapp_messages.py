@@ -1,11 +1,10 @@
-"""رسائل واتساب المهيكلة للضيوف — ثلاثة أنواع:
+"""رسائل واتساب المهيكلة للضيوف:
 
-1. **دعوة** — تفاعلية (خريطة + رابط + RSVP) أو قالب Meta/Twilio
-2. **تذكير مؤكّد** — رسالة نصية بسيطة + رابط QR (بدون قالب)
-3. **تذكير غير مؤكّد** — نفس الدعوة التفاعلية بعنوان «تذكير»
-4. **بطاقة QR** — قالب Meta/Twilio أو صورة عبر البوت
-في التطوير: البوت المحلي (نص + رابط منفصل / صورة base64).
-في الإنتاج: قوالب Meta المعتمدة عبر Cloud API أو Twilio ContentSid.
+1. **دعوة (Twilio النمط الوحيد عند تفعيل Twilio)** —
+   بطاقة دعوة ثم تذكير مسبق (نعم ذكرني / لا اعتذر)
+2. **تذكير قبل الموعد بيوم** — بطاقة تفاصيل ثم صورة QR
+3. **تذكير يدوي مؤكّد** — رسالة نصية + رابط (بدون قالب؛ من شاشة التذكير)
+4. **بطاقة QR** — صورة PNG (بعد التأكيد المجدول)
 """
 
 from __future__ import annotations
@@ -226,7 +225,11 @@ def send_guest_invitation(
     guest: Guest,
     custom_body: str | None = None,
 ) -> dict:
-    """إرسال دعوة تفاعلية (خريطة + رابط + نعم/لا) أو قالب Meta عند التفعيل."""
+    """إرسال الدعوة بالنمط الوحيد المعتمد مع Twilio:
+
+    1) بطاقة الدعوة (تفاصيل + خريطة + رابط)
+    2) فوراً: تذكير مسبق نعم ذكرني / لا اعتذر
+    """
     phone = guest.phone or ""
     invite_url = _invite_url(guest)
     fallback_url = build_whatsapp_url(phone, invite_url)
@@ -234,10 +237,15 @@ def send_guest_invitation(
     if not normalize_phone_digits(phone):
         return {"sent": False, "whatsapp_url": fallback_url, "detail": "رقم غير متوفر"}
 
+    # مع اعتماد Twilio: المسار التفاعلي دائماً (يتجاهل القالب اليدوي/الـ legacy)
+    if _active_twilio_credential() and _provider_mode() != "manual":
+        from .whatsapp_interactive import send_interactive_invitation
+
+        return send_interactive_invitation(guest)
+
     use_legacy = getattr(settings, "WHATSAPP_INVITATION_LEGACY_TEMPLATE", False)
     use_interactive = getattr(settings, "WHATSAPP_INVITATION_INTERACTIVE", True)
 
-    # الدعوة التفاعلية لها نصها الخاص (خريطة + رابط + نعم/لا) — لا يُستبدَل بقالب المحرّر
     if use_interactive and not use_legacy:
         from .whatsapp_interactive import send_interactive_invitation
 

@@ -13,10 +13,11 @@ from .whatsapp_send import (
 
 
 def check_twilio_invitation_setup() -> dict:
-    """يتطلب قالب الدعوة + قالب التذكير المسبق."""
+    """يتطلب قالب الدعوة (Card) + التذكير المسبق + تذكير ما قبل الموعد."""
     provider = (getattr(settings, "WHATSAPP_PROVIDER", "manual") or "manual").lower()
     cred = _active_twilio_credential()
     issues: list[str] = []
+    warnings: list[str] = []
 
     if provider == "manual":
         issues.append(
@@ -25,9 +26,9 @@ def check_twilio_invitation_setup() -> dict:
         )
 
     if _active_cloud_credential():
-        issues.append(
-            "يوجد اعتماد WhatsApp Cloud API نشط — له أولوية على Twilio. "
-            "عطّله إن كنت تستخدم Twilio فقط."
+        warnings.append(
+            "يوجد اعتماد WhatsApp Cloud API نشط — مسار الدعوات يفضّل Twilio "
+            "عند اكتمال قوالب Content. عطّل Cloud إن أردت Twilio فقط."
         )
 
     if not cred:
@@ -38,7 +39,7 @@ def check_twilio_invitation_setup() -> dict:
         return {
             "ready": False,
             "issues": issues,
-            "warnings": [],
+            "warnings": warnings,
             "provider": provider,
         }
 
@@ -47,15 +48,15 @@ def check_twilio_invitation_setup() -> dict:
 
     if not (cred.phone_number_id or "").strip():
         issues.append(
-            "رقم المُرسِل (phone_number_id) فارغ — استخدم whatsapp:+15558663061"
+            "رقم المُرسِل (phone_number_id) فارغ — استخدم whatsapp:+966XXXXXXXXX"
         )
 
     cfg = cred.config or {}
-    invite_sid = (cfg.get("content_card") or cfg.get("content_invitation") or "").strip()
+    invite_sid = (cfg.get("content_invitation") or cfg.get("content_card") or "").strip()
     if not invite_sid:
         issues.append(
-            "content_invitation مفقود — قالب twilio/call-to-action للدعوة "
-            "(نص + زر فتح الدعوة)."
+            "content_invitation مفقود — قالب twilio/card للدعوة "
+            "(اسم + مناسبة + تاريخ + وقت + مكان + خريطة + فتح الدعوة)."
         )
 
     optin_sid = (cfg.get("content_reminder_optin") or "").strip()
@@ -68,16 +69,14 @@ def check_twilio_invitation_setup() -> dict:
     reminder_sid = (cfg.get("content_reminder") or "").strip()
     if not reminder_sid:
         issues.append(
-            "content_reminder مفقود — قالب twilio/call-to-action لتذكير ما قبل الموعد بيوم "
+            "content_reminder مفقود — قالب twilio/card لتذكير ما قبل الموعد بيوم "
             "(ثم تُرسل صورة QR تلقائياً)."
         )
 
-    warnings: list[str] = []
-    # تشخيص عدد متغيرات قوالب Content مقابل ما يرسله مرحّاب
     expected = {
-        "content_invitation": (5, invite_sid),
+        "content_invitation": (7, invite_sid),
         "content_reminder_optin": (2, optin_sid),
-        "content_reminder": (5, reminder_sid),
+        "content_reminder": (7, reminder_sid),
     }
     for label, (want_n, sid) in expected.items():
         if not sid:

@@ -85,21 +85,25 @@ def invitation_twilio_variables(guest: Guest) -> dict[str, str]:
 
 
 def invitation_card_twilio_variables(guest: Guest) -> dict[str, str]:
-    """متغيرات قوالب الدعوة والتذكير (Call to action / واتساب).
+    """متغيرات قوالب الدعوة والتذكير قبل الموعد (Twilio Card).
 
-    صيغة موافقة واتساب (5 متغيرات فقط + زر رابط واحد):
-    {{1}} الاسم · {{2}} المناسبة · {{3}} التاريخ والوقت
-    {{4}} المكان · {{5}} رمز الضيف لرابط /i/{{5}}
+    {{1}} الاسم · {{2}} المناسبة · {{3}} التاريخ · {{4}} الوقت
+    {{5}} المكان · {{6}} استعلام الخريطة · {{7}} رمز الضيف
+    أزرار: خريطة maps?q={{6}} · دعوة /i/{{7}}
     """
     event = guest.event
     venue = (event.venue or event.geo_address or "-").strip() or "-"
     venue = " ".join(venue.split()) or "-"
+    map_q = map_template_variable(event) or venue or (event.title or "مناسبة")
+    map_q = " ".join(str(map_q).split()) or "مناسبة"
     return {
         "1": (guest.full_name or "ضيف").strip() or "ضيف",
         "2": (event.title or "مناسبة").strip() or "مناسبة",
-        "3": _event_datetime_label(guest),
-        "4": venue,
-        "5": str(guest.public_token),
+        "3": _event_date_label(guest),
+        "4": _event_time_label(guest),
+        "5": venue,
+        "6": map_q,
+        "7": str(guest.public_token),
     }
 
 
@@ -120,18 +124,20 @@ def invitation_body(guest: Guest, *, headline: str = "دعوة الضيف") -> s
     venue = (event.venue or event.geo_address or "-").strip() or "-"
     return (
         f"{headline}\n\n"
-        f"مرحبا بك يا {guest.full_name or 'ضيف'} نشكر دعوتكم لحضور مناسبة "
-        f"{event.title or 'مناسبتنا'}\n\n"
-        f"الموعد يوم {_event_datetime_label(guest)} والمكان {venue}\n\n"
-        "للاطلاع على التفاصيل وتأكيد الحضور افتح رابط الدعوة وشكرا لثقتكم بمرحاب"
+        f"مرحبا {guest.full_name or 'ضيف'}\n"
+        f"بكل سرور نتشرف بدعوتكم لحضور {event.title or 'مناسبتنا'}\n\n"
+        f"التاريخ: {_event_date_label(guest)}\n"
+        f"الوقت: {_event_time_label(guest)}\n"
+        f"المكان: {venue}\n\n"
+        "للاطلاع على التفاصيل استخدم الأزرار أدناه وشكرا لثقتكم بمرحاب"
     )
 
 
 def reminder_optin_body(guest: Guest) -> str:
     return (
         f"مرحبا {guest.full_name or 'ضيف'}\n\n"
-        "حرصا منا على تذكيركم بموعد المناسبة هل تودون ان نرسل لكم رسالة تذكير "
-        "قبل الموعد بيوم تتضمن تفاصيل الدعوة ورمز الدخول الخاصة بكم؟"
+        "هل تودون ان نرسل لكم رسالة تذكير قبل المناسبة بيوم "
+        "تتضمن تفاصيل الدعوة ورمز الدخول الخاص بكم؟"
     )
 
 
