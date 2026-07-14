@@ -100,6 +100,7 @@ def invitation_payload(request, guest: Guest) -> dict:
                 "going": m.status in GOING_STATUSES,
                 "declined": m.status == Guest.Status.DECLINED,
                 "is_self": m.id == guest.id,
+                "status": m.status,
             }
             for m in members
         ]

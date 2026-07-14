@@ -202,43 +202,87 @@ export default function PublicInvitationPage() {
           </section>
         )}
 
-        {/* 4 — من سيحضر من مجموعتك */}
-        {group_members.length > 0 && (
-          <section className="bg-surface-container-low p-3 sm:p-3.5 rounded-2xl space-y-2.5">
-            <h3 className="arabic-display text-sm font-bold text-on-surface px-0.5">
-              من سيحضر من مجموعتك
-            </h3>
-            <div className="space-y-1.5">
-              {group_members.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center justify-between px-2.5 py-2 bg-surface-container-high rounded-xl ${
-                    m.going ? "" : "opacity-60"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container text-[10px] font-bold shrink-0">
-                      {m.initials}
+        {/* 4 — بطاقة من سيحضر من مجموعتك */}
+        {(guest.group_name || group_members.length > 0) && (
+          <section className="rounded-2xl border border-outline-variant/15 bg-surface-container-low overflow-hidden">
+            <div className="px-3.5 pt-3.5 pb-2 flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="arabic-display text-sm font-bold text-on-surface">
+                  من سيحضر من مجموعتك
+                </h3>
+                {guest.group_name && (
+                  <p className="text-[11px] text-on-surface-variant mt-0.5 truncate">
+                    المجموعة: {guest.group_name}
+                  </p>
+                )}
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 text-emerald-300 text-[10px] font-bold px-2 py-1 shrink-0">
+                <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  groups
+                </span>
+                {group_members.filter((m) => m.going).length}
+              </span>
+            </div>
+            <div className="px-2.5 pb-3 space-y-1">
+              {group_members.length === 0 ? (
+                <p className="text-[11px] text-on-surface-variant px-2 py-3 text-center">
+                  لا يوجد أعضاء مسجّلون في هذه المجموعة بعد.
+                </p>
+              ) : (
+                [...group_members]
+                  .sort((a, b) => {
+                    const rank = (m: (typeof group_members)[number]) =>
+                      m.going ? 0 : m.declined ? 2 : 1;
+                    return rank(a) - rank(b) || a.full_name.localeCompare(b.full_name, "ar");
+                  })
+                  .map((m, i) => (
+                    <div
+                      key={`${m.full_name}-${i}`}
+                      className={`flex items-center justify-between px-2.5 py-2 rounded-xl bg-surface-container-high ${
+                        m.going ? "ring-1 ring-emerald-500/20" : m.declined ? "opacity-55" : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                            m.going
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-secondary-container text-on-secondary-container"
+                          }`}
+                        >
+                          {m.initials}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="arabic-display text-xs font-medium text-on-surface truncate">
+                            {m.full_name}
+                            {m.is_self && (
+                              <span className="text-primary text-[10px]"> (أنت)</span>
+                            )}
+                          </p>
+                          <p className="text-[10px] text-on-surface-variant">
+                            {m.going
+                              ? "سيحضر"
+                              : m.declined
+                                ? "معتذر"
+                                : "بانتظار الرد"}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`material-symbols-outlined text-lg shrink-0 ${
+                          m.going
+                            ? "text-emerald-400"
+                            : m.declined
+                              ? "text-error"
+                              : "text-outline"
+                        }`}
+                        style={m.going ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                      >
+                        {m.going ? "check_circle" : m.declined ? "cancel" : "schedule"}
+                      </span>
                     </div>
-                    <span className="arabic-display text-xs font-medium text-on-surface truncate">
-                      {m.full_name}
-                      {m.is_self && <span className="text-primary text-[10px]"> (أنت)</span>}
-                    </span>
-                  </div>
-                  <span
-                    className={`material-symbols-outlined text-base shrink-0 ${
-                      m.going
-                        ? "text-emerald-400"
-                        : m.declined
-                          ? "text-error"
-                          : "text-outline"
-                    }`}
-                    style={m.going ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                  >
-                    {m.going ? "check_circle" : m.declined ? "cancel" : "help"}
-                  </span>
-                </div>
-              ))}
+                  ))
+              )}
             </div>
           </section>
         )}

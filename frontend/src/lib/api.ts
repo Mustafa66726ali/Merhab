@@ -334,6 +334,7 @@ export interface PublicInvitationGroupMember {
   going: boolean;
   declined: boolean;
   is_self: boolean;
+  status?: string;
 }
 
 export interface PublicInvitationCoordinator {
