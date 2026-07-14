@@ -104,7 +104,10 @@ class Guest(models.Model):
             models.Index(fields=["event", "status"]),
             models.Index(fields=["event", "created_at"]),
             models.Index(fields=["status"]),
-            models.Index(fields=["reminder_scheduled_for", "reminder_sent_at"]),
+            models.Index(
+                fields=["reminder_scheduled_for", "reminder_sent_at"],
+                name="guests_gues_remind_sched_idx",
+            ),
         ]
 
     def __str__(self):
