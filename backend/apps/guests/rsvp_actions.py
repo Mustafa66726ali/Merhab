@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.utils import timezone
 
 from apps.guests.models import Guest
-from apps.guests.reminder_schedule import schedule_guest_day_before_reminder
+from apps.guests.reminder_schedule import deliver_guest_day_before_reminder
 
 
 def apply_guest_rsvp(
@@ -13,11 +13,13 @@ def apply_guest_rsvp(
     *,
     confirm: bool,
     defer_qr: bool = True,
+    force_reminder_delivery: bool = False,
 ) -> Guest:
     """يُحدّث حالة الضيف.
 
     عند التأكيد مع ``defer_qr=True`` (الافتراضي): يُؤكَّد الحضور ويُجدول
-    التذكير+QR قبل المناسبة بيوم — دون إرسال QR فوراً.
+    التذكير+QR قبل المناسبة بيوم — ويُرسل فوراً إن حان الموعد.
+    ``force_reminder_delivery`` يعيد الإرسال عند تأكيد متكرر (نعم ذكرني).
     """
     if guest.status in (Guest.Status.ATTENDED, Guest.Status.SEATED):
         return guest
@@ -32,24 +34,10 @@ def apply_guest_rsvp(
         guest.refresh_from_db()
 
         if defer_qr:
-            schedule_guest_day_before_reminder(guest)
+            deliver_guest_day_before_reminder(
+                guest, force=force_reminder_delivery
+            )
             guest.refresh_from_db()
-            # إن بقي أقل من يوم على المناسبة — أرسل التذكير+QR في أقرب وقت (فوراً)
-            due = guest.reminder_scheduled_for
-            if (
-                guest.phone
-                and due is not None
-                and due <= timezone.now()
-                and guest.reminder_sent_at is None
-            ):
-                from apps.integrations.whatsapp_messages import (
-                    send_guest_day_before_reminder,
-                )
-
-                outcome = send_guest_day_before_reminder(guest)
-                if outcome.get("sent"):
-                    guest.reminder_sent_at = timezone.now()
-                    guest.save(update_fields=["reminder_sent_at"])
         elif guest.phone:
             from apps.integrations.whatsapp_messages import send_guest_qr
 

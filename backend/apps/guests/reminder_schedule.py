@@ -40,10 +40,65 @@ def schedule_guest_day_before_reminder(guest: Guest) -> Guest:
     send_at = compute_reminder_scheduled_for(guest.event)
     guest.reminder_opted_in = True
     guest.reminder_scheduled_for = send_at
-    # إن أُرسل سابقاً وأُعيد التأكيد — اسمح بإعادة الجدولة فقط إن لم يُرسل
-    update = ["reminder_opted_in", "reminder_scheduled_for"]
-    if guest.reminder_sent_at and send_at and send_at > timezone.now():
-        # لا تمسح reminder_sent_at إن سبق الإرسال
-        pass
-    guest.save(update_fields=update)
+    guest.save(update_fields=["reminder_opted_in", "reminder_scheduled_for"])
     return guest
+
+
+def deliver_guest_day_before_reminder(
+    guest: Guest,
+    *,
+    force: bool = False,
+) -> dict | None:
+    """يرسل التذكير+QR عند الاستحقاق.
+
+    - ``force=False``: يرسل مرة واحدة فقط إن حان الموعد ولم يُرسل سابقاً.
+    - ``force=True``: يعيد الإرسال عند «نعم ذكرني» مجدداً طالما الحفل لم يبدأ
+      والموعد المستحق حان (أقل من 24 ساعة متبقية).
+    - إن بقي أكثر من 24 ساعة: يجدول فقط ولا يرسل قبل الأوان.
+    """
+    from apps.integrations.whatsapp_messages import send_guest_day_before_reminder
+
+    if not (guest.phone or "").strip():
+        return {"sent": False, "detail": "رقم غير متوفر", "deferred": False}
+
+    schedule_guest_day_before_reminder(guest)
+    guest.refresh_from_db()
+
+    now = timezone.now()
+    event_dt = event_aware_datetime(guest.event)
+    if event_dt is None or now >= event_dt:
+        return {
+            "sent": False,
+            "detail": "انتهى موعد المناسبة — لا يُرسل تذكير",
+            "deferred": False,
+        }
+
+    due = guest.reminder_scheduled_for
+    if due is None:
+        return {"sent": False, "detail": "تعذّر جدولة التذكير", "deferred": False}
+
+    # ما زال باكراً (أكثر من 24 ساعة على الحفل)
+    if due > now:
+        return {
+            "sent": False,
+            "detail": "مجدول قبل الموعد بـ 24 ساعة",
+            "deferred": True,
+            "scheduled_for": due,
+        }
+
+    # مستحق الآن — لا تُعد الإرسال التلقائي إن سبق بنجاح إلا مع force
+    if guest.reminder_sent_at and not force:
+        return {
+            "sent": False,
+            "detail": "سبق إرسال التذكير",
+            "deferred": False,
+            "already_sent": True,
+        }
+
+    outcome = send_guest_day_before_reminder(guest)
+    if outcome.get("sent"):
+        guest.reminder_sent_at = timezone.now()
+        guest.save(update_fields=["reminder_sent_at"])
+    result = dict(outcome)
+    result["deferred"] = False
+    return result

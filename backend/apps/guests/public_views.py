@@ -213,7 +213,12 @@ class PublicInvitationRespondView(APIView):
                 status=status.HTTP_409_CONFLICT,
             )
 
-        apply_guest_rsvp(guest, confirm=(action == "confirm"))
+        apply_guest_rsvp(
+            guest,
+            confirm=(action == "confirm"),
+            # إعادة التأكيد من الصفحة تعيد الإرسال إن حان موعد التذكير
+            force_reminder_delivery=(action == "confirm"),
+        )
         guest.refresh_from_db()
         return Response(invitation_payload(request, guest))
 
