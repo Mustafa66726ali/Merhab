@@ -51,6 +51,11 @@ TWILIO_KNOWN_ERRORS: dict[int, str] = {
     21608: "الرقم غير مفعّل لاستقبال رسائل WhatsApp عبر Twilio (21608).",
     21610: "المستلم ألغى الاشتراك / لا يمكن مراسلته (21610).",
     63024: "فشل إرسال القالب — قد يكون غير معتمد لواتساب أو المتغيرات ناقصة (63024).",
+    21656: (
+        "متغيرات القالب غير صالحة (21656) — غالباً Content SID لا يطابق ما يرسله مرحّاب، "
+        "أو قيمة متغير فارغة/فيها أسطر جديدة. قالب الدعوة يحتاج {{1}}…{{7}} "
+        "(اسم، مناسبة، تاريخ، وقت، مكان، خريطة، رمز الضيف)."
+    ),
     63028: (
         "عدد متغيرات القالب لا يطابق ما يرسله مرحّاب (63028). "
         "قالب الدعوة/التذكير (Card) يحتاج {{1}}…{{7}} بالضبط، "
@@ -219,28 +224,39 @@ def align_twilio_content_variables(
     variables: dict[str, str],
     template_keys: list[str],
 ) -> tuple[dict[str, str], str]:
-    """يطابق ContentVariables مع ما يعرّفه القالب لتفادي 63028."""
+    """يطابق ContentVariables مع تعريف القالب.
+
+    عند اختلاف العدد نُرجع خطأ واضحاً بدل إرسال حمولة ناقصة (كانت تسبب 21656).
+    """
     if not template_keys:
-        return dict(variables), ""
+        cleaned = {
+            str(k): " ".join(str(v).split()) or "ضيف"
+            for k, v in variables.items()
+        }
+        return cleaned, ""
+
+    def _key_sort(k: str):
+        return (0, int(k)) if str(k).isdigit() else (1, str(k))
+
+    prepared = sorted((str(k) for k in variables.keys()), key=_key_sort)
+    expected = list(template_keys)
+    if prepared != expected:
+        return {}, (
+            f"قالب Twilio يعرّف {{{','.join(expected)}}} n={len(expected)} "
+            f"بينما مرحّاب يرسل {{{','.join(prepared)}}} n={len(prepared)}. "
+            "ضع في التكاملات Content SID لقالب Approved بنفس المتغيرات "
+            "(الدعوة والتذكير قبل يوم: {{1}}…{{7}} — التذكير المسبق: {{1}} و{{2}} فقط)."
+        )
+
     aligned: dict[str, str] = {}
-    for key in template_keys:
+    for key in expected:
         raw = variables.get(key)
-        if raw is None or str(raw).strip() == "":
-            aligned[key] = "-"
-        else:
-            aligned[key] = " ".join(str(raw).split()) or "-"
-    note = ""
-    if set(variables.keys()) != set(aligned.keys()):
-        note = (
-            f"طُبّقت متغيرات القالب n={len(aligned)} "
-            f"(الكود جهّز n={len(variables)}): {{{','.join(template_keys)}}}"
-        )
-        logger.info(
-            "Twilio ContentVariables aligned prepared=%s expect=%s",
-            sorted(variables.keys()),
-            template_keys,
-        )
-    return aligned, note
+        value = " ".join(str(raw).split()) if raw is not None else ""
+        # واتساب يرفض الفراغ والأسطر الجديدة و4 مسافات متتالية (21656)
+        if not value:
+            value = "غير محدد"
+        aligned[key] = value
+    return aligned, ""
 
 
 def _log_twilio_result(action: str, phone: str, status_code: int, body: str) -> None:
@@ -482,11 +498,20 @@ def send_twilio_content_template(
         from_number = f"whatsapp:+{normalize_phone_digits(from_number)}"
     to_number = f"whatsapp:+{digits}"
 
-    # مطابقة المتغيرات مع تعريف القالب في Twilio (يمنع 63028)
+    # مطابقة المتغيرات مع تعريف القالب في Twilio (يمنع 63028/21656)
     content_def = fetch_twilio_content(cred, content_sid)
     template_keys = twilio_content_variable_keys(content_def)
     aligned, align_note = align_twilio_content_variables(variables, template_keys)
-    payload_vars = aligned
+    if not aligned and align_note:
+        return {
+            "sent": False,
+            "whatsapp_url": fallback_url,
+            "detail": f"{align_note} [SID={content_sid}]",
+            "template": content_sid,
+        }
+    payload_vars = aligned or {
+        str(k): " ".join(str(v).split()) or "غير محدد" for k, v in variables.items()
+    }
 
     api_url = (
         f"https://api.twilio.com/2010-04-01/Accounts/{cred.api_key}/Messages.json"
