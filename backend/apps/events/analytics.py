@@ -43,8 +43,6 @@ def _serialize_event_brief(ev: Event, request=None, stats=None) -> dict:
         stats = _guest_stats_for_event(ev.id)
     manager = ev.created_by.get_full_name().strip() or ev.created_by.email
     cover_path = event_cover_url(ev)
-    if cover_path and request is not None:
-        cover_path = request.build_absolute_uri(cover_path)
     return {
         "id": ev.id,
         "title": ev.title,

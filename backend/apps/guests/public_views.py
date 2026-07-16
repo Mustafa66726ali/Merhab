@@ -15,6 +15,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.events.cover_media import event_cover_url
 from apps.integrations.whatsapp_send import build_whatsapp_url
 from apps.platforms.platform_events import _location_label
 
@@ -127,7 +128,7 @@ def invitation_payload(request, guest: Guest) -> dict:
             "latitude": event.latitude,
             "longitude": event.longitude,
             "location": _location_label(event),
-            "cover_image": _abs_url(request, event.cover_image),
+            "cover_image": event_cover_url(event) or None,
             "platform_name": event.platform.name if event.platform_id else "",
             "invitation_title": event.invitation_title,
             "invitation_message": event.invitation_message,

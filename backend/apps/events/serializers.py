@@ -549,6 +549,11 @@ class EventCreateSerializer(serializers.ModelSerializer):
             attrs["end_date"] = date
         return attrs
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["cover_image"] = event_cover_url(instance)
+        return data
+
     def create(self, validated_data):
         manager_id = validated_data.pop("event_manager_id", None)
         organizer_id = validated_data.pop("event_organizer_id", None)

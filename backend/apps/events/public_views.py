@@ -5,24 +5,16 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.events.cover_media import event_cover_url
 from apps.events.live_media import build_live_media_payload
 from apps.events.models import Event
-
-
-def _abs_url(file_field) -> str | None:
-    if not file_field:
-        return None
-    try:
-        return file_field.url
-    except ValueError:
-        return None
 
 
 def broadcast_payload(event) -> dict:
     return {
         "event": {
             "title": event.title,
-            "cover_image": _abs_url(event.cover_image),
+            "cover_image": event_cover_url(event) or None,
             "platform_name": event.platform.name if event.platform_id else "",
         },
         "live_media": build_live_media_payload(event),

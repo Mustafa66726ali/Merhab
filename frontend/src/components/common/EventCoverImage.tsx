@@ -50,10 +50,19 @@ export default function EventCoverImage({
   }
 
   return (
-    <img
-      src="/event-cover-default.svg"
-      alt={variant === "thumb" ? "" : alt}
-      className={`w-full h-full object-cover ${variantStyles[variant]} ${className}`}
-    />
+    <div
+      role={alt ? "img" : undefined}
+      aria-label={alt || undefined}
+      className={`w-full h-full bg-gradient-to-br from-primary-container/20 to-surface-container-high flex items-center justify-center ${variantStyles[variant]} ${className}`}
+    >
+      <span
+        aria-hidden="true"
+        className={`material-symbols-outlined text-primary/40 overflow-hidden leading-none select-none ${
+          variant === "hero" ? "text-6xl" : variant === "banner" ? "text-5xl" : "text-xl"
+        }`}
+      >
+        celebration
+      </span>
+    </div>
   );
 }

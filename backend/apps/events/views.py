@@ -1,11 +1,14 @@
+import mimetypes
+
 from django.db import models
 from django.db.models import Count, Prefetch, Q
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from apps.accounts.models import User
@@ -189,6 +192,32 @@ class EventViewSet(viewsets.ModelViewSet):
         platform_id = instance.platform_id
         instance.delete()
         invalidate_platform_event_caches(platform_id)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="cover",
+        permission_classes=[AllowAny],
+        authentication_classes=[],
+    )
+    def cover(self, request, pk=None):
+        """عرض غلاف المناسبة من التخزين عبر API بغض النظر عن إعدادات /media."""
+        event = Event.objects.only("cover_image", "updated_at").filter(pk=pk).first()
+        if not event or not event.cover_image:
+            raise Http404("صورة المناسبة غير موجودة")
+        try:
+            file_handle = event.cover_image.open("rb")
+        except (FileNotFoundError, OSError, ValueError):
+            raise Http404("ملف صورة المناسبة غير موجود") from None
+
+        content_type = (
+            mimetypes.guess_type(event.cover_image.name)[0]
+            or "application/octet-stream"
+        )
+        response = FileResponse(file_handle, content_type=content_type)
+        response["Cache-Control"] = "public, max-age=86400, immutable"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
 
     @action(detail=False, methods=["get"], url_path="overview")
     def overview(self, request):
