@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import EventCoverImage from "@/components/common/EventCoverImage";
 import { publicBroadcastAPI, type PublicBroadcast } from "@/lib/api";
-import { getMediaUrl } from "@/components/common/UserAvatarPicker";
 import LiveMediaPlayer from "@/components/invitation/LiveMediaPlayer";
 
 export default function PublicBroadcastPage() {
@@ -82,17 +82,15 @@ export default function PublicBroadcastPage() {
           <div className="w-12 h-1 bg-primary mx-auto rounded-full" />
         </header>
 
-        {event.cover_image && (
-          <div className="relative h-48 rounded-2xl overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={getMediaUrl(event.cover_image)}
-              alt={event.title}
-              className="w-full h-full object-cover opacity-60"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-          </div>
-        )}
+        <div className="relative h-48 rounded-2xl overflow-hidden">
+          <EventCoverImage
+            coverImage={event.cover_image}
+            alt={event.title}
+            variant="banner"
+            className="opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+        </div>
 
         <LiveMediaPlayer live={live_media} />
 

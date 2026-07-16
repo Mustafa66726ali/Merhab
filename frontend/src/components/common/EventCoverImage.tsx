@@ -26,9 +26,9 @@ export default function EventCoverImage({
   className = "",
   showFallbackIcon = true,
 }: EventCoverImageProps) {
-  const [failed, setFailed] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const src = coverImage ? getMediaUrl(coverImage) : "";
-  const showImage = src && !failed;
+  const showImage = src && failedSrc !== src;
 
   if (showImage) {
     return (
@@ -36,7 +36,7 @@ export default function EventCoverImage({
         src={src}
         alt={variant === "thumb" ? "" : alt}
         className={`w-full h-full object-cover ${variantStyles[variant]} ${className}`}
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
       />
     );
   }
@@ -50,17 +50,10 @@ export default function EventCoverImage({
   }
 
   return (
-    <div
-      className={`w-full h-full bg-gradient-to-br from-primary-container/20 to-surface-container-high flex items-center justify-center ${variantStyles[variant]} ${className}`}
-    >
-      <span
-        aria-hidden="true"
-        className={`material-symbols-outlined text-primary/40 overflow-hidden leading-none select-none ${
-          variant === "hero" ? "text-6xl" : variant === "banner" ? "text-5xl" : "text-xl"
-        }`}
-      >
-        celebration
-      </span>
-    </div>
+    <img
+      src="/event-cover-default.svg"
+      alt={variant === "thumb" ? "" : alt}
+      className={`w-full h-full object-cover ${variantStyles[variant]} ${className}`}
+    />
   );
 }

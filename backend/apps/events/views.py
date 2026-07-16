@@ -16,6 +16,7 @@ from apps.platforms.platform_permissions import (
     require_event_access,
     staff_assigned_event_ids,
 )
+from config.cache_utils import invalidate_platform_event_caches
 
 from apps.events.event_lifecycle import end_event, start_event
 from .live_media import (
@@ -175,9 +176,19 @@ class EventViewSet(viewsets.ModelViewSet):
         if not serializer.validated_data.get("status"):
             extra["status"] = Event.Status.DRAFT
         event = serializer.save(**extra)
+        invalidate_platform_event_caches(event.platform_id)
         from apps.platforms.notification_service import notify_event_created
 
         notify_event_created(event, actor=user)
+
+    def perform_update(self, serializer):
+        event = serializer.save()
+        invalidate_platform_event_caches(event.platform_id)
+
+    def perform_destroy(self, instance):
+        platform_id = instance.platform_id
+        instance.delete()
+        invalidate_platform_event_caches(platform_id)
 
     @action(detail=False, methods=["get"], url_path="overview")
     def overview(self, request):

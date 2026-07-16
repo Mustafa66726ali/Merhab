@@ -17,14 +17,8 @@ from .cover_media import event_cover_url
 from .models import Event, Section, Schedule, Group
 
 
-def _absolute_cover_url(serializer, event: Event) -> str:
-    path = event_cover_url(event)
-    if not path:
-        return ""
-    request = serializer.context.get("request")
-    if request:
-        return request.build_absolute_uri(path)
-    return path
+def _cover_url(event: Event) -> str:
+    return event_cover_url(event)
 
 
 def _validate_coordinates(attrs):
@@ -207,7 +201,7 @@ class EventListSerializer(serializers.ModelSerializer):
         return obj.created_by.get_full_name().strip() or obj.created_by.email
 
     def get_cover_image(self, obj):
-        return _absolute_cover_url(self, obj)
+        return _cover_url(obj)
 
 
 class EventDetailSerializer(serializers.ModelSerializer):
@@ -256,7 +250,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
         return obj.created_by.get_full_name().strip() or obj.created_by.email
 
     def get_cover_image(self, obj):
-        return _absolute_cover_url(self, obj)
+        return _cover_url(obj)
 
     def get_event_manager(self, obj):
         manager, _ = _event_managers_by_role(obj, obj.platform_id)

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import EventCoverImage from "@/components/common/EventCoverImage";
 import { publicInvitationAPI, type PublicInvitation } from "@/lib/api";
 import { eventMapsUrl, formatEventLocation } from "@/lib/eventLocation";
 
@@ -83,11 +84,10 @@ export default function PublicInvitationPage() {
         {/* 1 — غلاف الحدث */}
         <section className="relative h-[220px] sm:h-[260px] flex flex-col items-center justify-end text-center overflow-hidden rounded-2xl">
           <div className="absolute inset-0 z-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={event.cover_image || "/invitation-hero.jpg"}
+            <EventCoverImage
+              coverImage={event.cover_image}
               alt={event.title}
-              className="w-full h-full object-cover"
+              variant="hero"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
           </div>

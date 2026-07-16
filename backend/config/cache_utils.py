@@ -21,3 +21,15 @@ def cache_delete_prefix(prefix: str):
         cache.delete_pattern(f"{prefix}*")
     else:
         cache.clear()
+
+
+def invalidate_platform_event_caches(platform_id: int | None) -> None:
+    """إبطال واجهات المنصة التي تتضمن بيانات المناسبات."""
+    if not platform_id:
+        return
+    cache.delete_many(
+        [
+            f"platform:events_dashboard:{platform_id}",
+            f"platform:overview:{platform_id}",
+        ]
+    )
