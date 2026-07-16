@@ -11,6 +11,7 @@ import {
 } from "@/components/events/guestStatus";
 import EventPageHeader from "@/components/platform-panel/EventPageHeader";
 import AddGuestModal, { type AddGuestFormState } from "@/components/platform-panel/AddGuestModal";
+import BulkDeleteGuestsModal from "@/components/platform-panel/BulkDeleteGuestsModal";
 import { useEvent } from "@/hooks/useEvent";
 import {
   eventsAPI,
@@ -85,6 +86,8 @@ export default function PlatformGuestsListView({
   const importFileRef = useRef<HTMLInputElement>(null);
   const [deleteTarget, setDeleteTarget] = useState<EventGuestRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [guestForm, setGuestForm] = useState<AddGuestFormState>({
     mode: "new",
     existingGuestId: "",
@@ -343,6 +346,28 @@ export default function PlatformGuestsListView({
     }
   };
 
+  const handleBulkDelete = async (ids: number[]) => {
+    if (ids.length === 0) return;
+    setBulkDeleting(true);
+    setActionError("");
+    try {
+      const res = await guestsAPI.bulkDelete(ids);
+      const skipped = res.data.skipped?.length ?? 0;
+      setBulkDeleteOpen(false);
+      refreshGuests();
+      if (skipped > 0) {
+        setActionError(
+          res.data.detail ||
+            `تم حذف ${res.data.deleted_count} — تُخطّي ${skipped} خارج الصلاحية`
+        );
+      }
+    } catch (e) {
+      setActionError(errMessage(e, "تعذّر الحذف الجماعي للضيوف."));
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   const handleExport = () => {
     exportGuestsExcel(
       filtered,
@@ -465,6 +490,19 @@ export default function PlatformGuestsListView({
             >
               <span className="material-symbols-outlined text-lg">person_add</span>
               <span className="hidden sm:inline">إضافة ضيف</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActionError("");
+                setBulkDeleteOpen(true);
+              }}
+              disabled={filtered.length === 0}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 font-bold text-sm hover:bg-rose-500/20 transition-all disabled:opacity-40"
+              title="حذف جماعي"
+            >
+              <span className="material-symbols-outlined text-lg">group_remove</span>
+              <span className="hidden sm:inline">حذف جماعي</span>
             </button>
             <button
               type="button"
@@ -823,6 +861,15 @@ export default function PlatformGuestsListView({
           </div>
         </div>
       )}
+
+      <BulkDeleteGuestsModal
+        open={bulkDeleteOpen}
+        guests={filtered}
+        showEventColumn={!isEventScope}
+        deleting={bulkDeleting}
+        onClose={() => !bulkDeleting && setBulkDeleteOpen(false)}
+        onConfirm={handleBulkDelete}
+      />
 
       {importModalOpen && (
         <div

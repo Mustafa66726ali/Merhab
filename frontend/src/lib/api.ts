@@ -181,6 +181,13 @@ export const guestsAPI = {
   update: (id: number, data: Record<string, unknown>) => api.put("/guests/" + id + "/", data),
   patch: (id: number, data: Record<string, unknown>) => api.patch(`/guests/${id}/`, data),
   delete: (id: number) => api.delete("/guests/" + id + "/"),
+  bulkDelete: (guest_ids: number[]) =>
+    api.post<{
+      deleted: number[];
+      deleted_count: number;
+      skipped?: { id: number; name?: string; detail: string }[];
+      detail?: string;
+    }>("/guests/bulk-delete/", { guest_ids }),
   importGuests: (guests: Record<string, unknown>[]) =>
     api.post("/guests/import_guests/", { guests }),
   checkIn: (id: number) => api.post<EventGuestDetail>(`/guests/${id}/check_in/`),

@@ -1,7 +1,8 @@
+from django.db import transaction
 from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -147,6 +148,88 @@ class GuestViewSet(viewsets.ModelViewSet):
         require_platform_permission(user, PERM_EDIT_GUESTS, "غير مصرح — لا تملك صلاحية تعديل الضيوف")
         require_event_access(user, instance.event)
         instance.delete()
+
+    @action(detail=False, methods=["post"], url_path="bulk-delete")
+    def bulk_delete(self, request):
+        """حذف مجموعة ضيوف دفعة واحدة ضمن صلاحيات المستخدم."""
+        require_platform_permission(
+            request.user,
+            PERM_EDIT_GUESTS,
+            "غير مصرح — لا تملك صلاحية تعديل الضيوف",
+        )
+        raw_ids = request.data.get("guest_ids") or request.data.get("ids") or []
+        if not isinstance(raw_ids, list) or not raw_ids:
+            return Response(
+                {"detail": "أرسل قائمة guest_ids غير فارغة"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ids: list[int] = []
+        for value in raw_ids:
+            try:
+                ids.append(int(value))
+            except (TypeError, ValueError):
+                continue
+        # إزالة التكرار مع الحفاظ على الترتيب
+        ids = list(dict.fromkeys(ids))
+        if not ids:
+            return Response(
+                {"detail": "معرّفات الضيوف غير صالحة"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(ids) > 500:
+            return Response(
+                {"detail": "الحد الأقصى لحذف دفعة واحدة هو 500 ضيف"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        qs = self.get_queryset().filter(id__in=ids).select_related("event")
+        found = {g.id: g for g in qs}
+        deleted_ids: list[int] = []
+        skipped: list[dict] = []
+
+        for gid in ids:
+            guest = found.get(gid)
+            if not guest:
+                skipped.append({"id": gid, "detail": "الضيف غير موجود أو خارج صلاحيتك"})
+                continue
+            try:
+                require_event_access(request.user, guest.event)
+            except PermissionDenied as exc:
+                detail = exc.detail
+                if isinstance(detail, list):
+                    detail = detail[0] if detail else "غير مصرح"
+                skipped.append(
+                    {"id": gid, "name": guest.full_name, "detail": str(detail)}
+                )
+                continue
+            deleted_ids.append(guest.id)
+
+        if not deleted_ids:
+            return Response(
+                {
+                    "detail": skipped[0]["detail"] if skipped else "لم يُحذف أي ضيف",
+                    "deleted": [],
+                    "deleted_count": 0,
+                    "skipped": skipped,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            Guest.objects.filter(id__in=deleted_ids).delete()
+
+        return Response(
+            {
+                "deleted": deleted_ids,
+                "deleted_count": len(deleted_ids),
+                "skipped": skipped,
+                "detail": (
+                    f"تم حذف {len(deleted_ids)} ضيف"
+                    + (f" — تُخطّي {len(skipped)}" if skipped else "")
+                ),
+            }
+        )
 
     @action(detail=False, methods=["post"])
     def import_guests(self, request):
