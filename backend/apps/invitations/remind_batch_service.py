@@ -65,8 +65,8 @@ def _countdown_message(guest: Guest) -> str | None:
     """
     مرحبا {اسم الضيف}
     تبقى لبدء {اسم المناسبة} {الوقت المتبقي}
-    معه رمز كيو ار كود
 
+    ثم تُرسل صورة QR مباشرة بدون قالب.
     يعيد None إذا انتهت المناسبة فلا يُرسل شيء.
     """
     if event_is_past(guest.event):
@@ -76,11 +76,7 @@ def _countdown_message(guest: Guest) -> str | None:
     remaining = format_remaining_duration(guest.event)
     if not remaining:
         return None
-    return (
-        f"مرحبا {name}\n"
-        f"تبقى لبدء {event_name} {remaining}\n"
-        f"معه رمز كيو ار كود"
-    )
+    return f"مرحبا {name}\nتبقى لبدء {event_name} {remaining}"
 
 
 def _record_invitation(event, guest, *, subject: str, body: str, sent: bool) -> None:
