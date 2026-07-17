@@ -44,22 +44,6 @@ const INVITE_DEFAULT: TemplateFields = {
   cta: "يرجى تأكيد حضورك عبر الرابط التالي:",
 };
 
-const REMIND_UNCONFIRMED_DEFAULT: TemplateFields = {
-  greeting: "مرحباً",
-  intro: "يسعدنا دعوتك لحضور",
-  showDateTime: true,
-  showVenue: true,
-  cta: "يرجى تأكيد حضورك عبر الرابط التالي:",
-};
-
-const REMIND_CONFIRMED_DEFAULT: TemplateFields = {
-  greeting: "تذكير بموعد المناسبة",
-  intro: "يسعدنا لقاؤك في",
-  showDateTime: true,
-  showVenue: true,
-  cta: "احتفظ ببطاقة دخولك (QR) :",
-};
-
 /** يبني نص القالب (مع عناصر نائبة) من الحقول المرتّبة. */
 function assembleTemplate(f: TemplateFields): string {
   const lines = [`${f.greeting} {name}،`, `${f.intro}: {event}`];
@@ -295,12 +279,6 @@ export default function InvitationBuilder({ eventId }: Props) {
 
   // وضع العمل: دعوة جديدة أو تذكير
   const [mode, setMode] = useState<"invite" | "remind">("invite");
-  const [remindUnconf, setRemindUnconf] = useState<TemplateFields>(
-    REMIND_UNCONFIRMED_DEFAULT
-  );
-  const [remindConf, setRemindConf] = useState<TemplateFields>(
-    REMIND_CONFIRMED_DEFAULT
-  );
   const [reminderResults, setReminderResults] = useState<
     InvitationReminderResult[] | null
   >(null);
@@ -443,6 +421,14 @@ export default function InvitationBuilder({ eventId }: Props) {
     }
   };
 
+  const canAuto = !!bot && bot.provider !== "manual";
+
+  // الإرسال العام لكل الضيوف متاح فقط مع مزوّد رسمي (Twilio/Cloud) — لا البوت
+  const isOfficialApi =
+    !!bot &&
+    (bot.provider === "twilio" || bot.provider === "cloud") &&
+    bot.ready;
+
   const send = async () => {
     if (targetGuests.length === 0) {
       setError("لا يوجد ضيوف ضمن الجمهور المحدد.");
@@ -499,9 +485,7 @@ export default function InvitationBuilder({ eventId }: Props) {
     try {
       const payload: Parameters<typeof invitationsAPI.remindBatch>[0] = {
         event: eventId,
-        message_unconfirmed: assembleTemplate(remindUnconf),
-        message_confirmed: assembleTemplate(remindConf),
-        auto: autoSend,
+        auto: isOfficialApi || autoSend,
       };
       if (audienceType === "section") payload.section = sectionId;
       else if (audienceType === "group") payload.group = groupId;
@@ -511,8 +495,8 @@ export default function InvitationBuilder({ eventId }: Props) {
       const skippedNote = res.data.skipped
         ? ` (تم تجاوز ${res.data.skipped} معتذر)`
         : "";
-      if (autoSend) {
-        const sentOk = res.data.reminders.filter((r) => r.sent).length;
+      if (isOfficialApi || autoSend) {
+        const sentOk = res.data.sent ?? res.data.reminders.filter((r) => r.sent).length;
         const failed = res.data.count - sentOk;
         if (failed > 0) {
           const firstErr =
@@ -533,14 +517,6 @@ export default function InvitationBuilder({ eventId }: Props) {
       setSending(false);
     }
   };
-
-  const canAuto = !!bot && bot.provider !== "manual";
-
-  // الإرسال العام لكل الضيوف متاح فقط مع مزوّد رسمي (Twilio/Cloud) — لا البوت
-  const isOfficialApi =
-    !!bot &&
-    (bot.provider === "twilio" || bot.provider === "cloud") &&
-    bot.ready;
 
   const sendToAll = async () => {
     if (!isOfficialApi) return;
@@ -579,8 +555,6 @@ export default function InvitationBuilder({ eventId }: Props) {
       } else {
         const res = await invitationsAPI.remindBatch({
           event: eventId,
-          message_unconfirmed: assembleTemplate(remindUnconf),
-          message_confirmed: assembleTemplate(remindConf),
           auto: true,
         });
         const list = res.data.reminders || [];
@@ -1098,40 +1072,24 @@ export default function InvitationBuilder({ eventId }: Props) {
                 <span className="material-symbols-outlined text-primary text-lg shrink-0">
                   info
                 </span>
-                <p className="text-xs text-on-surface-variant leading-relaxed">
-                  من لم يؤكّد يُعاد إرسال <strong>نفس الدعوة التفاعلية</strong> (خريطة +
-                  رابط + نعم/لا) بعنوان «تذكير». من أكّد يصله{" "}
-                  <strong>رسالة نصية</strong> بموعد المناسعة ورابط بطاقة QR — بدون قالب
-                  Meta. المعتذرون يُتجاوزون.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
-                <p className="text-sm font-bold text-on-surface flex items-center gap-2 mb-3">
-                  <span className="material-symbols-outlined text-amber-400 text-lg">
-                    schedule_send
-                  </span>
-                  تذكير لمن لم يؤكّد الحضور
-                </p>
-                <TemplateFieldsEditor
-                  value={remindUnconf}
-                  onChange={setRemindUnconf}
-                  eventMeta={eventMeta}
-                />
-              </div>
-
-              <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4">
-                <p className="text-sm font-bold text-on-surface flex items-center gap-2 mb-3">
-                  <span className="material-symbols-outlined text-emerald-400 text-lg">
-                    event_available
-                  </span>
-                  تذكير لمن أكّد الحضور
-                </p>
-                <TemplateFieldsEditor
-                  value={remindConf}
-                  onChange={setRemindConf}
-                  eventMeta={eventMeta}
-                />
+                <div className="text-xs text-on-surface-variant leading-relaxed space-y-2">
+                  <p>
+                    يُرسل بالترتيب — ضيفاً تلو الآخر بدون تكدس:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>
+                      من <strong>لم يختر</strong> نعم ذكرني أو لا اعتذر → إعادة{" "}
+                      <strong>قالب الدعوة</strong> ثم <strong>قالب التذكير المسبق</strong>.
+                    </li>
+                    <li>
+                      من اختار <strong>نعم ذكرني</strong> → الوقت المتبقي لبدء الحفل ثم{" "}
+                      <strong>رمز QR مباشرة</strong> بدون قالب.
+                    </li>
+                    <li>
+                      من اختار <strong>لا اعتذر</strong> → لا يُرسل شيء.
+                    </li>
+                  </ol>
+                </div>
               </div>
 
               <button
@@ -1187,25 +1145,19 @@ export default function InvitationBuilder({ eventId }: Props) {
             {mode === "remind" && (
               <div className="rounded-2xl border border-outline-variant/10 bg-surface-container-low p-5 space-y-3">
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-                  معاينة التذكير
+                  ما الذي يُرسل؟
                 </p>
-                <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
-                  <p className="text-[11px] font-bold text-amber-300 mb-1.5 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">schedule_send</span>
-                    لمن لم يؤكّد
+                <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-3 text-sm text-on-surface-variant leading-relaxed">
+                  <p className="text-[11px] font-bold text-amber-300 mb-1.5">
+                    لم يختر نعم/لا
                   </p>
-                  <p className="text-sm text-on-surface-variant whitespace-pre-line leading-relaxed text-right">
-                    {renderPreview(assembleTemplate(remindUnconf))}
-                  </p>
+                  قالب الدعوة التفاعلي ثم قالب «نعم ذكرني / لا اعتذر» من Twilio.
                 </div>
-                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3">
-                  <p className="text-[11px] font-bold text-emerald-300 mb-1.5 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">event_available</span>
-                    لمن أكّد
+                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3 text-sm text-on-surface-variant leading-relaxed">
+                  <p className="text-[11px] font-bold text-emerald-300 mb-1.5">
+                    اختار نعم ذكرني
                   </p>
-                  <p className="text-sm text-on-surface-variant whitespace-pre-line leading-relaxed text-right">
-                    {renderPreview(assembleTemplate(remindConf))}
-                  </p>
+                  رسالة نصية بالوقت المتبقي ثم صورة QR مباشرة بدون قالب.
                 </div>
               </div>
             )}
@@ -1316,12 +1268,14 @@ export default function InvitationBuilder({ eventId }: Props) {
                         </p>
                         <span
                           className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                            r.kind === "confirmed"
+                            r.kind === "opted_in" || r.kind === "confirmed"
                               ? "text-emerald-300 bg-emerald-400/10"
                               : "text-amber-300 bg-amber-400/10"
                           }`}
                         >
-                          {r.kind === "confirmed" ? "تذكير بالموعد" : "تذكير بالتأكيد"}
+                          {r.kind === "opted_in" || r.kind === "confirmed"
+                            ? "QR + العدّ التنازلي"
+                            : "دعوة + تذكير مسبق"}
                         </span>
                       </div>
                       {r.auto ? (

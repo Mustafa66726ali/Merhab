@@ -30,6 +30,7 @@ from apps.platforms.platform_permissions import (
 )
 
 from .models import Invitation
+from .remind_batch_service import process_manual_remind_batch
 from .serializers import InvitationSerializer
 
 DEFAULT_TEMPLATE = (
@@ -151,8 +152,9 @@ def process_event_reminders(
     tpl_confirmed: str | None = None,
     auto: bool = False,
 ):
-    """يُرسل تذكيرات لمجموعة ضيوف حسب حالتهم — منطق مشترك بين الإرسال اليدوي
-    (``remind_batch``) والتذكير التلقائي المجدوَل (أمر ``send_due_reminders``).
+    """يُرسل تذكيرات لمجموعة ضيوف حسب حالتهم — يُستخدم من التذكير التلقائي
+    المجدوَل (أمر ``send_due_reminders``) فقط. التذكير اليدوي من ``remind_batch``
+    يمر عبر ``process_manual_remind_batch``.
 
     - من لم يؤكّد الحضور → تذكير بالتأكيد عبر الرابط.
     - من أكّد/حضر/جلس   → تذكير بموعد المناسبة وبطاقة الدخول.
@@ -577,10 +579,10 @@ class InvitationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"], url_path="remind-batch")
     def remind_batch(self, request):
-        """إرسال تذكيرات مخصّصة حسب حالة الضيف:
-        - من لم يؤكّد الحضور  → تذكير بالتأكيد عبر الرابط.
-        - من أكّد الحضور      → تذكير بموعد المناسبة وبطاقة الدخول.
-        - من اعتذر            → يُتجاوز (حالة نهائية).
+        """تذكير يدوي من شاشة الدعوات:
+        - المعتذرون (لا اعتذر) → يُتجاوزون.
+        - من لم يختر نعم/لا → إعادة الدعوة + قالب التذكير المسبق.
+        - من اختار نعم ذكرني → العدّ التنازلي + QR مباشرة بدون قالب.
         """
         event_id = request.data.get("event")
         if not event_id:
@@ -603,22 +605,35 @@ class InvitationViewSet(viewsets.ModelViewSet):
         )
         guests = _filter_audience(guests, request.data)
 
-        tpl_unconfirmed = (
-            request.data.get("message_unconfirmed") or DEFAULT_REMINDER_UNCONFIRMED
-        )
-        tpl_confirmed = (
-            request.data.get("message_confirmed") or DEFAULT_REMINDER_CONFIRMED
-        )
         auto = bool(request.data.get("auto"))
 
-        results, skipped, _sent = process_event_reminders(
-            event, guests, tpl_unconfirmed, tpl_confirmed, auto
+        if auto:
+            from apps.integrations.whatsapp_send import _active_twilio_credential
+            from apps.integrations.whatsapp_twilio_setup import (
+                check_twilio_invitation_setup,
+            )
+
+            if _active_twilio_credential() and not _active_cloud_credential():
+                setup = check_twilio_invitation_setup()
+                if not setup["ready"]:
+                    return Response(
+                        {
+                            "detail": "لا يمكن الإرسال — إعداد Twilio غير مكتمل",
+                            "issues": setup["issues"],
+                            "auto": True,
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+        results, skipped, sent_count = process_manual_remind_batch(
+            event, guests, auto=auto
         )
 
         return Response(
             {
                 "count": len(results),
                 "skipped": skipped,
+                "sent": sent_count,
                 "auto": auto,
                 "reminders": results,
             }

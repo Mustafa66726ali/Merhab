@@ -410,6 +410,55 @@ def send_guest_day_before_reminder(guest: Guest) -> dict:
     }
 
 
+def send_guest_qr_direct(guest: Guest, *, preamble: str = "") -> dict:
+    """إرسال صورة QR مباشرة بدون قالب Twilio/Meta — مع نص اختياري قبلها."""
+    import time
+
+    from apps.guests.qr_utils import build_guest_qr_png, ensure_guest_qr
+
+    phone = guest.phone or ""
+    fallback_url = build_whatsapp_url(phone, "")
+
+    if not normalize_phone_digits(phone):
+        return {"sent": False, "detail": "رقم غير متوفر"}
+
+    ensure_guest_qr(guest)
+    guest.refresh_from_db()
+    png_bytes = build_guest_qr_png(guest.public_token)
+    image_url = _qr_public_url(guest)
+    caption = BOT_QR_CAPTION
+
+    if image_url and not image_url.startswith("https://"):
+        logger.warning(
+            "QR media URL is not HTTPS — Twilio/WhatsApp will reject it: %s",
+            image_url,
+        )
+
+    if _provider_mode() == "bot":
+        if preamble.strip():
+            text_out = send_via_bot(phone, preamble.strip())
+            if not text_out.get("sent"):
+                return text_out
+            time.sleep(0.5)
+        return send_via_bot_image(phone, png_bytes, caption=caption)
+
+    if preamble.strip() and has_active_whatsapp_credential():
+        text_out = dispatch_whatsapp(phone, preamble.strip())
+        if not text_out.get("sent"):
+            return text_out
+        time.sleep(0.8)
+
+    if image_url and has_active_whatsapp_credential():
+        return send_whatsapp_image(
+            phone,
+            image_url=image_url,
+            caption=caption,
+            fallback_url=fallback_url,
+        )
+
+    return {"sent": False, "detail": "لم يُكوَّن مزوّد إرسال للصورة"}
+
+
 def send_guest_qr(guest: Guest) -> dict:
     """إرسال قالب rsvp_qr ثم صورة QR بعد تأكيد الحضور."""
     from apps.guests.qr_utils import build_guest_qr_png, ensure_guest_qr

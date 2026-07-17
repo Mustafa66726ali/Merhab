@@ -262,7 +262,7 @@ export interface InvitationSendResult {
 
 export interface InvitationReminderResult extends InvitationSendResult {
   status: string;
-  kind: "confirmed" | "unconfirmed";
+  kind: "no_optin" | "opted_in" | "confirmed" | "unconfirmed";
 }
 
 export interface WhatsappBotStatus {
@@ -321,6 +321,7 @@ export const invitationsAPI = {
     api.post<{
       count: number;
       skipped: number;
+      sent?: number;
       auto: boolean;
       reminders: InvitationReminderResult[];
     }>("/invitations/remind-batch/", data),
