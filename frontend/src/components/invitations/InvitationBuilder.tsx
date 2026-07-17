@@ -1082,8 +1082,9 @@ export default function InvitationBuilder({ eventId }: Props) {
                       <strong>قالب الدعوة</strong> ثم <strong>قالب التذكير المسبق</strong>.
                     </li>
                     <li>
-                      من اختار <strong>نعم ذكرني</strong> → الوقت المتبقي لبدء الحفل ثم{" "}
-                      <strong>رمز QR مباشرة</strong> بدون قالب.
+                      من اختار <strong>نعم ذكرني</strong> → رسالة «مرحبا + الاسم /
+                      تبقى لبدء المناسبة + الوقت المتبقي / معه رمز كيو ار كود» ثم{" "}
+                      <strong>QR مباشرة</strong>. إذا انتهت المناسبة لا يُرسل شيء.
                     </li>
                     <li>
                       من اختار <strong>لا اعتذر</strong> → لا يُرسل شيء.
@@ -1157,7 +1158,8 @@ export default function InvitationBuilder({ eventId }: Props) {
                   <p className="text-[11px] font-bold text-emerald-300 mb-1.5">
                     اختار نعم ذكرني
                   </p>
-                  رسالة نصية بالوقت المتبقي ثم صورة QR مباشرة بدون قالب.
+                  رسالة: مرحبا + الاسم، تبقى لبدء المناسبة + الوقت المتبقي، معه رمز
+                  كيو ار كود — ثم صورة QR. إذا انتهت المناسبة لا يُرسل شيء.
                 </div>
               </div>
             )}

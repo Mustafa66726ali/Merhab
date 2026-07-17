@@ -29,14 +29,22 @@ def classify_guest_remind_bucket(guest: Guest) -> str:
     return "no_optin"
 
 
-def format_time_until_event(event) -> str:
-    """نص عربي لما تبقى على بدء المناسبة."""
+def event_is_past(event) -> bool:
+    """True إذا بدأ موعد المناسبة أو انتهى."""
+    event_dt = event_aware_datetime(event)
+    if not event_dt:
+        return False
+    return timezone.now() >= event_dt
+
+
+def format_remaining_duration(event) -> str:
+    """الوقت المتبقي فقط (مثل: 2 يوم و 5 ساعة)."""
     event_dt = event_aware_datetime(event)
     if not event_dt:
         return ""
     now = timezone.now()
     if now >= event_dt:
-        return "المناسبة بدأت أو انتهى موعدها."
+        return ""
     total_secs = int((event_dt - now).total_seconds())
     days, rem = divmod(total_secs, 86400)
     hours, rem = divmod(rem, 3600)
@@ -50,17 +58,29 @@ def format_time_until_event(event) -> str:
         parts.append(f"{minutes} دقيقة")
     if not parts:
         parts.append("أقل من دقيقة")
-    return "يتبقى على بدء المناسبة: " + " و ".join(parts)
+    return " و ".join(parts)
 
 
-def _countdown_message(guest: Guest) -> str:
+def _countdown_message(guest: Guest) -> str | None:
+    """
+    مرحبا {اسم الضيف}
+    تبقى لبدء {اسم المناسبة} {الوقت المتبقي}
+    معه رمز كيو ار كود
+
+    يعيد None إذا انتهت المناسبة فلا يُرسل شيء.
+    """
+    if event_is_past(guest.event):
+        return None
     name = (guest.full_name or "ضيف").strip()
-    countdown = format_time_until_event(guest.event)
-    lines = [f"مرحباً {name}"]
-    if countdown:
-        lines.append(countdown)
-    lines.append("هذا رمز الدخول الخاص بكم:")
-    return "\n".join(lines)
+    event_name = (guest.event.title or "المناسبة").strip()
+    remaining = format_remaining_duration(guest.event)
+    if not remaining:
+        return None
+    return (
+        f"مرحبا {name}\n"
+        f"تبقى لبدء {event_name} {remaining}\n"
+        f"معه رمز كيو ار كود"
+    )
 
 
 def _record_invitation(event, guest, *, subject: str, body: str, sent: bool) -> None:
@@ -148,10 +168,16 @@ def _send_no_optin_guest(event, guest: Guest, *, auto: bool) -> dict:
     return row
 
 
-def _send_opted_in_guest(event, guest: Guest, *, auto: bool) -> dict:
-    """من اختار نعم ذكرني — العدّاد + QR مباشرة بدون قالب."""
-    subject = f"رمز الدخول — {event.invitation_title or event.title}"
+def _send_opted_in_guest(event, guest: Guest, *, auto: bool) -> dict | None:
+    """من اختار نعم ذكرني — العدّاد + QR مباشرة بدون قالب.
+
+    يعيد None إذا انتهت المناسبة (لا يُرسل شيء ولا يُسجَّل فشل).
+    """
     countdown = _countdown_message(guest)
+    if countdown is None:
+        return None
+
+    subject = f"رمز الدخول — {event.invitation_title or event.title}"
 
     if not auto:
         return _result_row(
@@ -198,6 +224,7 @@ def process_manual_remind_batch(event, guests_qs, *, auto: bool) -> tuple[list[d
     no_optin: list[Guest] = []
     opted_in: list[Guest] = []
     skipped = 0
+    event_past = event_is_past(event)
 
     for guest in guests_qs.order_by("id"):
         bucket = classify_guest_remind_bucket(guest)
@@ -205,6 +232,9 @@ def process_manual_remind_batch(event, guests_qs, *, auto: bool) -> tuple[list[d
             skipped += 1
         elif bucket == "no_optin":
             no_optin.append(guest)
+        elif event_past:
+            # انتهت المناسبة — لا QR ولا عدّ تنازلي لمن اختار نعم ذكرني
+            skipped += 1
         else:
             opted_in.append(guest)
 
@@ -217,6 +247,9 @@ def process_manual_remind_batch(event, guests_qs, *, auto: bool) -> tuple[list[d
             row = _send_no_optin_guest(event, guest, auto=auto)
         else:
             row = _send_opted_in_guest(event, guest, auto=auto)
+            if row is None:
+                skipped += 1
+                continue
         results.append(row)
         if row.get("sent"):
             sent_count += 1
@@ -224,9 +257,10 @@ def process_manual_remind_batch(event, guests_qs, *, auto: bool) -> tuple[list[d
             time.sleep(BATCH_DELAY_SEC)
 
     logger.info(
-        "manual remind batch event=%s auto=%s no_optin=%s opted_in=%s skipped=%s sent=%s",
+        "manual remind batch event=%s auto=%s past=%s no_optin=%s opted_in=%s skipped=%s sent=%s",
         event.id,
         auto,
+        event_past,
         len(no_optin),
         len(opted_in),
         skipped,
